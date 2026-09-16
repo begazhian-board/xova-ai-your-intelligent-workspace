@@ -96,8 +96,10 @@ export function useConversation(userId: string | undefined, config: AiConfig) {
         user_id: userId,
         role: message.role,
         content: message.content,
-        attachments: persistableAttachments(message.attachments),
-        sources: message.sources,
+        attachments: JSON.parse(
+          JSON.stringify(persistableAttachments(message.attachments)),
+        ) as never,
+        sources: JSON.parse(JSON.stringify(message.sources)) as never,
         image_url: message.imageUrl ?? null,
         mode: message.mode ?? null,
         created_at: message.createdAt,
