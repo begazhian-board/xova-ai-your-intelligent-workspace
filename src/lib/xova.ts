@@ -105,7 +105,7 @@ export function newId() {
 export function conversationTitle(messages: ChatMessage[]) {
   const first = messages.find((m) => m.role === "user" && m.content.trim().length > 0);
   if (!first) return null;
-  const line = first.content.trim().split("\n")[0];
+  const line = first.content.trim().split("\n")[0] ?? "";
   return line.length > 48 ? `${line.slice(0, 48).trimEnd()}…` : line;
 }
 
