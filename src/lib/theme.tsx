@@ -14,10 +14,9 @@ export function useApplyAppearance(theme: ThemeChoice, lang: LanguageId) {
     };
 
     apply();
-    if (theme === "system") {
-      media.addEventListener("change", apply);
-      return () => media.removeEventListener("change", apply);
-    }
+    if (theme !== "system") return undefined;
+    media.addEventListener("change", apply);
+    return () => media.removeEventListener("change", apply);
   }, [theme]);
 
   useEffect(() => {
