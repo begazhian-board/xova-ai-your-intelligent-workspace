@@ -14,7 +14,90 @@ export type Database = {
   }
   public: {
     Tables: {
-      [_ in never]: never
+      messages: {
+        Row: {
+          attachments: Json
+          content: string
+          created_at: string
+          id: string
+          image_url: string | null
+          mode: string | null
+          role: string
+          sources: Json
+          user_id: string
+        }
+        Insert: {
+          attachments?: Json
+          content?: string
+          created_at?: string
+          id?: string
+          image_url?: string | null
+          mode?: string | null
+          role: string
+          sources?: Json
+          user_id: string
+        }
+        Update: {
+          attachments?: Json
+          content?: string
+          created_at?: string
+          id?: string
+          image_url?: string | null
+          mode?: string | null
+          role?: string
+          sources?: Json
+          user_id?: string
+        }
+        Relationships: []
+      }
+      profiles: {
+        Row: {
+          avatar_url: string | null
+          created_at: string
+          custom_personality: string | null
+          default_mode: string
+          display_name: string | null
+          enter_to_send: boolean
+          id: string
+          language: string
+          personality: string
+          response_style: string
+          theme: string
+          updated_at: string
+          username: string | null
+        }
+        Insert: {
+          avatar_url?: string | null
+          created_at?: string
+          custom_personality?: string | null
+          default_mode?: string
+          display_name?: string | null
+          enter_to_send?: boolean
+          id: string
+          language?: string
+          personality?: string
+          response_style?: string
+          theme?: string
+          updated_at?: string
+          username?: string | null
+        }
+        Update: {
+          avatar_url?: string | null
+          created_at?: string
+          custom_personality?: string | null
+          default_mode?: string
+          display_name?: string | null
+          enter_to_send?: boolean
+          id?: string
+          language?: string
+          personality?: string
+          response_style?: string
+          theme?: string
+          updated_at?: string
+          username?: string | null
+        }
+        Relationships: []
+      }
     }
     Views: {
       [_ in never]: never
