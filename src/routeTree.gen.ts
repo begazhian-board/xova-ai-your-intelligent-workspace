@@ -10,12 +10,18 @@
 
 import { Route as rootRouteImport } from './routes/__root'
 import { Route as IndexRouteImport } from './routes/index'
+import { Route as AuthRouteImport } from './routes/auth'
 import { Route as ApiChatRouteImport } from './routes/api/chat'
 import { Route as ApiImageRouteImport } from './routes/api/image'
 
 const IndexRoute = IndexRouteImport.update({
   id: '/',
   path: '/',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const AuthRoute = AuthRouteImport.update({
+  id: '/auth',
+  path: '/auth',
   getParentRoute: () => rootRouteImport,
 } as any)
 const ApiChatRoute = ApiChatRouteImport.update({
@@ -31,30 +37,34 @@ const ApiImageRoute = ApiImageRouteImport.update({
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
+  '/auth': typeof AuthRoute
   '/api/chat': typeof ApiChatRoute
   '/api/image': typeof ApiImageRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
+  '/auth': typeof AuthRoute
   '/api/chat': typeof ApiChatRoute
   '/api/image': typeof ApiImageRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
+  '/auth': typeof AuthRoute
   '/api/chat': typeof ApiChatRoute
   '/api/image': typeof ApiImageRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
-  fullPaths: '/' | '/api/chat' | '/api/image'
+  fullPaths: '/' | '/auth' | '/api/chat' | '/api/image'
   fileRoutesByTo: FileRoutesByTo
-  to: '/' | '/api/chat' | '/api/image'
-  id: '__root__' | '/' | '/api/chat' | '/api/image'
+  to: '/' | '/auth' | '/api/chat' | '/api/image'
+  id: '__root__' | '/' | '/auth' | '/api/chat' | '/api/image'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
+  AuthRoute: typeof AuthRoute
   ApiChatRoute: typeof ApiChatRoute
   ApiImageRoute: typeof ApiImageRoute
 }
@@ -66,6 +76,13 @@ declare module '@tanstack/react-router' {
       path: '/'
       fullPath: '/'
       preLoaderRoute: typeof IndexRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/auth': {
+      id: '/auth'
+      path: '/auth'
+      fullPath: '/auth'
+      preLoaderRoute: typeof AuthRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/api/chat': {
@@ -87,6 +104,7 @@ declare module '@tanstack/react-router' {
 
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
+  AuthRoute: AuthRoute,
   ApiChatRoute: ApiChatRoute,
   ApiImageRoute: ApiImageRoute,
 }
