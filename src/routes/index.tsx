@@ -387,7 +387,6 @@ function Workspace() {
               {t("dialog.confirm")}
             </AlertDialogAction>
           </AlertDialogFooter>
-        </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
     </div>
