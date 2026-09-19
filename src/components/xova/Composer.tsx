@@ -57,6 +57,8 @@ export function Composer({
   onSend,
   onGenerateImage,
   onStop,
+  seedText,
+  onSeedConsumed,
 }: ComposerProps) {
   const { t } = useI18n();
   const [value, setValue] = useState("");
