@@ -38,6 +38,7 @@ function fallbackProfile(userId: string): Profile {
     language: cached.lang,
     theme: cached.theme,
     enter_to_send: true,
+    conversation_title: null,
   };
 }
 
