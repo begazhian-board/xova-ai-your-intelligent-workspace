@@ -36,6 +36,9 @@ interface ComposerProps {
   onSend: (text: string, attachments: Attachment[]) => void;
   onGenerateImage: (prompt: string) => void;
   onStop: () => void;
+  /** Text pushed in from a suggestion or an edit action. */
+  seedText?: string | null;
+  onSeedConsumed?: () => void;
 }
 
 function AttachmentIcon({ kind }: { kind: Attachment["kind"] }) {
@@ -54,6 +57,8 @@ export function Composer({
   onSend,
   onGenerateImage,
   onStop,
+  seedText,
+  onSeedConsumed,
 }: ComposerProps) {
   const { t } = useI18n();
   const [value, setValue] = useState("");

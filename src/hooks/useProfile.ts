@@ -21,6 +21,7 @@ export interface Profile {
   language: LanguageId;
   theme: ThemeChoice;
   enter_to_send: boolean;
+  conversation_title: string | null;
 }
 
 function fallbackProfile(userId: string): Profile {
@@ -37,6 +38,7 @@ function fallbackProfile(userId: string): Profile {
     language: cached.lang,
     theme: cached.theme,
     enter_to_send: true,
+    conversation_title: null,
   };
 }
 
