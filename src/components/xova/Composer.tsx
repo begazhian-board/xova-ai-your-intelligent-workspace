@@ -80,6 +80,13 @@ export function Composer({
   }, [status]);
 
   useEffect(() => {
+    if (!seedText) return;
+    setValue(seedText);
+    textareaRef.current?.focus();
+    onSeedConsumed?.();
+  }, [seedText, onSeedConsumed]);
+
+  useEffect(() => {
     const node = textareaRef.current;
     if (!node) return;
     node.style.height = "auto";
