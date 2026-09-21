@@ -15,6 +15,13 @@
       "when": 1789969715606,
       "tag": "0001_create_generated_images",
       "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "7",
+      "when": 1789969735099,
+      "tag": "0002_xova_images_storage_policies",
+      "breakpoints": true
     }
   ]
 }
