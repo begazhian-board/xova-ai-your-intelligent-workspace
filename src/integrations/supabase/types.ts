@@ -14,6 +14,39 @@ export type Database = {
   }
   public: {
     Tables: {
+      generated_images: {
+        Row: {
+          aspect: string
+          created_at: string
+          id: string
+          image_url: string
+          prompt: string
+          quality: string
+          storage_path: string
+          user_id: string
+        }
+        Insert: {
+          aspect?: string
+          created_at?: string
+          id?: string
+          image_url: string
+          prompt: string
+          quality?: string
+          storage_path: string
+          user_id: string
+        }
+        Update: {
+          aspect?: string
+          created_at?: string
+          id?: string
+          image_url?: string
+          prompt?: string
+          quality?: string
+          storage_path?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       messages: {
         Row: {
           attachments: Json

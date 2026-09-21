@@ -8,6 +8,13 @@
       "when": 1789804796170,
       "tag": "0000_add_conversation_title_to_profiles",
       "breakpoints": true
+    },
+    {
+      "idx": 1,
+      "version": "7",
+      "when": 1789969715606,
+      "tag": "0001_create_generated_images",
+      "breakpoints": true
     }
   ]
 }
