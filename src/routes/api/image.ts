@@ -13,6 +13,11 @@ const SIZES: Record<string, string> = {
   "2:3": "1024x1536",
 };
 
+/** Generations allowed per user per rolling hour. */
+const RATE_LIMIT = 15;
+/** One year — the bucket is private, the signed token is the only way in. */
+const SIGNED_URL_TTL = 60 * 60 * 24 * 365;
+
 async function authenticate(request: Request) {
   const token = request.headers.get("authorization")?.replace(/^Bearer\s+/i, "");
   if (!token) return null;
@@ -26,6 +31,13 @@ async function authenticate(request: Request) {
   const { data, error } = await supabase.auth.getUser(token);
   if (error || !data.user) return null;
   return data.user;
+}
+
+function base64ToBytes(base64: string) {
+  const binary = atob(base64);
+  const bytes = new Uint8Array(binary.length);
+  for (let i = 0; i < binary.length; i += 1) bytes[i] = binary.charCodeAt(i);
+  return bytes;
 }
 
 export const Route = createFileRoute("/api/image")({
@@ -47,6 +59,23 @@ export const Route = createFileRoute("/api/image")({
 
         const prompt = body.prompt?.trim();
         if (!prompt) return Response.json({ error: "err.generic" }, { status: 400 });
+        if (prompt.length > 2000) return Response.json({ error: "err.generic" }, { status: 400 });
+
+        const aspect = body.aspect && SIZES[body.aspect] ? body.aspect : "1:1";
+        const quality = body.quality === "premium" ? "premium" : "standard";
+
+        const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+
+        // Rate limit per user, rolling hour.
+        const since = new Date(Date.now() - 60 * 60 * 1000).toISOString();
+        const { count } = await supabaseAdmin
+          .from("generated_images")
+          .select("id", { count: "exact", head: true })
+          .eq("user_id", user.id)
+          .gte("created_at", since);
+        if ((count ?? 0) >= RATE_LIMIT) {
+          return Response.json({ error: "err.imageRate" }, { status: 429 });
+        }
 
         try {
           const res = await fetch("https://ai.gateway.lovable.dev/v1/images/generations", {
@@ -57,9 +86,9 @@ export const Route = createFileRoute("/api/image")({
               "X-Lovable-AIG-SDK": "fetch",
             },
             body: JSON.stringify({
-              model: body.quality === "premium" ? "lovable/image-premium" : "lovable/image-standard",
+              model: quality === "premium" ? "lovable/image-premium" : "lovable/image-standard",
               prompt,
-              size: SIZES[body.aspect ?? "1:1"] ?? SIZES["1:1"],
+              size: SIZES[aspect],
               n: 1,
             }),
           });
@@ -77,12 +106,57 @@ export const Route = createFileRoute("/api/image")({
             data?: Array<{ b64_json?: string; url?: string }>;
           };
           const first = json.data?.[0];
-          const image = first?.b64_json
-            ? `data:image/png;base64,${first.b64_json}`
-            : (first?.url ?? null);
-          if (!image) return Response.json({ error: "err.imageFailed" }, { status: 502 });
 
-          return Response.json({ image });
+          let bytes: Uint8Array | null = null;
+          if (first?.b64_json) {
+            bytes = base64ToBytes(first.b64_json);
+          } else if (first?.url) {
+            const downloaded = await fetch(first.url);
+            if (downloaded.ok) bytes = new Uint8Array(await downloaded.arrayBuffer());
+          }
+          if (!bytes) return Response.json({ error: "err.imageFailed" }, { status: 502 });
+
+          const path = `${user.id}/${crypto.randomUUID()}.png`;
+          const { error: uploadError } = await supabaseAdmin.storage
+            .from("xova-images")
+            .upload(path, bytes, { contentType: "image/png", upsert: false });
+          if (uploadError) {
+            console.error("XOVA image upload", uploadError.message);
+            return Response.json({ error: "err.imageFailed" }, { status: 502 });
+          }
+
+          const { data: signed, error: signError } = await supabaseAdmin.storage
+            .from("xova-images")
+            .createSignedUrl(path, SIGNED_URL_TTL);
+          if (signError || !signed?.signedUrl) {
+            console.error("XOVA image sign", signError?.message);
+            return Response.json({ error: "err.imageFailed" }, { status: 502 });
+          }
+
+          const { data: row, error: insertError } = await supabaseAdmin
+            .from("generated_images")
+            .insert({
+              user_id: user.id,
+              prompt,
+              aspect,
+              quality,
+              storage_path: path,
+              image_url: signed.signedUrl,
+            })
+            .select("id, created_at")
+            .single();
+          if (insertError) {
+            console.error("XOVA image record", insertError.message);
+            return Response.json({ error: "err.imageFailed" }, { status: 502 });
+          }
+
+          return Response.json({
+            image: signed.signedUrl,
+            id: row.id,
+            createdAt: row.created_at,
+            aspect,
+            quality,
+          });
         } catch (error) {
           console.error("XOVA image error", error);
           return Response.json({ error: "err.imageFailed" }, { status: 502 });
