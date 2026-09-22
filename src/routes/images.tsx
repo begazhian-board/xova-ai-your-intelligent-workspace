@@ -183,43 +183,55 @@ function ImageStudio() {
   }
 
   return (
-    <main className="min-h-screen bg-background text-foreground">
-      <div className="mx-auto flex w-full max-w-3xl flex-col gap-6 px-4 py-6 sm:px-6">
+    <main className="relative min-h-screen overflow-hidden bg-background text-foreground">
+      <div
+        aria-hidden="true"
+        className="pointer-events-none absolute inset-x-0 -top-40 h-80 bg-[radial-gradient(60%_60%_at_50%_50%,var(--brand-soft),transparent_70%)] opacity-70"
+      />
+      <div className="relative mx-auto flex w-full max-w-5xl flex-col gap-8 px-4 py-6 sm:px-6 sm:py-10">
         <div className="flex items-center gap-2">
           <button
             type="button"
             onClick={() => void navigate({ to: "/" })}
-            className="xv-focus inline-flex items-center gap-1.5 rounded-lg border border-border bg-surface px-2.5 py-1.5 text-xs font-medium transition-colors hover:bg-hover"
+            className="xv-focus inline-flex items-center gap-1.5 rounded-full border border-border bg-surface/80 px-3 py-1.5 text-xs font-medium backdrop-blur transition-colors hover:bg-hover"
           >
             <ArrowLeft className="h-3.5 w-3.5 rtl:rotate-180" aria-hidden="true" />
             {t("studio.back")}
           </button>
         </div>
 
-        <header className="flex flex-col gap-1">
-          <h1 className="text-lg font-semibold tracking-tight">{t("studio.title")}</h1>
-          <p className="text-sm text-muted-foreground">{t("studio.subtitle")}</p>
+        <header className="flex flex-col gap-2">
+          <span className="inline-flex w-fit items-center gap-1.5 rounded-full border border-brand/30 bg-brand-soft px-2.5 py-1 text-xxs font-semibold uppercase tracking-[0.14em] text-brand">
+            <Sparkles className="h-3 w-3" aria-hidden="true" />
+            {t("app.name")}
+          </span>
+          <h1 className="text-2xl font-semibold tracking-tight sm:text-3xl">{t("studio.title")}</h1>
+          <p className="max-w-xl text-sm leading-relaxed text-muted-foreground">
+            {t("studio.subtitle")}
+          </p>
         </header>
 
-        <section className="flex flex-col gap-3 rounded-2xl border border-border bg-composer p-3 sm:p-4">
-          <label className="flex flex-col gap-1.5">
-            <span className="text-xs font-medium text-muted-foreground">{t("studio.prompt")}</span>
+        <section className="flex flex-col gap-4 rounded-3xl border border-border bg-composer/90 p-4 shadow-lg shadow-black/5 backdrop-blur sm:p-5">
+          <label className="flex flex-col gap-2">
+            <span className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
+              {t("studio.prompt")}
+            </span>
             <textarea
               value={prompt}
               onChange={(event) => setPrompt(event.target.value)}
               rows={3}
               maxLength={2000}
               placeholder={t("composer.imagePlaceholder")}
-              className="xv-focus w-full resize-none rounded-xl border border-border bg-surface px-3 py-2 text-sm outline-none placeholder:text-muted-foreground"
+              className="xv-focus w-full resize-none rounded-2xl border border-border bg-surface px-3.5 py-3 text-sm leading-relaxed outline-none transition-colors placeholder:text-muted-foreground focus:border-brand/45"
             />
           </label>
 
-          <div className="flex flex-wrap items-end gap-4">
-            <fieldset className="flex flex-col gap-1.5">
-              <legend className="text-xs font-medium text-muted-foreground">
+          <div className="flex flex-wrap items-end gap-5">
+            <fieldset className="flex flex-col gap-2">
+              <legend className="text-xxs font-semibold uppercase tracking-wide text-muted-foreground">
                 {t("studio.aspect")}
               </legend>
-              <div className="flex gap-1.5">
+              <div className="flex gap-1.5 rounded-full border border-border bg-surface p-1">
                 {ASPECTS.map((value) => (
                   <button
                     key={value}
@@ -227,10 +239,10 @@ function ImageStudio() {
                     aria-pressed={aspect === value}
                     onClick={() => setAspect(value)}
                     className={cn(
-                      "xv-focus rounded-lg border px-2.5 py-1.5 text-xs font-medium transition-colors",
+                      "xv-focus rounded-full px-3 py-1.5 text-xs font-medium transition-all",
                       aspect === value
-                        ? "border-brand bg-brand-soft text-brand"
-                        : "border-border bg-surface text-muted-foreground hover:bg-hover",
+                        ? "bg-brand-soft text-brand shadow-sm"
+                        : "text-muted-foreground hover:bg-hover hover:text-foreground",
                     )}
                   >
                     {t(`studio.aspect.${value}`)}
@@ -239,11 +251,11 @@ function ImageStudio() {
               </div>
             </fieldset>
 
-            <fieldset className="flex flex-col gap-1.5">
-              <legend className="text-xs font-medium text-muted-foreground">
+            <fieldset className="flex flex-col gap-2">
+              <legend className="text-xxs font-semibold uppercase tracking-wide text-muted-foreground">
                 {t("studio.quality")}
               </legend>
-              <div className="flex gap-1.5">
+              <div className="flex gap-1.5 rounded-full border border-border bg-surface p-1">
                 {QUALITIES.map((value) => (
                   <button
                     key={value}
@@ -251,10 +263,10 @@ function ImageStudio() {
                     aria-pressed={quality === value}
                     onClick={() => setQuality(value)}
                     className={cn(
-                      "xv-focus rounded-lg border px-2.5 py-1.5 text-xs font-medium transition-colors",
+                      "xv-focus rounded-full px-3 py-1.5 text-xs font-medium transition-all",
                       quality === value
-                        ? "border-brand bg-brand-soft text-brand"
-                        : "border-border bg-surface text-muted-foreground hover:bg-hover",
+                        ? "bg-brand-soft text-brand shadow-sm"
+                        : "text-muted-foreground hover:bg-hover hover:text-foreground",
                     )}
                   >
                     {t(`studio.quality.${value}`)}
@@ -267,14 +279,14 @@ function ImageStudio() {
               type="button"
               disabled={busy || prompt.trim().length === 0}
               onClick={() => void generate(prompt, aspect, quality)}
-              className="xv-focus ms-auto inline-flex items-center gap-2 rounded-xl bg-brand px-3.5 py-2 text-sm font-medium text-brand-foreground transition-opacity hover:opacity-90 disabled:opacity-45"
+              className="xv-focus ms-auto inline-flex items-center gap-2 rounded-full bg-brand px-5 py-2.5 text-sm font-semibold text-brand-foreground shadow-md shadow-brand/20 transition-all hover:opacity-90 active:scale-[0.98] disabled:opacity-45 disabled:shadow-none"
             >
               {busy ? (
                 <Loader2 className="h-4 w-4 animate-spin" aria-hidden="true" />
               ) : (
                 <Sparkles className="h-4 w-4" aria-hidden="true" />
               )}
-              {t("studio.generate")}
+              {busy ? t("studio.generating") : t("studio.generate")}
             </button>
           </div>
 
@@ -288,50 +300,65 @@ function ImageStudio() {
           )}
         </section>
 
-        <section className="flex flex-col gap-3">
-          <h2 className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
-            {t("studio.history")}
-          </h2>
-
-          {busy && (
-            <div className="flex items-center gap-2 text-xs text-muted-foreground">
-              <Loader2 className="h-3.5 w-3.5 animate-spin" aria-hidden="true" />
-              {t("studio.generating")}
-            </div>
-          )}
+        <section className="flex flex-col gap-4">
+          <div className="flex items-center gap-3">
+            <h2 className="text-xs font-semibold uppercase tracking-[0.14em] text-muted-foreground">
+              {t("studio.history")}
+            </h2>
+            <span className="h-px flex-1 bg-border" aria-hidden="true" />
+          </div>
 
           {loading ? (
-            <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
-              <Skeleton className="aspect-square w-full rounded-xl" />
-              <Skeleton className="aspect-square w-full rounded-xl" />
+            <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
+              <Skeleton className="aspect-square w-full rounded-2xl" />
+              <Skeleton className="aspect-square w-full rounded-2xl" />
+              <Skeleton className="aspect-square w-full rounded-2xl" />
             </div>
-          ) : images.length === 0 ? (
-            <div className="flex flex-col items-center gap-2 rounded-2xl border border-border bg-surface px-4 py-10 text-center">
-              <ImageIcon className="h-5 w-5 text-muted-foreground" aria-hidden="true" />
+          ) : images.length === 0 && !busy ? (
+            <div className="flex flex-col items-center gap-3 rounded-3xl border border-dashed border-border bg-surface/60 px-4 py-16 text-center">
+              <span className="grid h-11 w-11 place-items-center rounded-2xl bg-brand-soft text-brand">
+                <ImageIcon className="h-5 w-5" aria-hidden="true" />
+              </span>
               <p className="text-sm text-muted-foreground">{t("empty.noImages")}</p>
             </div>
           ) : (
-            <ul className="grid grid-cols-1 gap-3 sm:grid-cols-2">
+            <ul className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
+              {busy && (
+                <li className="grid aspect-square w-full place-items-center rounded-2xl border border-border bg-surface">
+                  <span className="flex flex-col items-center gap-2 text-xs text-muted-foreground">
+                    <Loader2 className="h-5 w-5 animate-spin text-brand" aria-hidden="true" />
+                    {t("studio.generating")}
+                  </span>
+                </li>
+              )}
               {images.map((row) => (
                 <li
                   key={row.id}
-                  className="flex flex-col overflow-hidden rounded-2xl border border-border bg-surface"
+                  className="group/card flex flex-col overflow-hidden rounded-2xl border border-border bg-surface transition-all hover:-translate-y-0.5 hover:border-brand/35 hover:shadow-lg hover:shadow-black/10"
                 >
-                  <img
-                    src={row.image_url}
-                    alt={row.prompt}
-                    loading="lazy"
-                    className={cn("w-full object-cover", ASPECT_CLASS[row.aspect] ?? "aspect-square")}
-                  />
-                  <div className="flex flex-col gap-2 p-3">
-                    <p className="line-clamp-2 text-xs text-muted-foreground">{row.prompt}</p>
+                  <div className="relative overflow-hidden">
+                    <img
+                      src={row.image_url}
+                      alt={row.prompt}
+                      loading="lazy"
+                      className={cn(
+                        "w-full object-cover transition-transform duration-500 group-hover/card:scale-[1.03]",
+                        ASPECT_CLASS[row.aspect] ?? "aspect-square",
+                      )}
+                    />
+                    <div className="pointer-events-none absolute inset-x-0 bottom-0 h-16 bg-gradient-to-t from-black/45 to-transparent opacity-0 transition-opacity group-hover/card:opacity-100" />
+                  </div>
+                  <div className="flex flex-col gap-2.5 p-3">
+                    <p className="line-clamp-2 text-xs leading-relaxed text-muted-foreground">
+                      {row.prompt}
+                    </p>
                     <div className="flex items-center gap-1.5">
                       <button
                         type="button"
                         onClick={() => void download(row)}
                         aria-label={t("msg.download")}
                         title={t("msg.download")}
-                        className="xv-focus grid h-7 w-7 place-items-center rounded-lg border border-border text-muted-foreground hover:bg-hover hover:text-foreground"
+                        className="xv-focus grid h-8 w-8 place-items-center rounded-xl border border-border text-muted-foreground transition-colors hover:bg-hover hover:text-foreground"
                       >
                         <Download className="h-3.5 w-3.5" />
                       </button>
@@ -347,16 +374,16 @@ function ImageStudio() {
                         }
                         aria-label={t("msg.regenerate")}
                         title={t("msg.regenerate")}
-                        className="xv-focus grid h-7 w-7 place-items-center rounded-lg border border-border text-muted-foreground hover:bg-hover hover:text-foreground disabled:opacity-45"
+                        className="xv-focus grid h-8 w-8 place-items-center rounded-xl border border-border text-muted-foreground transition-colors hover:bg-hover hover:text-foreground disabled:opacity-45"
                       >
                         <RefreshCw className="h-3.5 w-3.5" />
                       </button>
                       <button
                         type="button"
                         onClick={() => setPendingDelete(row)}
-                        aria-label={t("dialog.confirm")}
+                        aria-label={t("studio.confirmDelete")}
                         title={t("studio.confirmDelete")}
-                        className="xv-focus ms-auto grid h-7 w-7 place-items-center rounded-lg border border-border text-muted-foreground hover:bg-hover hover:text-destructive"
+                        className="xv-focus ms-auto grid h-8 w-8 place-items-center rounded-xl border border-border text-muted-foreground transition-colors hover:bg-hover hover:text-destructive"
                       >
                         <Trash2 className="h-3.5 w-3.5" />
                       </button>

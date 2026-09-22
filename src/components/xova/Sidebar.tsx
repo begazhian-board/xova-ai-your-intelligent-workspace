@@ -1,5 +1,7 @@
 import { useMemo, useState } from "react";
+import { Link } from "@tanstack/react-router";
 import {
+  Image as ImageIcon,
   LogOut,
   MessageSquare,
   PanelLeftClose,
@@ -99,6 +101,14 @@ export function Sidebar({
         >
           <Plus className="h-4 w-4" />
         </button>
+        <Link
+          to="/images"
+          aria-label={t("nav.imageStudio")}
+          title={t("nav.imageStudio")}
+          className="xv-focus grid h-9 w-9 place-items-center rounded-lg text-muted-foreground hover:bg-hover hover:text-foreground"
+        >
+          <ImageIcon className="h-4 w-4" />
+        </Link>
         <button
           type="button"
           onClick={onOpenSettings}
@@ -150,6 +160,15 @@ export function Sidebar({
           <Plus className="h-4 w-4 text-brand" />
           {t("nav.newChat")}
         </button>
+
+        <Link
+          to="/images"
+          onClick={() => onCloseDrawer?.()}
+          className="xv-focus inline-flex items-center gap-2 rounded-xl px-3 py-2 text-sm font-medium text-muted-foreground transition-colors hover:bg-hover hover:text-foreground"
+        >
+          <ImageIcon className="h-4 w-4" />
+          {t("nav.imageStudio")}
+        </Link>
 
         <div className="relative">
           <Search

@@ -69,13 +69,6 @@ function AuthPage() {
     }
   };
 
-  const google = async () => {
-    const { error } = await supabase.auth.signInWithOAuth({
-      provider: "google",
-      options: { redirectTo: `${window.location.origin}/` },
-    });
-    if (error) toast.error(error.message);
-  };
 
   return (
     <main className="flex min-h-screen items-center justify-center bg-background px-4 py-10">
@@ -124,20 +117,6 @@ function AuthPage() {
             {mode === "signup" ? t("auth.signUp") : t("auth.signIn")}
           </button>
         </form>
-
-        <div className="my-4 flex items-center gap-3 text-xxs uppercase tracking-wide text-faint">
-          <span className="h-px flex-1 bg-border" />
-          {t("auth.or")}
-          <span className="h-px flex-1 bg-border" />
-        </div>
-
-        <button
-          type="button"
-          onClick={google}
-          className="xv-focus w-full rounded-xl border border-border bg-surface px-4 py-2.5 text-sm font-medium transition-colors hover:bg-hover"
-        >
-          {t("auth.google")}
-        </button>
 
         <button
           type="button"
