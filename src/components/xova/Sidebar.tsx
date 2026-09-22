@@ -1,5 +1,7 @@
 import { useMemo, useState } from "react";
+import { Link } from "@tanstack/react-router";
 import {
+  Image as ImageIcon,
   LogOut,
   MessageSquare,
   PanelLeftClose,
