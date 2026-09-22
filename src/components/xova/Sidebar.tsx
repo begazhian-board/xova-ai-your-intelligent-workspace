@@ -161,6 +161,15 @@ export function Sidebar({
           {t("nav.newChat")}
         </button>
 
+        <Link
+          to="/images"
+          onClick={() => onCloseDrawer?.()}
+          className="xv-focus inline-flex items-center gap-2 rounded-xl px-3 py-2 text-sm font-medium text-muted-foreground transition-colors hover:bg-hover hover:text-foreground"
+        >
+          <ImageIcon className="h-4 w-4" />
+          {t("nav.imageStudio")}
+        </Link>
+
         <div className="relative">
           <Search
             className="pointer-events-none absolute start-2.5 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-muted-foreground"
