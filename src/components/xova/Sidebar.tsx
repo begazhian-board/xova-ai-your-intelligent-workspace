@@ -99,6 +99,14 @@ export function Sidebar({
         >
           <Plus className="h-4 w-4" />
         </button>
+        <Link
+          to="/images"
+          aria-label={t("nav.imageStudio")}
+          title={t("nav.imageStudio")}
+          className="xv-focus grid h-9 w-9 place-items-center rounded-lg text-muted-foreground hover:bg-hover hover:text-foreground"
+        >
+          <ImageIcon className="h-4 w-4" />
+        </Link>
         <button
           type="button"
           onClick={onOpenSettings}
