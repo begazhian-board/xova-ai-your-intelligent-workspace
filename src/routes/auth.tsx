@@ -69,13 +69,6 @@ function AuthPage() {
     }
   };
 
-  const google = async () => {
-    const { error } = await supabase.auth.signInWithOAuth({
-      provider: "google",
-      options: { redirectTo: `${window.location.origin}/` },
-    });
-    if (error) toast.error(error.message);
-  };
 
   return (
     <main className="flex min-h-screen items-center justify-center bg-background px-4 py-10">
