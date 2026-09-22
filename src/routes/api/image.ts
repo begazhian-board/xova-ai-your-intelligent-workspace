@@ -86,7 +86,11 @@ export const Route = createFileRoute("/api/image")({
               "X-Lovable-AIG-SDK": "fetch",
             },
             body: JSON.stringify({
-              model: quality === "premium" ? "lovable/image-premium" : "lovable/image-standard",
+              // Current-generation OpenAI image models (2026 line-up).
+              model:
+                quality === "premium"
+                  ? "openai/gpt-image-2.5-sunburst"
+                  : "openai/gpt-image-2.5-flare",
               prompt,
               size: SIZES[aspect],
               n: 1,
