@@ -25,16 +25,18 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { useI18n } from "@/lib/i18n";
 import { cn } from "@/lib/utils";
 import type { ChatMessage } from "@/lib/xova";
-import { conversationTitle } from "@/lib/xova";
+import type { ConversationSummary } from "@/hooks/useConversation";
 
 interface SidebarProps {
   collapsed: boolean;
   onToggleCollapsed: () => void;
   messages: ChatMessage[];
   loading: boolean;
-  title: string | null;
-  onRename: () => void;
-  onDelete: () => void;
+  conversations: ConversationSummary[];
+  activeId: string | null;
+  onSelect: (id: string) => void;
+  onRename: (id: string) => void;
+  onDelete: (id: string) => void;
   onNewChat: () => void;
   onOpenSettings: () => void;
   onSignOut: () => void;
@@ -50,7 +52,9 @@ export function Sidebar({
   onToggleCollapsed,
   messages,
   loading,
-  title,
+  conversations,
+  activeId,
+  onSelect,
   onRename,
   onDelete,
   onNewChat,
@@ -74,8 +78,6 @@ export function Sidebar({
       .reverse();
   }, [messages, query]);
 
-  const label = title ?? conversationTitle(messages);
-  const lastAt = messages.length > 0 ? messages[messages.length - 1]!.createdAt : null;
 
   if (collapsed) {
     return (
@@ -232,34 +234,50 @@ export function Sidebar({
             <Skeleton className="h-9 w-full rounded-lg" />
             <Skeleton className="h-9 w-4/5 rounded-lg" />
           </div>
-        ) : label ? (
-          <div className="group/item flex items-center gap-1 rounded-lg bg-active px-2 py-2">
-            <MessageSquare className="h-3.5 w-3.5 shrink-0 text-brand" aria-hidden="true" />
-            <span className="min-w-0 flex-1">
-              <span className="block truncate text-xs font-medium">{label}</span>
-              {lastAt && (
-                <span className="block text-xxs text-faint">
-                  {new Date(lastAt).toLocaleDateString()}
-                </span>
-              )}
-            </span>
-            <button
-              type="button"
-              onClick={onRename}
-              aria-label={t("dialog.rename.title")}
-              className="xv-focus grid h-6 w-6 place-items-center rounded text-muted-foreground hover:text-foreground"
-            >
-              <Pencil className="h-3 w-3" />
-            </button>
-            <button
-              type="button"
-              onClick={onDelete}
-              aria-label={t("dialog.delete.title")}
-              className="xv-focus grid h-6 w-6 place-items-center rounded text-muted-foreground hover:text-destructive"
-            >
-              <Trash2 className="h-3 w-3" />
-            </button>
-          </div>
+        ) : conversations.length > 0 ? (
+          <ul className="flex flex-col gap-0.5">
+            {conversations.map((c) => (
+              <li
+                key={c.id}
+                className={cn(
+                  "group/item flex items-center gap-1 rounded-lg px-2 py-1.5 transition-colors hover:bg-hover",
+                  c.id === activeId && "bg-active",
+                )}
+              >
+                <button
+                  type="button"
+                  onClick={() => onSelect(c.id)}
+                  aria-current={c.id === activeId ? "page" : undefined}
+                  className="xv-focus flex min-w-0 flex-1 items-center gap-2 rounded text-start"
+                >
+                  <MessageSquare
+                    className={cn("h-3.5 w-3.5 shrink-0", c.id === activeId ? "text-brand" : "text-muted-foreground")}
+                    aria-hidden="true"
+                  />
+                  <span className="min-w-0 flex-1">
+                    <span className="block truncate text-xs font-medium">{c.title ?? t("nav.newChat")}</span>
+                    <span className="block text-xxs text-faint">{new Date(c.updatedAt).toLocaleDateString()}</span>
+                  </span>
+                </button>
+                <button
+                  type="button"
+                  onClick={() => onRename(c.id)}
+                  aria-label={t("dialog.rename.title")}
+                  className="xv-focus grid h-6 w-6 place-items-center rounded text-muted-foreground opacity-100 hover:text-foreground md:opacity-0 md:group-hover/item:opacity-100 md:focus:opacity-100"
+                >
+                  <Pencil className="h-3 w-3" />
+                </button>
+                <button
+                  type="button"
+                  onClick={() => onDelete(c.id)}
+                  aria-label={t("dialog.delete.title")}
+                  className="xv-focus grid h-6 w-6 place-items-center rounded text-muted-foreground opacity-100 hover:text-destructive md:opacity-0 md:group-hover/item:opacity-100 md:focus:opacity-100"
+                >
+                  <Trash2 className="h-3 w-3" />
+                </button>
+              </li>
+            ))}
+          </ul>
         ) : (
           <p className="px-1 py-4 text-xs text-muted-foreground">{t("empty.noMessages")}</p>
         )}

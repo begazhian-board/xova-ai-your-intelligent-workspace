@@ -54,8 +54,19 @@ function persistableAttachments(attachments: Attachment[]) {
   }));
 }
 
+export interface ConversationSummary {
+  id: string;
+  title: string | null;
+  updatedAt: string;
+}
+
 export function useConversation(userId: string | undefined, config: AiConfig) {
   const [messages, setMessages] = useState<ChatMessage[]>([]);
+  const [conversations, setConversations] = useState<ConversationSummary[]>([]);
+  const [activeId, setActiveId] = useState<string | null>(null);
+  const activeIdRef = useRef<string | null>(null);
+  activeIdRef.current = activeId;
+  const skipLoadRef = useRef(false);
   const [loading, setLoading] = useState(Boolean(userId));
   const [status, setStatus] = useState<"idle" | "submitted" | "streaming" | "generating">("idle");
   const [error, setError] = useState<string | null>(null);
@@ -66,6 +77,36 @@ export function useConversation(userId: string | undefined, config: AiConfig) {
 
   useEffect(() => {
     if (!userId) {
+      setConversations([]);
+      setActiveId(null);
+      return;
+    }
+    let active = true;
+    setLoading(true);
+    supabase
+      .from("conversations")
+      .select("id,title,updated_at")
+      .eq("user_id", userId)
+      .order("updated_at", { ascending: false })
+      .then(({ data, error: dbError }) => {
+        if (!active) return;
+        if (dbError) console.error("conversations load", dbError.message);
+        const list = (data ?? []).map((c) => ({ id: c.id, title: c.title, updatedAt: c.updated_at }));
+        setConversations(list);
+        setActiveId(list[0]?.id ?? null);
+        if (!list[0]) setLoading(false);
+      });
+    return () => {
+      active = false;
+    };
+  }, [userId]);
+
+  useEffect(() => {
+    if (skipLoadRef.current) {
+      skipLoadRef.current = false;
+      return;
+    }
+    if (!userId || !activeId) {
       setMessages([]);
       setLoading(false);
       return;
@@ -75,7 +116,7 @@ export function useConversation(userId: string | undefined, config: AiConfig) {
     supabase
       .from("messages")
       .select("*")
-      .eq("user_id", userId)
+      .eq("conversation_id", activeId)
       .order("created_at", { ascending: true })
       .then(({ data, error: dbError }) => {
         if (!active) return;
@@ -86,13 +127,50 @@ export function useConversation(userId: string | undefined, config: AiConfig) {
     return () => {
       active = false;
     };
-  }, [userId]);
+  }, [userId, activeId]);
+
+  /** Returns the active conversation id, creating a titled conversation on first use. */
+  const ensureConversation = useCallback(
+    async (firstText: string) => {
+      if (activeIdRef.current) return activeIdRef.current;
+      if (!userId) return null;
+      const clean = firstText.replace(/\s+/g, " ").trim();
+      const title = clean ? (clean.length > 60 ? `${clean.slice(0, 57)}…` : clean) : null;
+      const { data, error: dbError } = await supabase
+        .from("conversations")
+        .insert({ user_id: userId, title })
+        .select("id,title,updated_at")
+        .single();
+      if (dbError || !data) {
+        console.error("conversation create", dbError?.message);
+        return null;
+      }
+      skipLoadRef.current = true;
+      activeIdRef.current = data.id;
+      setActiveId(data.id);
+      setConversations((list) => [{ id: data.id, title: data.title, updatedAt: data.updated_at }, ...list]);
+      return data.id;
+    },
+    [userId],
+  );
+
+  const touch = useCallback((id: string) => {
+    const now = new Date().toISOString();
+    setConversations((list) => {
+      const item = list.find((c) => c.id === id);
+      return item ? [{ ...item, updatedAt: now }, ...list.filter((c) => c.id !== id)] : list;
+    });
+    void supabase.from("conversations").update({ updated_at: now }).eq("id", id);
+  }, []);
 
   const persist = useCallback(
     async (message: ChatMessage) => {
-      if (!userId) return;
+      const conversationId = activeIdRef.current;
+      if (!userId || !conversationId) return;
+      touch(conversationId);
       const { error: dbError } = await supabase.from("messages").insert({
         id: message.id,
+        conversation_id: conversationId,
         user_id: userId,
         role: message.role,
         content: message.content,
@@ -106,7 +184,7 @@ export function useConversation(userId: string | undefined, config: AiConfig) {
       });
       if (dbError) console.error("message save", dbError.message);
     },
-    [userId],
+    [userId, touch],
   );
 
   const runCompletion = useCallback(
@@ -255,10 +333,14 @@ export function useConversation(userId: string | undefined, config: AiConfig) {
       };
       const history = [...messages.filter((m) => !m.streaming), userMessage];
       setMessages(history);
+      if (!(await ensureConversation(text))) {
+        setError("err.generic");
+        return;
+      }
       void persist(userMessage);
       await runCompletion(history, mode);
     },
-    [messages, persist, runCompletion, userId],
+    [messages, persist, runCompletion, userId, ensureConversation],
   );
 
   const regenerate = useCallback(
@@ -277,15 +359,40 @@ export function useConversation(userId: string | undefined, config: AiConfig) {
     abortRef.current?.abort();
   }, []);
 
-  const clear = useCallback(async () => {
-    if (!userId) return;
+  const newChat = useCallback(() => {
     abortRef.current?.abort();
+    setActiveId(null);
     setMessages([]);
     setError(null);
     setNotice(null);
-    const { error: dbError } = await supabase.from("messages").delete().eq("user_id", userId);
-    if (dbError) console.error("clear conversation", dbError.message);
-  }, [userId]);
+  }, []);
+
+  const select = useCallback((id: string) => {
+    abortRef.current?.abort();
+    setError(null);
+    setNotice(null);
+    setActiveId(id);
+  }, []);
+
+  const rename = useCallback(async (id: string, title: string | null) => {
+    setConversations((list) => list.map((c) => (c.id === id ? { ...c, title } : c)));
+    const { error: dbError } = await supabase.from("conversations").update({ title }).eq("id", id);
+    return { error: dbError };
+  }, []);
+
+  const remove = useCallback(
+    async (id: string) => {
+      if (id === activeIdRef.current) newChat();
+      setConversations((list) => list.filter((c) => c.id !== id));
+      const { error: dbError } = await supabase.from("conversations").delete().eq("id", id);
+      if (dbError) console.error("delete conversation", dbError.message);
+    },
+    [newChat],
+  );
+
+  const clear = useCallback(async () => {
+    if (activeIdRef.current) await remove(activeIdRef.current);
+  }, [remove]);
 
   const generateImage = useCallback(
     async (prompt: string, aspect: "1:1" | "3:2" | "2:3") => {
@@ -301,6 +408,10 @@ export function useConversation(userId: string | undefined, config: AiConfig) {
         createdAt: new Date().toISOString(),
       };
       setMessages((current) => [...current.filter((m) => !m.streaming), userMessage]);
+      if (!(await ensureConversation(prompt))) {
+        setError("err.generic");
+        return undefined;
+      }
       void persist(userMessage);
       setStatus("generating");
 
@@ -337,10 +448,16 @@ export function useConversation(userId: string | undefined, config: AiConfig) {
         setStatus("idle");
       }
     },
-    [persist, userId],
+    [persist, userId, ensureConversation],
   );
 
   return {
+    conversations,
+    activeId,
+    newChat,
+    select,
+    rename,
+    remove,
     messages,
     loading,
     status,

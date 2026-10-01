@@ -93,7 +93,8 @@ function Workspace() {
   const [settingsOpen, setSettingsOpen] = useState(false);
   const [renameOpen, setRenameOpen] = useState(false);
   const [renameValue, setRenameValue] = useState("");
-  const [confirmDelete, setConfirmDelete] = useState(false);
+  const [confirmDelete, setConfirmDelete] = useState<string | null>(null);
+  const [renameId, setRenameId] = useState<string | null>(null);
   const [mode, setMode] = useState<ModeId>("instant");
   const [imageMode, setImageMode] = useState(false);
   const [draft, setDraft] = useState<string | null>(null);
@@ -132,9 +133,14 @@ function Workspace() {
     setNotice,
     send,
     stop,
-    clear,
     regenerate,
     generateImage,
+    conversations,
+    activeId,
+    newChat,
+    select,
+    rename,
+    remove,
   } = useConversation(user?.id, aiConfig);
 
   // Intelligent scrolling: follow the stream only while the user is at the bottom.
@@ -154,7 +160,8 @@ function Workspace() {
     node.scrollTop = node.scrollHeight;
   }, [messages, status]);
 
-  const title = profile?.conversation_title ?? conversationTitle(messages);
+  const title =
+    conversations.find((c) => c.id === activeId)?.title ?? conversationTitle(messages);
 
   const handleSend = useCallback(
     (text: string, attachments: Attachment[]) => {
@@ -175,9 +182,8 @@ function Workspace() {
 
   const handleNewChat = useCallback(() => {
     setDrawer(false);
-    if (messages.length === 0) return;
-    setConfirmDelete(true);
-  }, [messages.length]);
+    newChat();
+  }, [newChat]);
 
   const jumpTo = useCallback((messageId: string) => {
     setDrawer(false);
@@ -209,12 +215,18 @@ function Workspace() {
       onToggleCollapsed={() => setCollapsed((value) => !value)}
       messages={messages}
       loading={messagesLoading}
-      title={title}
-      onRename={() => {
-        setRenameValue(title ?? "");
+      conversations={conversations}
+      activeId={activeId}
+      onSelect={(id) => {
+        setDrawer(false);
+        select(id);
+      }}
+      onRename={(id) => {
+        setRenameId(id);
+        setRenameValue(conversations.find((c) => c.id === id)?.title ?? "");
         setRenameOpen(true);
       }}
-      onDelete={() => setConfirmDelete(true)}
+      onDelete={(id) => setConfirmDelete(id)}
       onNewChat={handleNewChat}
       onOpenSettings={() => {
         setDrawer(false);
@@ -326,7 +338,7 @@ function Workspace() {
         }}
         onDeleteConversation={() => {
           setSettingsOpen(false);
-          setConfirmDelete(true);
+          if (activeId) setConfirmDelete(activeId);
         }}
       />
 
@@ -356,9 +368,10 @@ function Workspace() {
             <button
               type="button"
               onClick={() => {
-                void update({ conversation_title: renameValue.trim() || null }).then(({ error: e }) =>
-                  e ? toast.error(t("err.generic")) : toast.success(t("toast.saved")),
-                );
+                if (renameId)
+                  void rename(renameId, renameValue.trim() || null).then(({ error: e }) =>
+                    e ? toast.error(t("err.generic")) : toast.success(t("toast.saved")),
+                  );
                 setRenameOpen(false);
               }}
               className="xv-focus rounded-lg bg-brand px-3 py-1.5 text-xs font-medium text-brand-foreground"
@@ -369,7 +382,7 @@ function Workspace() {
         </DialogContent>
       </Dialog>
 
-      <AlertDialog open={confirmDelete} onOpenChange={setConfirmDelete}>
+      <AlertDialog open={confirmDelete !== null} onOpenChange={(o) => !o && setConfirmDelete(null)}>
         <AlertDialogContent>
           <AlertDialogHeader className="text-start">
             <AlertDialogTitle>{t("dialog.delete.title")}</AlertDialogTitle>
@@ -379,8 +392,7 @@ function Workspace() {
             <AlertDialogCancel>{t("dialog.cancel")}</AlertDialogCancel>
             <AlertDialogAction
               onClick={() => {
-                void clear();
-                void update({ conversation_title: null });
+                if (confirmDelete) void remove(confirmDelete);
                 toast.success(t("toast.deleted"));
               }}
             >
