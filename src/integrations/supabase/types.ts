@@ -14,6 +14,30 @@ export type Database = {
   }
   public: {
     Tables: {
+      conversations: {
+        Row: {
+          created_at: string
+          id: string
+          title: string | null
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          title?: string | null
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          title?: string | null
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       generated_images: {
         Row: {
           aspect: string
@@ -51,6 +75,7 @@ export type Database = {
         Row: {
           attachments: Json
           content: string
+          conversation_id: string | null
           created_at: string
           id: string
           image_url: string | null
@@ -62,6 +87,7 @@ export type Database = {
         Insert: {
           attachments?: Json
           content?: string
+          conversation_id?: string | null
           created_at?: string
           id?: string
           image_url?: string | null
@@ -73,6 +99,7 @@ export type Database = {
         Update: {
           attachments?: Json
           content?: string
+          conversation_id?: string | null
           created_at?: string
           id?: string
           image_url?: string | null
@@ -81,7 +108,15 @@ export type Database = {
           sources?: Json
           user_id?: string
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "messages_conversation_id_fkey"
+            columns: ["conversation_id"]
+            isOneToOne: false
+            referencedRelation: "conversations"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       profiles: {
         Row: {
