@@ -254,7 +254,7 @@ function Workspace() {
         </DialogContent>
       </Dialog>
 
-      <main className="flex min-w-0 flex-1 flex-col">
+      <main className="xv-ambient relative flex min-w-0 flex-1 flex-col">
         <Topbar
           title={title}
           mode={mode}

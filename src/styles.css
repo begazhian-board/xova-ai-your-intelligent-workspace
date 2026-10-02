@@ -179,6 +179,44 @@
   }
 }
 
+/* Soft brand light at the top of the workspace */
+@utility xv-ambient {
+  background-image:
+    radial-gradient(60rem 22rem at 50% -8rem, color-mix(in oklab, var(--brand) 9%, transparent), transparent 70%);
+  background-repeat: no-repeat;
+}
+
+/* Composer: floating surface with a brand glow while typing */
+@utility xv-composer {
+  box-shadow: var(--shadow-panel);
+  &:focus-within {
+    box-shadow:
+      var(--shadow-float),
+      0 0 0 4px color-mix(in oklab, var(--brand) 12%, transparent);
+  }
+}
+
+/* Brand gradient text for headings */
+@utility xv-gradient-text {
+  background: linear-gradient(120deg, var(--foreground) 30%, var(--brand));
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+}
+
+/* Suggestion cards lift slightly on hover */
+@utility xv-lift {
+  transition: transform 180ms ease, border-color 180ms ease, background-color 180ms ease, box-shadow 180ms ease;
+  &:hover {
+    transform: translateY(-2px);
+    border-color: color-mix(in oklab, var(--brand) 35%, var(--border));
+    box-shadow: var(--shadow-panel);
+  }
+  @media (prefers-reduced-motion: reduce) {
+    &:hover { transform: none; }
+  }
+}
+
 @utility xv-focus {
   &:focus-visible {
     outline: 2px solid var(--color-ring);
