@@ -1,23 +1,65 @@
+import { useId } from "react";
 import { cn } from "@/lib/utils";
 
-/** Original XOVA mark: two interlocking chevrons forming an aperture. */
+function Grad({ id }: { id: string }) {
+  return (
+    <linearGradient id={id} x1="0" y1="64" x2="92" y2="0" gradientUnits="userSpaceOnUse">
+      <stop offset="0" stopColor="#1EA0FF" />
+      <stop offset="1" stopColor="#7B3FF2" />
+    </linearGradient>
+  );
+}
+
+const X_PATHS = (
+  <>
+    <path d="M2 2h22l3 2 63 58H68l-3-2L2 2Z" />
+    <path d="M90 2H68l-3 2L2 62h22l3-2L90 2Z" opacity="0.88" />
+  </>
+);
+
+/** XOVA mark: the gradient ribbon X. */
 export function XovaMark({ className }: { className?: string }) {
+  const id = useId();
+  return (
+    <svg viewBox="0 0 92 64" aria-hidden="true" className={cn("h-7 w-7", className)}>
+      <defs>
+        <Grad id={id} />
+      </defs>
+      <g fill={`url(#${id})`}>{X_PATHS}</g>
+    </svg>
+  );
+}
+
+/** Full vector "XOVA AI" logo — real shapes, not an image. Letters follow text color. */
+export function XovaLogoText({ className }: { className?: string }) {
+  const id = useId();
   return (
     <svg
-      viewBox="0 0 34 32"
+      viewBox="0 0 300 70"
       role="img"
-      aria-hidden="true"
-      className={cn("h-7 w-7", className)}
-      fill="none"
+      aria-label="XOVA AI"
+      className={cn("h-6 w-auto", className)}
     >
       <defs>
-        <linearGradient id="xova-grad" x1="0" y1="32" x2="34" y2="0" gradientUnits="userSpaceOnUse">
-          <stop offset="0" stopColor="oklch(0.72 0.17 238)" />
-          <stop offset="1" stopColor="oklch(0.58 0.25 292)" />
-        </linearGradient>
+        <Grad id={id} />
       </defs>
-      <path d="M5 4.5 14.5 16 5 27.5h6.2L20.7 16 11.2 4.5H5Z" fill="url(#xova-grad)" opacity="0.8" />
-      <path d="M17.3 4.5 26.8 16l-9.5 11.5H23.5L33 16 23.5 4.5h-6.2Z" fill="url(#xova-grad)" />
+      <g fill={`url(#${id})`} transform="translate(0 3)">{X_PATHS}</g>
+      <g fill="none" stroke="currentColor" strokeWidth="12" strokeLinejoin="round" strokeLinecap="round">
+        <circle cx="126" cy="39" r="19.5" strokeWidth="11.5" />
+        <path d="M158 10l22 50 22-50" />
+        <path d="M212 60l23-50 23 50" />
+      </g>
+      <text
+        x="265"
+        y="64"
+        fill={`url(#${id})`}
+        fontSize="30"
+        fontWeight="800"
+        fontFamily="system-ui, -apple-system, 'Segoe UI', sans-serif"
+        letterSpacing="1"
+      >
+        AI
+      </text>
     </svg>
   );
 }
@@ -29,17 +71,17 @@ export function XovaWordmark({
   compact?: boolean;
   className?: string;
 }) {
-  return (
-    <span className={cn("flex items-center gap-2.5", className)}>
-      <span className="grid h-8 w-8 shrink-0 place-items-center rounded-[10px] bg-brand-soft text-brand">
-        <XovaMark className="h-[18px] w-[18px]" />
+  if (compact) {
+    return (
+      <span className={cn("grid h-8 w-8 shrink-0 place-items-center", className)}>
+        <XovaMark className="h-5 w-7" />
       </span>
-      {!compact && (
-        <span className="flex min-w-0 flex-col leading-none">
-          <span className="truncate text-[15px] font-semibold tracking-[-0.01em]">XOVA AI</span>
-          <span className="mt-0.5 truncate text-xxs font-medium text-faint">by Begad</span>
-        </span>
-      )}
+    );
+  }
+  return (
+    <span className={cn("flex min-w-0 flex-col items-start leading-none", className)} dir="ltr">
+      <XovaLogoText className="h-7 text-foreground" />
+      <span className="mt-1 truncate text-xxs font-medium text-faint">by Begad</span>
     </span>
   );
 }
