@@ -45,15 +45,15 @@ export function XovaLogoText({ className }: { className?: string }) {
       </defs>
       <g fill={`url(#${id})`} transform="translate(0 3)">{X_PATHS}</g>
       <g fill="none" stroke="currentColor" strokeWidth="12" strokeLinejoin="round" strokeLinecap="round">
-        <circle cx="124" cy="44" r="16" strokeWidth="11.5" />
-        <path d="M154 10l23 50 23-50" />
-        <path d="M210 60l24-50 24 50" />
+        <circle cx="126" cy="39" r="19.5" strokeWidth="11.5" />
+        <path d="M158 10l22 50 22-50" />
+        <path d="M212 60l23-50 23 50" />
       </g>
       <text
-        x="266"
+        x="265"
         y="64"
         fill={`url(#${id})`}
-        fontSize="24"
+        fontSize="30"
         fontWeight="800"
         fontFamily="system-ui, -apple-system, 'Segoe UI', sans-serif"
         letterSpacing="1"
@@ -80,7 +80,7 @@ export function XovaWordmark({
   }
   return (
     <span className={cn("flex min-w-0 flex-col items-start leading-none", className)} dir="ltr">
-      <XovaLogoText className="h-6 text-foreground" />
+      <XovaLogoText className="h-7 text-foreground" />
       <span className="mt-1 truncate text-xxs font-medium text-faint">by Begad</span>
     </span>
   );
