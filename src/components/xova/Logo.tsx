@@ -35,7 +35,7 @@ export function XovaLogoText({ className }: { className?: string }) {
   const id = useId();
   return (
     <svg
-      viewBox="0 0 300 70"
+      viewBox="0 0 308 70"
       role="img"
       aria-label="XOVA AI"
       className={cn("h-6 w-auto", className)}
@@ -45,12 +45,12 @@ export function XovaLogoText({ className }: { className?: string }) {
       </defs>
       <g fill={`url(#${id})`} transform="translate(0 3)">{X_PATHS}</g>
       <g fill="none" stroke="currentColor" strokeWidth="12" strokeLinejoin="round" strokeLinecap="round">
-        <circle cx="126" cy="39" r="19.5" strokeWidth="11.5" />
-        <path d="M158 10l22 50 22-50" />
-        <path d="M212 60l23-50 23 50" />
+        <circle cx="127" cy="35" r="20" strokeWidth="12" />
+        <path d="M163 10l22 50 22-50" />
+        <path d="M216 60l23-50 23 50" />
       </g>
       <text
-        x="265"
+        x="270"
         y="64"
         fill={`url(#${id})`}
         fontSize="30"
