@@ -225,8 +225,8 @@ export function Composer({
             if (event.dataTransfer.files.length > 0) void addFiles(event.dataTransfer.files);
           }}
           className={cn(
-            "rounded-2xl border bg-composer shadow-panel transition-colors",
-            dragging ? "border-brand" : "border-border",
+            "xv-composer rounded-[1.4rem] border bg-composer transition-[border-color,box-shadow] duration-200",
+            dragging ? "border-brand" : "border-border focus-within:border-brand/50",
           )}
         >
           {dragging && (
