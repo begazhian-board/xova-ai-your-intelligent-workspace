@@ -17,10 +17,14 @@ export function Welcome({ onPick }: { onPick: (text: string) => void }) {
       <span className="xv-rise relative grid h-16 w-16 place-items-center rounded-2xl border border-brand/25 bg-brand-soft text-brand shadow-panel">
         <XovaMark className="h-8 w-8" />
       </span>
-      <div className="mt-5 flex items-baseline gap-2" dir="ltr">
-        <XovaLogoText className="h-9" />
-        <span className="text-4xl font-semibold tracking-[-0.03em] text-foreground">OVA</span>
-        <span className="xv-gradient-text text-sm font-bold tracking-wide">AI</span>
+      <div className="mt-5 flex items-baseline" dir="ltr">
+        <XovaLogoText className="h-10" />
+        <span className="-ml-0.5 text-[2.75rem] font-semibold leading-none tracking-[-0.06em] text-foreground">
+          OVA
+        </span>
+        <span className="xv-gradient-text ml-0.5 self-end pb-1 text-sm font-bold tracking-tight">
+          AI
+        </span>
       </div>
       <p className="mt-1 text-xxs font-medium text-faint">by Begad</p>
       <h1 className="xv-gradient-text mt-2 text-3xl font-semibold tracking-[-0.03em] sm:text-4xl">
