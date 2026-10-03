@@ -57,7 +57,7 @@ export const Route = createFileRoute("/api/image")({
         if (!prompt) return Response.json({ error: "err.generic" }, { status: 400 });
         if (prompt.length > 2000) return Response.json({ error: "err.generic" }, { status: 400 });
 
-        const aspect = body.aspect && SIZES[body.aspect] ? body.aspect : "1:1";
+        const aspect = body.aspect && ASPECTS.has(body.aspect) ? body.aspect : "1:1";
         const quality = body.quality === "premium" ? "premium" : "standard";
 
         const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
