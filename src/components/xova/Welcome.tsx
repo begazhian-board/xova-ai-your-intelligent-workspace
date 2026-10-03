@@ -1,5 +1,5 @@
 import { Code2, FileSearch, Lightbulb, PenLine } from "lucide-react";
-import { XovaMark } from "./Logo";
+import { XovaLogoText, XovaMark } from "./Logo";
 import { useI18n } from "@/lib/i18n";
 
 const SUGGESTIONS = [
@@ -14,12 +14,15 @@ export function Welcome({ onPick }: { onPick: (text: string) => void }) {
 
   return (
     <div className="mx-auto flex w-full max-w-2xl flex-1 flex-col items-center justify-center px-4 py-10 text-center">
-      <span className="xv-rise relative grid h-14 w-14 place-items-center rounded-2xl border border-brand/25 bg-brand-soft text-brand shadow-panel">
-        <XovaMark className="h-7 w-7" />
+      <span className="xv-rise relative grid h-16 w-16 place-items-center rounded-2xl border border-brand/25 bg-brand-soft text-brand shadow-panel">
+        <XovaMark className="h-8 w-8" />
       </span>
-      <p className="mt-6 text-xs font-semibold uppercase tracking-[0.2em] text-brand">
-        {t("app.name")}
-      </p>
+      <div className="mt-5 flex items-baseline gap-2" dir="ltr">
+        <XovaLogoText className="h-9" />
+        <span className="text-4xl font-semibold tracking-[-0.03em] text-foreground">OVA</span>
+        <span className="xv-gradient-text text-sm font-bold tracking-wide">AI</span>
+      </div>
+      <p className="mt-1 text-xxs font-medium text-faint">by Begad</p>
       <h1 className="xv-gradient-text mt-2 text-3xl font-semibold tracking-[-0.03em] sm:text-4xl">
         {t("welcome.greeting")}
       </h1>
