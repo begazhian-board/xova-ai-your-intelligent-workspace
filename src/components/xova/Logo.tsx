@@ -30,36 +30,20 @@ export function XovaMark({ className }: { className?: string }) {
   );
 }
 
-/** Full vector "XOVA AI" logo — real shapes, not an image. Letters follow text color. */
+/** Full vector logo — the gradient X alone, real shapes, not an image. */
 export function XovaLogoText({ className }: { className?: string }) {
   const id = useId();
   return (
     <svg
-      viewBox="0 0 308 70"
+      viewBox="0 0 92 70"
       role="img"
-      aria-label="XOVA AI"
-      className={cn("h-6 w-auto", className)}
+      aria-label="XOVA"
+      className={cn("h-7 w-auto", className)}
     >
       <defs>
         <Grad id={id} />
       </defs>
       <g fill={`url(#${id})`} transform="translate(0 3)">{X_PATHS}</g>
-      <g fill="none" stroke="currentColor" strokeWidth="12" strokeLinejoin="round" strokeLinecap="round">
-        <circle cx="127" cy="35" r="20" strokeWidth="12" />
-        <path d="M163 10l22 50 22-50" />
-        <path d="M216 60l23-50 23 50" />
-      </g>
-      <text
-        x="270"
-        y="64"
-        fill={`url(#${id})`}
-        fontSize="30"
-        fontWeight="800"
-        fontFamily="system-ui, -apple-system, 'Segoe UI', sans-serif"
-        letterSpacing="1"
-      >
-        AI
-      </text>
     </svg>
   );
 }
