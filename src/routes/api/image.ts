@@ -78,7 +78,9 @@ export const Route = createFileRoute("/api/image")({
         }
 
         try {
-          const res = await fetch("https://ai.gateway.lovable.dev/v1/images/generations", {
+          // Gemini image models (2026 line-up) generate through chat
+          // completions with image modalities, not /images/generations.
+          const res = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
             method: "POST",
             headers: {
               "Content-Type": "application/json",
@@ -86,14 +88,13 @@ export const Route = createFileRoute("/api/image")({
               "X-Lovable-AIG-SDK": "fetch",
             },
             body: JSON.stringify({
-              // Current-generation OpenAI image models (2026 line-up).
               model:
                 quality === "premium"
-                  ? "openai/gpt-image-2.5-sunburst"
-                  : "openai/gpt-image-2.5-flare",
-              prompt,
-              size: SIZES[aspect],
-              n: 1,
+                  ? "google/gemini-3-pro-image"
+                  : "google/gemini-3.1-flash-image",
+              messages: [{ role: "user", content: prompt }],
+              modalities: ["image", "text"],
+              image_config: { aspect_ratio: aspect },
             }),
           });
 
@@ -107,15 +108,20 @@ export const Route = createFileRoute("/api/image")({
           }
 
           const json = (await res.json()) as {
-            data?: Array<{ b64_json?: string; url?: string }>;
+            choices?: Array<{
+              message?: {
+                images?: Array<{ image_url?: { url?: string } }>;
+              };
+            }>;
           };
-          const first = json.data?.[0];
+          const dataUrl = json.choices?.[0]?.message?.images?.[0]?.image_url?.url;
 
           let bytes: Uint8Array | null = null;
-          if (first?.b64_json) {
-            bytes = base64ToBytes(first.b64_json);
-          } else if (first?.url) {
-            const downloaded = await fetch(first.url);
+          if (dataUrl?.startsWith("data:")) {
+            const base64 = dataUrl.slice(dataUrl.indexOf(",") + 1);
+            bytes = base64ToBytes(base64);
+          } else if (dataUrl) {
+            const downloaded = await fetch(dataUrl);
             if (downloaded.ok) bytes = new Uint8Array(await downloaded.arrayBuffer());
           }
           if (!bytes) return Response.json({ error: "err.imageFailed" }, { status: 502 });
