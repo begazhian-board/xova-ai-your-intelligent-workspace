@@ -7,11 +7,7 @@ interface WireBody {
   quality?: "standard" | "premium";
 }
 
-const SIZES: Record<string, string> = {
-  "1:1": "1024x1024",
-  "3:2": "1536x1024",
-  "2:3": "1024x1536",
-};
+const ASPECTS = new Set(["1:1", "3:2", "2:3"]);
 
 /** Generations allowed per user per rolling hour. */
 const RATE_LIMIT = 15;
