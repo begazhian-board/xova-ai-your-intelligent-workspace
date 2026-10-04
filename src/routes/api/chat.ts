@@ -3,7 +3,7 @@ import { createClient } from "@supabase/supabase-js";
 import { streamText, type ModelMessage } from "ai";
 import { createLovableAiGatewayProvider, getLovableAiGatewayRunId } from "@/lib/ai-gateway.server";
 import { buildSystemPrompt, routeModel } from "@/lib/xova-prompt.server";
-import { createGeminiProvider, geminiModel } from "@/lib/gemini.server";
+import { createGeminiProvider, GEMINI_MODEL } from "@/lib/gemini.server";
 import type { ModeId } from "@/lib/xova";
 
 interface WireAttachment {
@@ -31,6 +31,9 @@ interface WireBody {
 
 /** Sentinel line used to hand real search sources to the client before the text stream. */
 const SOURCES_PREFIX = "\u241E SOURCES ";
+/** Sentinel that ends the text stream with final sources + error code. */
+const TRAILER_PREFIX = "\u241F";
+const geminiKeyPresent = () => Boolean(process.env["GEMINI_API_KEY"]);
 
 async function authenticate(request: Request) {
   const token = request.headers.get("authorization")?.replace(/^Bearer\s+/i, "");
