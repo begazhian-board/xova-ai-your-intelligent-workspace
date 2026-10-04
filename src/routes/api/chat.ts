@@ -238,8 +238,6 @@ export const Route = createFileRoute("/api/chat")({
                 }
                 if (!errorCode || wroteText) break;
               }
-              {
-              }
               controller.enqueue(
                 encoder.encode(`${TRAILER_PREFIX}${JSON.stringify({ sources: collected, error: errorCode })}`),
               );
