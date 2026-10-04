@@ -175,17 +175,19 @@ export const Route = createFileRoute("/api/chat")({
             );
 
         try {
-          const result = streamText({
-            model,
-            system: gemini
-              ? `${system}\nYou can use Google Search for live, current information (news, prices, dates, recent events). Use it whenever the answer depends on up-to-date facts.`
-              : system,
-            messages: modelMessages,
-            abortSignal: request.signal,
-            // Bounded retries for transient provider overload (503/429).
-            maxRetries: 2,
-            ...(gemini ? { tools: { google_search: gemini.tools.googleSearch({}) } } : {}),
-          });
+          const start = (withSearch: boolean) =>
+            streamText({
+              model: model as never,
+              system: withSearch
+                ? `${system}\nYou can use Google Search for live, current information (news, prices, dates, recent events). Use it whenever the answer depends on up-to-date facts.`
+                : system,
+              messages: modelMessages,
+              abortSignal: request.signal,
+              maxRetries: withSearch ? 0 : 2,
+              ...(withSearch && gemini
+                ? { tools: { google_search: gemini.tools.googleSearch({}) as never } }
+                : {}),
+            });
 
           const encoder = new TextEncoder();
           const prelude = `${SOURCES_PREFIX}${JSON.stringify(sources ?? [])}\n`;
@@ -196,36 +198,47 @@ export const Route = createFileRoute("/api/chat")({
               controller.enqueue(encoder.encode(prelude));
               let errorCode: string | null = null;
               let wroteText = false;
-              try {
-                for await (const part of result.fullStream) {
-                  if (part.type === "text-delta") {
-                    if (part.text) {
-                      wroteText = true;
-                      controller.enqueue(encoder.encode(part.text));
-                    }
-                  } else if (part.type === "source" && part.sourceType === "url") {
-                    if (!collected.some((s) => s.url === part.url)) {
-                      let title = part.title?.trim() || "";
-                      try {
-                        title ||= new URL(part.url).hostname;
-                      } catch {
-                        /* keep */
+              // Try with live Google Search first; if the key's plan rejects it before any
+              // text was sent, answer again without search instead of failing.
+              const attempts = gemini ? [true, false] : [false];
+              for (const withSearch of attempts) {
+                errorCode = null;
+                try {
+                  for await (const part of start(withSearch).fullStream) {
+                    if (part.type === "text-delta") {
+                      if (part.text) {
+                        wroteText = true;
+                        controller.enqueue(encoder.encode(part.text));
                       }
-                      collected.push({ title, url: part.url, snippet: "" });
+                    } else if (part.type === "source" && part.sourceType === "url") {
+                      if (!collected.some((s) => s.url === part.url)) {
+                        let title = part.title?.trim() || "";
+                        try {
+                          title ||= new URL(part.url).hostname;
+                        } catch {
+                          /* keep */
+                        }
+                        collected.push({ title, url: part.url, snippet: "" });
+                      }
+                    } else if (part.type === "error") {
+                      throw part.error;
                     }
-                  } else if (part.type === "error") {
-                    throw part.error;
                   }
+                  if (!wroteText) errorCode = "err.unavailable";
+                } catch (error) {
+                  if (request.signal.aborted) {
+                    controller.close();
+                    return;
+                  }
+                  console.error("XOVA stream error", withSearch ? "(search)" : "", error);
+                  const status =
+                    (error as { statusCode?: number })?.statusCode ??
+                    (error as { lastError?: { statusCode?: number } })?.lastError?.statusCode;
+                  errorCode = status === 429 ? "err.rate" : "err.unavailable";
                 }
-                if (!wroteText) errorCode = "err.unavailable";
-              } catch (error) {
-                if (request.signal.aborted) {
-                  controller.close();
-                  return;
-                }
-                console.error("XOVA stream error", error);
-                const status = (error as { statusCode?: number })?.statusCode;
-                errorCode = status === 429 ? "err.rate" : "err.unavailable";
+                if (!errorCode || wroteText) break;
+              }
+              {
               }
               controller.enqueue(
                 encoder.encode(`${TRAILER_PREFIX}${JSON.stringify({ sources: collected, error: errorCode })}`),
