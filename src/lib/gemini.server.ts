@@ -1,15 +1,9 @@
-import { createOpenAICompatible } from "@ai-sdk/openai-compatible";
+import { createGoogleGenerativeAI } from "@ai-sdk/google";
 
-/** Google AI Studio (free tier) via its OpenAI-compatible endpoint. Used first when GEMINI_API_KEY is set. */
+/** Google AI Studio (free tier), native API so Google Search grounding is available. */
 export function createGeminiProvider(apiKey: string) {
-  return createOpenAICompatible({
-    name: "gemini",
-    baseURL: "https://generativelanguage.googleapis.com/v1beta/openai",
-    apiKey,
-  });
+  return createGoogleGenerativeAI({ apiKey });
 }
 
-/** Gemini Flash handles both text and images. */
-export function geminiModel(): string {
-  return "gemini-flash-latest";
-}
+/** Pinned, currently supported Gemini model (handles text + images). */
+export const GEMINI_MODEL = "gemini-3.8-flash";

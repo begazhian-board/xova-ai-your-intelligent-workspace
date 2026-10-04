@@ -4,6 +4,7 @@ import type { Attachment, ChatMessage, ModeId, SourceRef } from "@/lib/xova";
 import { newId } from "@/lib/xova";
 
 const SOURCES_PREFIX = "\u241E SOURCES ";
+const TRAILER_PREFIX = "\u241F";
 
 interface SendOptions {
   text: string;
@@ -278,12 +279,29 @@ export function useConversation(userId: string | undefined, config: AiConfig) {
           if (buffer) {
             text += buffer;
             buffer = "";
+            const visible = text.split(TRAILER_PREFIX)[0]!;
             setMessages((current) =>
               current.map((message) =>
-                message.id === assistantId ? { ...message, content: text, sources } : message,
+                message.id === assistantId ? { ...message, content: visible, sources } : message,
               ),
             );
           }
+        }
+
+        let streamError: string | null = null;
+        const trailerAt = text.indexOf(TRAILER_PREFIX);
+        if (trailerAt !== -1) {
+          try {
+            const trailer = JSON.parse(text.slice(trailerAt + TRAILER_PREFIX.length)) as {
+              sources?: SourceRef[];
+              error?: string | null;
+            };
+            if (Array.isArray(trailer.sources)) sources = trailer.sources;
+            streamError = trailer.error ?? null;
+          } catch {
+            /* ignore malformed trailer */
+          }
+          text = text.slice(0, trailerAt);
         }
 
         const finalMessage: ChatMessage = {
@@ -292,10 +310,12 @@ export function useConversation(userId: string | undefined, config: AiConfig) {
           sources,
           streaming: false,
         };
+        if (!finalMessage.content) throw new Error(streamError ?? "err.unavailable");
         setMessages((current) =>
           current.map((message) => (message.id === assistantId ? finalMessage : message)),
         );
-        if (finalMessage.content) await persist(finalMessage);
+        await persist(finalMessage);
+        if (streamError) setError(streamError);
       } catch (caught) {
         const aborted = caught instanceof DOMException && caught.name === "AbortError";
         setMessages((current) => {

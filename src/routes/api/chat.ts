@@ -3,7 +3,7 @@ import { createClient } from "@supabase/supabase-js";
 import { streamText, type ModelMessage } from "ai";
 import { createLovableAiGatewayProvider, getLovableAiGatewayRunId } from "@/lib/ai-gateway.server";
 import { buildSystemPrompt, routeModel } from "@/lib/xova-prompt.server";
-import { createGeminiProvider, geminiModel } from "@/lib/gemini.server";
+import { createGeminiProvider, GEMINI_MODEL } from "@/lib/gemini.server";
 import type { ModeId } from "@/lib/xova";
 
 interface WireAttachment {
@@ -31,6 +31,9 @@ interface WireBody {
 
 /** Sentinel line used to hand real search sources to the client before the text stream. */
 const SOURCES_PREFIX = "\u241E SOURCES ";
+/** Sentinel that ends the text stream with final sources + error code. */
+const TRAILER_PREFIX = "\u241F";
+const geminiKeyPresent = () => Boolean(process.env["GEMINI_API_KEY"]);
 
 async function authenticate(request: Request) {
   const token = request.headers.get("authorization")?.replace(/^Bearer\s+/i, "");
@@ -160,44 +163,85 @@ export const Route = createFileRoute("/api/chat")({
           customPersonality: body.customPersonality ?? null,
           responseStyle: body.responseStyle ?? "balanced",
           language: body.language ?? "en",
-          searchAvailable: Boolean(sources && sources.length > 0),
+          searchAvailable: Boolean(geminiKeyPresent() || (sources && sources.length > 0)),
         });
 
         const geminiKey = process.env["GEMINI_API_KEY"];
-        const model = geminiKey
-          ? createGeminiProvider(geminiKey)(geminiModel())
+        const gemini = geminiKey ? createGeminiProvider(geminiKey) : null;
+        const model = gemini
+          ? gemini(GEMINI_MODEL)
           : createLovableAiGatewayProvider(apiKey!, getLovableAiGatewayRunId(request))(
               routeModel(mode, hasImage),
             );
 
         try {
-          const result = streamText({
-            model,
-            system,
-            messages: modelMessages,
-            abortSignal: request.signal,
-            maxRetries: 0,
-          });
+          const start = (withSearch: boolean) =>
+            streamText({
+              model: model as never,
+              system: withSearch
+                ? `${system}\nYou can use Google Search for live, current information (news, prices, dates, recent events). Use it whenever the answer depends on up-to-date facts.`
+                : system,
+              messages: modelMessages,
+              abortSignal: request.signal,
+              maxRetries: withSearch ? 0 : 2,
+              ...(withSearch && gemini
+                ? { tools: { google_search: gemini.tools.googleSearch({}) as never } }
+                : {}),
+            });
 
-          const textStream = result.textStream;
           const encoder = new TextEncoder();
-          const prelude =
-            sources && sources.length > 0
-              ? `${SOURCES_PREFIX}${JSON.stringify(sources)}\n`
-              : `${SOURCES_PREFIX}[]\n`;
+          const prelude = `${SOURCES_PREFIX}${JSON.stringify(sources ?? [])}\n`;
+          const collected: Array<{ title: string; url: string; snippet: string }> = [...(sources ?? [])];
 
           const stream = new ReadableStream<Uint8Array>({
             async start(controller) {
               controller.enqueue(encoder.encode(prelude));
-              try {
-                for await (const chunk of textStream) {
-                  controller.enqueue(encoder.encode(chunk));
+              let errorCode: string | null = null;
+              let wroteText = false;
+              // Try with live Google Search first; if the key's plan rejects it before any
+              // text was sent, answer again without search instead of failing.
+              const attempts = gemini ? [true, false] : [false];
+              for (const withSearch of attempts) {
+                errorCode = null;
+                try {
+                  for await (const part of start(withSearch).fullStream) {
+                    if (part.type === "text-delta") {
+                      if (part.text) {
+                        wroteText = true;
+                        controller.enqueue(encoder.encode(part.text));
+                      }
+                    } else if (part.type === "source" && part.sourceType === "url") {
+                      if (!collected.some((s) => s.url === part.url)) {
+                        let title = part.title?.trim() || "";
+                        try {
+                          title ||= new URL(part.url).hostname;
+                        } catch {
+                          /* keep */
+                        }
+                        collected.push({ title, url: part.url, snippet: "" });
+                      }
+                    } else if (part.type === "error") {
+                      throw part.error;
+                    }
+                  }
+                  if (!wroteText) errorCode = "err.unavailable";
+                } catch (error) {
+                  if (request.signal.aborted) {
+                    controller.close();
+                    return;
+                  }
+                  console.error("XOVA stream error", withSearch ? "(search)" : "", error);
+                  const status =
+                    (error as { statusCode?: number })?.statusCode ??
+                    (error as { lastError?: { statusCode?: number } })?.lastError?.statusCode;
+                  errorCode = status === 429 ? "err.rate" : "err.unavailable";
                 }
-                controller.close();
-              } catch (error) {
-                console.error("XOVA stream error", error);
-                controller.close();
+                if (!errorCode || wroteText) break;
               }
+              controller.enqueue(
+                encoder.encode(`${TRAILER_PREFIX}${JSON.stringify({ sources: collected, error: errorCode })}`),
+              );
+              controller.close();
             },
           });
 
@@ -205,7 +249,7 @@ export const Route = createFileRoute("/api/chat")({
             headers: {
               "Content-Type": "text/plain; charset=utf-8",
               "Cache-Control": "no-store",
-              "X-Xova-Search": sources && sources.length > 0 ? "live" : "unavailable",
+              "X-Xova-Search": gemini || (sources && sources.length > 0) ? "live" : "unavailable",
             },
           });
         } catch (error) {
