@@ -3,7 +3,7 @@ import { createClient } from "@supabase/supabase-js";
 import { streamText, type ModelMessage } from "ai";
 import { createLovableAiGatewayProvider, getLovableAiGatewayRunId } from "@/lib/ai-gateway.server";
 import { buildSystemPrompt, routeModel } from "@/lib/xova-prompt.server";
-import { createGroqProvider, groqModel } from "@/lib/groq.server";
+import { createGeminiProvider, geminiModel } from "@/lib/gemini.server";
 import type { ModeId } from "@/lib/xova";
 
 interface WireAttachment {
@@ -115,7 +115,7 @@ export const Route = createFileRoute("/api/chat")({
         }
 
         const apiKey = process.env["LOVABLE_API_KEY"];
-        if (!apiKey && !process.env["GROQ_API_KEY"]) {
+        if (!apiKey && !process.env["GEMINI_API_KEY"]) {
           return Response.json({ error: "err.unavailable" }, { status: 500 });
         }
 
@@ -163,9 +163,9 @@ export const Route = createFileRoute("/api/chat")({
           searchAvailable: Boolean(sources && sources.length > 0),
         });
 
-        const groqKey = process.env["GROQ_API_KEY"];
-        const model = groqKey
-          ? createGroqProvider(groqKey)(groqModel(hasImage))
+        const geminiKey = process.env["GEMINI_API_KEY"];
+        const model = geminiKey
+          ? createGeminiProvider(geminiKey)(geminiModel())
           : createLovableAiGatewayProvider(apiKey!, getLovableAiGatewayRunId(request))(
               routeModel(mode, hasImage),
             );
