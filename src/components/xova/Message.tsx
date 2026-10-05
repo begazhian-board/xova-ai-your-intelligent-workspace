@@ -144,7 +144,12 @@ export function Message({ message, onRegenerate, onEdit }: MessageProps) {
       <div className="min-w-0 flex-1">
         {message.imageUrl && (
           <figure className="mb-3 max-w-md overflow-hidden rounded-xl border border-border">
-            <img src={message.imageUrl} alt={message.content || t("nav.imageStudio")} />
+            <span className="relative block">
+              <img src={message.imageUrl} alt={message.content || t("nav.imageStudio")} />
+              <span className="pointer-events-none absolute bottom-2 end-2 rounded-md bg-black/35 px-1.5 py-0.5 text-[10px] font-semibold tracking-wide text-white/85 backdrop-blur-sm">
+                XOVA AI
+              </span>
+            </span>
             <figcaption className="flex gap-1.5 border-t border-border bg-subtle px-2 py-1.5">
               <a
                 href={message.imageUrl}

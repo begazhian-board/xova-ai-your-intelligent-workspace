@@ -3,7 +3,7 @@ import { createClient } from "@supabase/supabase-js";
 import { streamText, type ModelMessage } from "ai";
 import { createLovableAiGatewayProvider, getLovableAiGatewayRunId } from "@/lib/ai-gateway.server";
 import { buildSystemPrompt, routeModel } from "@/lib/xova-prompt.server";
-import { createGeminiProvider, GEMINI_MODEL } from "@/lib/gemini.server";
+import { createGeminiProvider, GEMINI_MODEL, GEMINI_FALLBACK_MODELS } from "@/lib/gemini.server";
 import type { ModeId } from "@/lib/xova";
 
 interface WireAttachment {
@@ -168,23 +168,27 @@ export const Route = createFileRoute("/api/chat")({
 
         const geminiKey = process.env["GEMINI_API_KEY"];
         const gemini = geminiKey ? createGeminiProvider(geminiKey) : null;
-        const model = gemini
-          ? gemini(GEMINI_MODEL)
-          : createLovableAiGatewayProvider(apiKey!, getLovableAiGatewayRunId(request))(
+        const gateway = apiKey
+          ? createLovableAiGatewayProvider(apiKey, getLovableAiGatewayRunId(request))(
               routeModel(mode, hasImage),
-            );
+            )
+          : null;
+        const geminiModels = gemini
+          ? [GEMINI_MODEL, ...GEMINI_FALLBACK_MODELS].map((id) => gemini(id))
+          : [];
 
         try {
-          const start = (withSearch: boolean) =>
+          const start = (provider: "gemini" | "gateway", modelIndex: number, withSearch: boolean) =>
             streamText({
-              model: model as never,
-              system: withSearch
-                ? `${system}\nYou can use Google Search for live, current information (news, prices, dates, recent events). Use it whenever the answer depends on up-to-date facts.`
-                : system,
+              model: (provider === "gemini" ? geminiModels[modelIndex]! : gateway!) as never,
+              system:
+                withSearch && provider === "gemini"
+                  ? `${system}\nYou can use Google Search for live, current information (news, prices, dates, recent events). Use it whenever the answer depends on up-to-date facts.`
+                  : system,
               messages: modelMessages,
               abortSignal: request.signal,
               maxRetries: withSearch ? 0 : 2,
-              ...(withSearch && gemini
+              ...(withSearch && provider === "gemini" && gemini
                 ? { tools: { google_search: gemini.tools.googleSearch({}) as never } }
                 : {}),
             });
@@ -200,11 +204,18 @@ export const Route = createFileRoute("/api/chat")({
               let wroteText = false;
               // Try with live Google Search first; if the key's plan rejects it before any
               // text was sent, answer again without search instead of failing.
-              const attempts = gemini ? [true, false] : [false];
-              for (const withSearch of attempts) {
+              // Gemini first (free); on any failure before text, fall back to the
+              // Lovable gateway so the user always gets an answer.
+              const attempts: Array<{ provider: "gemini" | "gateway"; modelIndex: number; withSearch: boolean }> = [];
+              geminiModels.forEach((_, modelIndex) => {
+                // Live search only on the primary model, to save free-tier quota.
+                attempts.push({ provider: "gemini", modelIndex, withSearch: modelIndex === 0 });
+              });
+              if (gateway) attempts.push({ provider: "gateway", modelIndex: 0, withSearch: false });
+              for (const attempt of attempts) {
                 errorCode = null;
                 try {
-                  for await (const part of start(withSearch).fullStream) {
+                  for await (const part of start(attempt.provider, attempt.modelIndex, attempt.withSearch).fullStream) {
                     if (part.type === "text-delta") {
                       if (part.text) {
                         wroteText = true;
@@ -230,7 +241,7 @@ export const Route = createFileRoute("/api/chat")({
                     controller.close();
                     return;
                   }
-                  console.error("XOVA stream error", withSearch ? "(search)" : "", error);
+                  console.error("XOVA stream error", attempt.provider, attempt.withSearch ? "(search)" : "", error);
                   const status =
                     (error as { statusCode?: number })?.statusCode ??
                     (error as { lastError?: { statusCode?: number } })?.lastError?.statusCode;
