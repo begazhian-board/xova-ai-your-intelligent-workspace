@@ -173,12 +173,14 @@ export const Route = createFileRoute("/api/chat")({
               routeModel(mode, hasImage),
             )
           : null;
-        const geminiModel = gemini ? gemini(GEMINI_MODEL) : null;
+        const geminiModels = gemini
+          ? [GEMINI_MODEL, ...GEMINI_FALLBACK_MODELS].map((id) => gemini(id))
+          : [];
 
         try {
-          const start = (provider: "gemini" | "gateway", withSearch: boolean) =>
+          const start = (provider: "gemini" | "gateway", modelIndex: number, withSearch: boolean) =>
             streamText({
-              model: (provider === "gemini" ? geminiModel! : gateway!) as never,
+              model: (provider === "gemini" ? geminiModels[modelIndex]! : gateway!) as never,
               system:
                 withSearch && provider === "gemini"
                   ? `${system}\nYou can use Google Search for live, current information (news, prices, dates, recent events). Use it whenever the answer depends on up-to-date facts.`
