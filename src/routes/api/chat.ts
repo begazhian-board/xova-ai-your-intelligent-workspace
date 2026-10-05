@@ -168,23 +168,25 @@ export const Route = createFileRoute("/api/chat")({
 
         const geminiKey = process.env["GEMINI_API_KEY"];
         const gemini = geminiKey ? createGeminiProvider(geminiKey) : null;
-        const model = gemini
-          ? gemini(GEMINI_MODEL)
-          : createLovableAiGatewayProvider(apiKey!, getLovableAiGatewayRunId(request))(
+        const gateway = apiKey
+          ? createLovableAiGatewayProvider(apiKey, getLovableAiGatewayRunId(request))(
               routeModel(mode, hasImage),
-            );
+            )
+          : null;
+        const geminiModel = gemini ? gemini(GEMINI_MODEL) : null;
 
         try {
-          const start = (withSearch: boolean) =>
+          const start = (provider: "gemini" | "gateway", withSearch: boolean) =>
             streamText({
-              model: model as never,
-              system: withSearch
-                ? `${system}\nYou can use Google Search for live, current information (news, prices, dates, recent events). Use it whenever the answer depends on up-to-date facts.`
-                : system,
+              model: (provider === "gemini" ? geminiModel! : gateway!) as never,
+              system:
+                withSearch && provider === "gemini"
+                  ? `${system}\nYou can use Google Search for live, current information (news, prices, dates, recent events). Use it whenever the answer depends on up-to-date facts.`
+                  : system,
               messages: modelMessages,
               abortSignal: request.signal,
               maxRetries: withSearch ? 0 : 2,
-              ...(withSearch && gemini
+              ...(withSearch && provider === "gemini" && gemini
                 ? { tools: { google_search: gemini.tools.googleSearch({}) as never } }
                 : {}),
             });
