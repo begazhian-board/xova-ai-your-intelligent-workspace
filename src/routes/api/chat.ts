@@ -3,7 +3,7 @@ import { createClient } from "@supabase/supabase-js";
 import { streamText, type ModelMessage } from "ai";
 import { createLovableAiGatewayProvider, getLovableAiGatewayRunId } from "@/lib/ai-gateway.server";
 import { buildSystemPrompt, routeModel } from "@/lib/xova-prompt.server";
-import { createGeminiProvider, GEMINI_MODEL } from "@/lib/gemini.server";
+import { createGeminiProvider, GEMINI_MODEL, GEMINI_FALLBACK_MODELS } from "@/lib/gemini.server";
 import type { ModeId } from "@/lib/xova";
 
 interface WireAttachment {
