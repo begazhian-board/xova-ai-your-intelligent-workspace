@@ -202,11 +202,18 @@ export const Route = createFileRoute("/api/chat")({
               let wroteText = false;
               // Try with live Google Search first; if the key's plan rejects it before any
               // text was sent, answer again without search instead of failing.
-              const attempts = gemini ? [true, false] : [false];
-              for (const withSearch of attempts) {
+              // Gemini first (free); on any failure before text, fall back to the
+              // Lovable gateway so the user always gets an answer.
+              const attempts: Array<{ provider: "gemini" | "gateway"; withSearch: boolean }> = [];
+              if (geminiModel) {
+                attempts.push({ provider: "gemini", withSearch: true });
+                attempts.push({ provider: "gemini", withSearch: false });
+              }
+              if (gateway) attempts.push({ provider: "gateway", withSearch: false });
+              for (const attempt of attempts) {
                 errorCode = null;
                 try {
-                  for await (const part of start(withSearch).fullStream) {
+                  for await (const part of start(attempt.provider, attempt.withSearch).fullStream) {
                     if (part.type === "text-delta") {
                       if (part.text) {
                         wroteText = true;
