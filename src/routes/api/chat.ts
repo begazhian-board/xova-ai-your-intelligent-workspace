@@ -239,7 +239,7 @@ export const Route = createFileRoute("/api/chat")({
                     controller.close();
                     return;
                   }
-                  console.error("XOVA stream error", withSearch ? "(search)" : "", error);
+                  console.error("XOVA stream error", attempt.provider, attempt.withSearch ? "(search)" : "", error);
                   const status =
                     (error as { statusCode?: number })?.statusCode ??
                     (error as { lastError?: { statusCode?: number } })?.lastError?.statusCode;
