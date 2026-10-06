@@ -190,6 +190,7 @@ const en: Dict = {
   "err.speechUnsupported": "Read aloud isn't supported in this browser.",
   "err.imageFailed": "Image generation failed. Please try again.",
   "err.imageRate": "You reached the image limit for this hour. Try again later.",
+  "err.imageCredits": "Image generation is paused: the AI credit has run out. Add credit and try again.",
   "err.searchOffline":
     "Live web search isn't connected, so XOVA answered from its own knowledge without citations.",
   "err.stopped": "Generation stopped.",
@@ -390,6 +391,7 @@ const ar: Dict = {
   "err.speechUnsupported": "القراءة الصوتية غير مدعومة في هذا المتصفح.",
   "err.imageFailed": "فشل توليد الصورة. حاول مرة أخرى.",
   "err.imageRate": "وصلت إلى حد الصور لهذه الساعة. حاول لاحقًا.",
+  "err.imageCredits": "توليد الصور متوقف مؤقتًا: رصيد الذكاء الاصطناعي خلص. اشحن الرصيد وجرب تاني.",
   "err.searchOffline": "البحث المباشر على الويب غير موصول، لذلك أجاب XOVA من معرفته دون مصادر.",
   "err.stopped": "تم إيقاف التوليد.",
 

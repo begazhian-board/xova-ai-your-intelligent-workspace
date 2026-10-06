@@ -178,7 +178,12 @@ export const Route = createFileRoute("/api/chat")({
           : [];
 
         try {
-          const start = (provider: "gemini" | "gateway", modelIndex: number, withSearch: boolean) =>
+          const start = (
+            provider: "gemini" | "gateway",
+            modelIndex: number,
+            withSearch: boolean,
+            signal: AbortSignal,
+          ) =>
             streamText({
               model: (provider === "gemini" ? geminiModels[modelIndex]! : gateway!) as never,
               system:
@@ -186,8 +191,8 @@ export const Route = createFileRoute("/api/chat")({
                   ? `${system}\nYou can use Google Search for live, current information (news, prices, dates, recent events). Use it whenever the answer depends on up-to-date facts.`
                   : system,
               messages: modelMessages,
-              abortSignal: request.signal,
-              maxRetries: withSearch ? 0 : 2,
+              abortSignal: signal,
+              maxRetries: 0,
               ...(withSearch && provider === "gemini" && gemini
                 ? { tools: { google_search: gemini.tools.googleSearch({}) as never } }
                 : {}),
@@ -202,22 +207,30 @@ export const Route = createFileRoute("/api/chat")({
               controller.enqueue(encoder.encode(prelude));
               let errorCode: string | null = null;
               let wroteText = false;
-              // Try with live Google Search first; if the key's plan rejects it before any
-              // text was sent, answer again without search instead of failing.
-              // Gemini first (free); on any failure before text, fall back to the
-              // Lovable gateway so the user always gets an answer.
+              // Lovable gateway first (fast); free Gemini models are the fallback.
               const attempts: Array<{ provider: "gemini" | "gateway"; modelIndex: number; withSearch: boolean }> = [];
-              geminiModels.forEach((_, modelIndex) => {
-                // Live search only on the primary model, to save free-tier quota.
-                attempts.push({ provider: "gemini", modelIndex, withSearch: modelIndex === 0 });
-              });
               if (gateway) attempts.push({ provider: "gateway", modelIndex: 0, withSearch: false });
+              geminiModels.forEach((_, modelIndex) => {
+                if (modelIndex === 0) attempts.push({ provider: "gemini", modelIndex, withSearch: true });
+                attempts.push({ provider: "gemini", modelIndex, withSearch: false });
+              });
               for (const attempt of attempts) {
                 errorCode = null;
+                const local = new AbortController();
+                const onAbort = () => local.abort();
+                request.signal.addEventListener("abort", onAbort);
+                // Gemini: give up quickly if no first token within 6s.
+                let timer: ReturnType<typeof setTimeout> | undefined =
+                  attempt.provider === "gemini" ? setTimeout(() => local.abort(), 6000) : undefined;
+                const clearTimer = () => {
+                  if (timer) clearTimeout(timer);
+                  timer = undefined;
+                };
                 try {
-                  for await (const part of start(attempt.provider, attempt.modelIndex, attempt.withSearch).fullStream) {
+                  for await (const part of start(attempt.provider, attempt.modelIndex, attempt.withSearch, local.signal).fullStream) {
                     if (part.type === "text-delta") {
                       if (part.text) {
+                        clearTimer();
                         wroteText = true;
                         controller.enqueue(encoder.encode(part.text));
                       }
@@ -246,6 +259,9 @@ export const Route = createFileRoute("/api/chat")({
                     (error as { statusCode?: number })?.statusCode ??
                     (error as { lastError?: { statusCode?: number } })?.lastError?.statusCode;
                   errorCode = status === 429 ? "err.rate" : "err.unavailable";
+                } finally {
+                  clearTimer();
+                  request.signal.removeEventListener("abort", onAbort);
                 }
                 if (!errorCode || wroteText) break;
               }

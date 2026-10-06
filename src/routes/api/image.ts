@@ -74,53 +74,92 @@ export const Route = createFileRoute("/api/image")({
         }
 
         try {
-          // Gemini image models (2026 line-up) generate through chat
-          // completions with image modalities, not /images/generations.
-          const res = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
-            method: "POST",
-            headers: {
-              "Content-Type": "application/json",
-              "Lovable-API-Key": apiKey,
-              "X-Lovable-AIG-SDK": "fetch",
-            },
-            body: JSON.stringify({
-              model:
-                quality === "premium"
-                  ? "google/gemini-3-pro-image"
-                  : "google/gemini-3.1-flash-image",
-              messages: [{ role: "user", content: prompt }],
-              modalities: ["image", "text"],
-              image_config: { aspect_ratio: aspect },
-            }),
-          });
-
-          if (!res.ok) {
-            const detail = await res.text();
-            console.error("XOVA image failure", res.status, detail.slice(0, 400));
-            return Response.json(
-              { error: res.status === 429 ? "err.rate" : "err.imageFailed" },
-              { status: 502 },
-            );
-          }
-
-          const json = (await res.json()) as {
-            choices?: Array<{
-              message?: {
-                images?: Array<{ image_url?: { url?: string } }>;
-              };
-            }>;
-          };
-          const dataUrl = json.choices?.[0]?.message?.images?.[0]?.image_url?.url;
-
           let bytes: Uint8Array | null = null;
-          if (dataUrl?.startsWith("data:")) {
-            const base64 = dataUrl.slice(dataUrl.indexOf(",") + 1);
-            bytes = base64ToBytes(base64);
-          } else if (dataUrl) {
-            const downloaded = await fetch(dataUrl);
-            if (downloaded.ok) bytes = new Uint8Array(await downloaded.arrayBuffer());
+          let gatewayStatus: number | undefined;
+
+          // 1) Free path: Gemini key directly.
+          const geminiKey = process.env["GEMINI_API_KEY"];
+          if (geminiKey) {
+            for (const model of ["gemini-3.1-flash-image", "gemini-2.5-flash-image"]) {
+              try {
+                const res = await fetch(
+                  `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent`,
+                  {
+                    method: "POST",
+                    headers: { "Content-Type": "application/json", "x-goog-api-key": geminiKey },
+                    body: JSON.stringify({
+                      contents: [{ parts: [{ text: prompt }] }],
+                      generationConfig: {
+                        responseModalities: ["IMAGE", "TEXT"],
+                        imageConfig: { aspectRatio: aspect },
+                      },
+                    }),
+                  },
+                );
+                if (!res.ok) {
+                  console.error("XOVA gemini image", model, res.status, (await res.text()).slice(0, 200));
+                  continue;
+                }
+                const json = (await res.json()) as {
+                  candidates?: Array<{ content?: { parts?: Array<{ inlineData?: { data?: string } }> } }>;
+                };
+                const data = json.candidates?.[0]?.content?.parts?.find((p) => p.inlineData?.data)
+                  ?.inlineData?.data;
+                if (data) {
+                  bytes = base64ToBytes(data);
+                  break;
+                }
+              } catch (error) {
+                console.error("XOVA gemini image error", model, error);
+              }
+            }
           }
-          if (!bytes) return Response.json({ error: "err.imageFailed" }, { status: 502 });
+
+          // 2) Fallback: Lovable AI Gateway.
+          if (!bytes && apiKey) {
+            const res = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
+              method: "POST",
+              headers: {
+                "Content-Type": "application/json",
+                "Lovable-API-Key": apiKey as string,
+                "X-Lovable-AIG-SDK": "fetch",
+              },
+              body: JSON.stringify({
+                model:
+                  quality === "premium"
+                    ? "google/gemini-3-pro-image"
+                    : "google/gemini-3.1-flash-image",
+                messages: [{ role: "user", content: prompt }],
+                modalities: ["image", "text"],
+                image_config: { aspect_ratio: aspect },
+              }),
+            });
+            if (!res.ok) {
+              gatewayStatus = res.status;
+              console.error("XOVA image failure", res.status, (await res.text()).slice(0, 400));
+            } else {
+              const json = (await res.json()) as {
+                choices?: Array<{ message?: { images?: Array<{ image_url?: { url?: string } }> } }>;
+              };
+              const dataUrl = json.choices?.[0]?.message?.images?.[0]?.image_url?.url;
+              if (dataUrl?.startsWith("data:")) {
+                bytes = base64ToBytes(dataUrl.slice(dataUrl.indexOf(",") + 1));
+              } else if (dataUrl) {
+                const downloaded = await fetch(dataUrl);
+                if (downloaded.ok) bytes = new Uint8Array(await downloaded.arrayBuffer());
+              }
+            }
+          }
+
+          if (!bytes) {
+            const code =
+              gatewayStatus === 402 || gatewayStatus === 403
+                ? "err.imageCredits"
+                : gatewayStatus === 429
+                  ? "err.rate"
+                  : "err.imageFailed";
+            return Response.json({ error: code }, { status: 502 });
+          }
 
           const path = `${user.id}/${crypto.randomUUID()}.png`;
           const { error: uploadError } = await supabaseAdmin.storage
