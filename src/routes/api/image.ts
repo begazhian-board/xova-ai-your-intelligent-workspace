@@ -77,9 +77,28 @@ export const Route = createFileRoute("/api/image")({
           let bytes: Uint8Array | null = null;
           let gatewayStatus: number | undefined;
 
+          // 0) Always-free path: Pollinations (no key, no credit).
+          try {
+            const [width, height] =
+              aspect === "3:2" ? [1024, 680] : aspect === "2:3" ? [680, 1024] : [1024, 1024];
+            const seed = Math.floor(Math.random() * 1000000);
+            const res = await fetch(
+              `https://image.pollinations.ai/prompt/${encodeURIComponent(prompt)}?width=${width}&height=${height}&nologo=true&seed=${seed}`,
+            );
+            const type = res.headers.get("content-type") ?? "";
+            if (res.ok && type.startsWith("image/")) {
+              const buf = new Uint8Array(await res.arrayBuffer());
+              if (buf.length > 1000) bytes = buf;
+            } else {
+              console.error("XOVA pollinations", res.status, type);
+            }
+          } catch (error) {
+            console.error("XOVA pollinations error", error);
+          }
+
           // 1) Free path: Gemini key directly.
           const geminiKey = process.env["GEMINI_API_KEY"];
-          if (geminiKey) {
+          if (!bytes && geminiKey) {
             for (const model of ["gemini-3.1-flash-image", "gemini-2.5-flash-image"]) {
               try {
                 const res = await fetch(
@@ -161,10 +180,11 @@ export const Route = createFileRoute("/api/image")({
             return Response.json({ error: code }, { status: 502 });
           }
 
-          const path = `${user.id}/${crypto.randomUUID()}.png`;
+          const isJpeg = bytes[0] === 0xff && bytes[1] === 0xd8;
+          const path = `${user.id}/${crypto.randomUUID()}.${isJpeg ? "jpg" : "png"}`;
           const { error: uploadError } = await supabaseAdmin.storage
             .from("xova-images")
-            .upload(path, bytes, { contentType: "image/png", upsert: false });
+            .upload(path, bytes, { contentType: isJpeg ? "image/jpeg" : "image/png", upsert: false });
           if (uploadError) {
             console.error("XOVA image upload", uploadError.message);
             return Response.json({ error: "err.imageFailed" }, { status: 502 });
