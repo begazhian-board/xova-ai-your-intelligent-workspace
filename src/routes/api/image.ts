@@ -121,7 +121,7 @@ export const Route = createFileRoute("/api/image")({
               method: "POST",
               headers: {
                 "Content-Type": "application/json",
-                "Lovable-API-Key": apiKey,
+                "Lovable-API-Key": apiKey as string,
                 "X-Lovable-AIG-SDK": "fetch",
               },
               body: JSON.stringify({
