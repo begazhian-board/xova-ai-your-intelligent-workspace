@@ -29,6 +29,22 @@ async function authenticate(request: Request) {
   return data.user;
 }
 
+/** Free, keyless translation to English; returns the original text on any failure. */
+async function translateToEnglish(text: string) {
+  if (!/[^\x00-\x7F]/.test(text)) return text;
+  try {
+    const res = await fetch(
+      `https://translate.googleapis.com/translate_a/single?client=gtx&sl=auto&tl=en&dt=t&q=${encodeURIComponent(text)}`,
+    );
+    if (!res.ok) return text;
+    const json = (await res.json()) as Array<Array<[string]>>;
+    const out = (json[0] ?? []).map((seg) => seg[0]).join("").trim();
+    return out || text;
+  } catch {
+    return text;
+  }
+}
+
 function base64ToBytes(base64: string) {
   const binary = atob(base64);
   const bytes = new Uint8Array(binary.length);
