@@ -91,117 +91,137 @@ export const Route = createFileRoute("/api/image")({
 
         try {
           let bytes: Uint8Array | null = null;
-          let gatewayStatus: number | undefined;
-
-          // 0) Always-free path: Pollinations (no key, no credit).
-          // Translate to English first (free endpoint), then try clean rephrasings
-          // if the safety filter rejects the wording.
+          let lastStatus: number | undefined;
+          // Faithful English translation of the user's own words — nothing added.
           const english = await translateToEnglish(prompt);
-          const variants = [
-            `${english}, clean illustration, high quality, suitable for printing`,
-            `Educational, family-friendly illustrated poster about: ${english}. Clean modern flat illustration, polite and respectful, suitable for printing`,
-            `Clean educational poster about etiquette, hygiene and good manners, modern flat illustration, suitable for printing`,
-          ];
-          const [width, height] =
-            aspect === "3:2" ? [1024, 680] : aspect === "2:3" ? [680, 1024] : [1024, 1024];
-          for (const variant of variants) {
+
+          // 1) Primary: Lovable AI Gateway.
+          if (apiKey) {
             try {
-              const seed = Math.floor(Math.random() * 1000000);
-              const res = await fetch(
-                `https://image.pollinations.ai/prompt/${encodeURIComponent(variant)}?width=${width}&height=${height}&nologo=true&safe=true&seed=${seed}`,
-              );
-              const type = res.headers.get("content-type") ?? "";
-              if (res.ok && type.startsWith("image/")) {
-                const buf = new Uint8Array(await res.arrayBuffer());
-                if (buf.length > 1000) {
-                  bytes = buf;
-                  break;
-                }
+              const res = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
+                method: "POST",
+                headers: {
+                  "Content-Type": "application/json",
+                  "Lovable-API-Key": apiKey,
+                  "X-Lovable-AIG-SDK": "fetch",
+                },
+                body: JSON.stringify({
+                  model:
+                    quality === "premium"
+                      ? "google/gemini-3-pro-image"
+                      : "google/gemini-3.1-flash-image",
+                  messages: [{ role: "user", content: english }],
+                  modalities: ["image", "text"],
+                  image_config: { aspect_ratio: aspect },
+                }),
+              });
+              if (!res.ok) {
+                lastStatus = res.status;
+                console.error("XOVA image gateway", res.status, (await res.text()).slice(0, 300));
               } else {
-                console.error("XOVA pollinations", res.status, type);
+                const json = (await res.json()) as {
+                  choices?: Array<{ message?: { images?: Array<{ image_url?: { url?: string } }> } }>;
+                };
+                const dataUrl = json.choices?.[0]?.message?.images?.[0]?.image_url?.url;
+                if (dataUrl?.startsWith("data:")) {
+                  bytes = base64ToBytes(dataUrl.slice(dataUrl.indexOf(",") + 1));
+                } else if (dataUrl) {
+                  const downloaded = await fetch(dataUrl);
+                  if (downloaded.ok) bytes = new Uint8Array(await downloaded.arrayBuffer());
+                }
               }
             } catch (error) {
-              console.error("XOVA pollinations error", error);
+              console.error("XOVA image gateway error", error);
             }
           }
 
-          // 1) Free path: Gemini key directly.
+          // 2) Hugging Face (only when HUGGINGFACE_API_KEY is set).
+          const hfKey = process.env["HUGGINGFACE_API_KEY"];
+          if (!bytes && hfKey) {
+            try {
+              const [width, height] =
+                aspect === "3:2" ? [1216, 832] : aspect === "2:3" ? [832, 1216] : [1024, 1024];
+              const res = await fetch(
+                "https://router.huggingface.co/hf-inference/models/black-forest-labs/FLUX.1-schnell",
+                {
+                  method: "POST",
+                  headers: {
+                    Authorization: `Bearer ${hfKey}`,
+                    "Content-Type": "application/json",
+                    Accept: "image/png",
+                  },
+                  body: JSON.stringify({ inputs: english, parameters: { width, height } }),
+                },
+              );
+              const type = res.headers.get("content-type") ?? "";
+              if (res.ok && type.startsWith("image/")) {
+                bytes = new Uint8Array(await res.arrayBuffer());
+              } else {
+                lastStatus = res.status;
+                console.error("XOVA image hf", res.status, (await res.text()).slice(0, 200));
+              }
+            } catch (error) {
+              console.error("XOVA image hf error", error);
+            }
+          }
+
+          // 3) Gemini key directly.
           const geminiKey = process.env["GEMINI_API_KEY"];
           if (!bytes && geminiKey) {
-            for (const model of ["gemini-3.1-flash-image", "gemini-2.5-flash-image"]) {
-              try {
-                const res = await fetch(
-                  `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent`,
-                  {
-                    method: "POST",
-                    headers: { "Content-Type": "application/json", "x-goog-api-key": geminiKey },
-                    body: JSON.stringify({
-                      contents: [{ parts: [{ text: prompt }] }],
-                      generationConfig: {
-                        responseModalities: ["IMAGE", "TEXT"],
-                        imageConfig: { aspectRatio: aspect },
-                      },
-                    }),
-                  },
-                );
-                if (!res.ok) {
-                  console.error("XOVA gemini image", model, res.status, (await res.text()).slice(0, 200));
-                  continue;
-                }
+            try {
+              const res = await fetch(
+                "https://generativelanguage.googleapis.com/v1beta/models/gemini-3.1-flash-image:generateContent",
+                {
+                  method: "POST",
+                  headers: { "Content-Type": "application/json", "x-goog-api-key": geminiKey },
+                  body: JSON.stringify({
+                    contents: [{ parts: [{ text: english }] }],
+                    generationConfig: {
+                      responseModalities: ["IMAGE", "TEXT"],
+                      imageConfig: { aspectRatio: aspect },
+                    },
+                  }),
+                },
+              );
+              if (res.ok) {
                 const json = (await res.json()) as {
                   candidates?: Array<{ content?: { parts?: Array<{ inlineData?: { data?: string } }> } }>;
                 };
                 const data = json.candidates?.[0]?.content?.parts?.find((p) => p.inlineData?.data)
                   ?.inlineData?.data;
-                if (data) {
-                  bytes = base64ToBytes(data);
-                  break;
-                }
-              } catch (error) {
-                console.error("XOVA gemini image error", model, error);
+                if (data) bytes = base64ToBytes(data);
+              } else {
+                console.error("XOVA image gemini", res.status);
               }
+            } catch (error) {
+              console.error("XOVA image gemini error", error);
             }
           }
 
-          // 2) Fallback: Lovable AI Gateway.
-          if (!bytes && apiKey) {
-            const res = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
-              method: "POST",
-              headers: {
-                "Content-Type": "application/json",
-                "Lovable-API-Key": apiKey as string,
-                "X-Lovable-AIG-SDK": "fetch",
-              },
-              body: JSON.stringify({
-                model:
-                  quality === "premium"
-                    ? "google/gemini-3-pro-image"
-                    : "google/gemini-3.1-flash-image",
-                messages: [{ role: "user", content: prompt }],
-                modalities: ["image", "text"],
-                image_config: { aspect_ratio: aspect },
-              }),
-            });
-            if (!res.ok) {
-              gatewayStatus = res.status;
-              console.error("XOVA image failure", res.status, (await res.text()).slice(0, 400));
-            } else {
-              const json = (await res.json()) as {
-                choices?: Array<{ message?: { images?: Array<{ image_url?: { url?: string } }> } }>;
-              };
-              const dataUrl = json.choices?.[0]?.message?.images?.[0]?.image_url?.url;
-              if (dataUrl?.startsWith("data:")) {
-                bytes = base64ToBytes(dataUrl.slice(dataUrl.indexOf(",") + 1));
-              } else if (dataUrl) {
-                const downloaded = await fetch(dataUrl);
-                if (downloaded.ok) bytes = new Uint8Array(await downloaded.arrayBuffer());
+          // 4) Last resort: Pollinations with the exact translated prompt (no extra text).
+          if (!bytes) {
+            try {
+              const [width, height] =
+                aspect === "3:2" ? [1024, 680] : aspect === "2:3" ? [680, 1024] : [1024, 1024];
+              const seed = Math.floor(Math.random() * 1000000);
+              const res = await fetch(
+                `https://image.pollinations.ai/prompt/${encodeURIComponent(english)}?width=${width}&height=${height}&nologo=true&seed=${seed}`,
+              );
+              const type = res.headers.get("content-type") ?? "";
+              if (res.ok && type.startsWith("image/")) {
+                const buf = new Uint8Array(await res.arrayBuffer());
+                if (buf.length > 1000) bytes = buf;
               }
+            } catch (error) {
+              console.error("XOVA image pollinations error", error);
             }
           }
 
           if (!bytes) {
-            void gatewayStatus;
-            return Response.json({ error: "err.imageBlocked" }, { status: 502 });
+            return Response.json(
+              { error: lastStatus === 429 ? "err.rate" : "err.imageFailed" },
+              { status: 502 },
+            );
           }
 
           const isJpeg = bytes[0] === 0xff && bytes[1] === 0xd8;
