@@ -188,7 +188,7 @@ const en: Dict = {
   "err.tooLarge": "That file is too large (8 MB max).",
   "err.voiceUnsupported": "Voice input isn't supported in this browser.",
   "err.speechUnsupported": "Read aloud isn't supported in this browser.",
-  "err.imageFailed": "Image generation failed. Please try again.",
+  "err.imageFailed": "We couldn't create this image. Please try again, or rephrase your description.",
   "err.imageRate": "You reached the image limit for this hour. Try again later.",
   "err.imageBlocked": "This image couldn't be created right now. Try again, or reword the description a little.",
   "err.searchOffline":
@@ -389,7 +389,7 @@ const ar: Dict = {
   "err.tooLarge": "الملف كبير جدًا (8 ميغابايت كحد أقصى).",
   "err.voiceUnsupported": "الإدخال الصوتي غير مدعوم في هذا المتصفح.",
   "err.speechUnsupported": "القراءة الصوتية غير مدعومة في هذا المتصفح.",
-  "err.imageFailed": "فشل توليد الصورة. حاول مرة أخرى.",
+  "err.imageFailed": "معرفناش نعمل الصورة دي. جرّب تاني أو اكتب الوصف بطريقة مختلفة.",
   "err.imageRate": "وصلت إلى حد الصور لهذه الساعة. حاول لاحقًا.",
   "err.imageBlocked": "مقدرناش نعمل الصورة دي دلوقتي. جرّب تاني أو غيّر الوصف شوية.",
   "err.searchOffline": "البحث المباشر على الويب غير موصول، لذلك أجاب XOVA من معرفته دون مصادر.",
