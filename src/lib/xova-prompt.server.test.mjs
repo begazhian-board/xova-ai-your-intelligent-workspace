@@ -1,5 +1,5 @@
 import { describe, expect, it } from "bun:test";
-import { buildSystemPrompt } from "./xova-prompt.server";
+import { buildSystemPrompt } from "./xova-prompt.server.ts";
 
 describe("buildSystemPrompt current date", () => {
   it("provides the authoritative current UTC date to the assistant", () => {
