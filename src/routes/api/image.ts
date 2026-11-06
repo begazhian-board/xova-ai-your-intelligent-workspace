@@ -198,25 +198,6 @@ export const Route = createFileRoute("/api/image")({
             }
           }
 
-          // 4) Last resort: Pollinations with the exact translated prompt (no extra text).
-          if (!bytes) {
-            try {
-              const [width, height] =
-                aspect === "3:2" ? [1024, 680] : aspect === "2:3" ? [680, 1024] : [1024, 1024];
-              const seed = Math.floor(Math.random() * 1000000);
-              const res = await fetch(
-                `https://image.pollinations.ai/prompt/${encodeURIComponent(english)}?width=${width}&height=${height}&nologo=true&seed=${seed}`,
-              );
-              const type = res.headers.get("content-type") ?? "";
-              if (res.ok && type.startsWith("image/")) {
-                const buf = new Uint8Array(await res.arrayBuffer());
-                if (buf.length > 1000) bytes = buf;
-              }
-            } catch (error) {
-              console.error("XOVA image pollinations error", error);
-            }
-          }
-
           if (!bytes) {
             return Response.json(
               { error: lastStatus === 429 ? "err.rate" : "err.imageFailed" },
