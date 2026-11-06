@@ -60,7 +60,9 @@ export const Route = createFileRoute("/api/image")({
         if (!user) return Response.json({ error: "err.auth" }, { status: 401 });
 
         const apiKey = process.env["LOVABLE_API_KEY"];
-        if (!apiKey) return Response.json({ error: "err.unavailable" }, { status: 500 });
+        if (!apiKey && !process.env["HUGGINGFACE_API_KEY"] && !process.env["GEMINI_API_KEY"]) {
+          return Response.json({ error: "err.unavailable" }, { status: 500 });
+        }
 
         let body: WireBody;
         try {
