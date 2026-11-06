@@ -60,7 +60,9 @@ export const Route = createFileRoute("/api/image")({
         if (!user) return Response.json({ error: "err.auth" }, { status: 401 });
 
         const apiKey = process.env["LOVABLE_API_KEY"];
-        if (!apiKey) return Response.json({ error: "err.unavailable" }, { status: 500 });
+        if (!apiKey && !process.env["HUGGINGFACE_API_KEY"] && !process.env["GEMINI_API_KEY"]) {
+          return Response.json({ error: "err.unavailable" }, { status: 500 });
+        }
 
         let body: WireBody;
         try {
@@ -195,25 +197,6 @@ export const Route = createFileRoute("/api/image")({
               }
             } catch (error) {
               console.error("XOVA image gemini error", error);
-            }
-          }
-
-          // 4) Last resort: Pollinations with the exact translated prompt (no extra text).
-          if (!bytes) {
-            try {
-              const [width, height] =
-                aspect === "3:2" ? [1024, 680] : aspect === "2:3" ? [680, 1024] : [1024, 1024];
-              const seed = Math.floor(Math.random() * 1000000);
-              const res = await fetch(
-                `https://image.pollinations.ai/prompt/${encodeURIComponent(english)}?width=${width}&height=${height}&nologo=true&seed=${seed}`,
-              );
-              const type = res.headers.get("content-type") ?? "";
-              if (res.ok && type.startsWith("image/")) {
-                const buf = new Uint8Array(await res.arrayBuffer());
-                if (buf.length > 1000) bytes = buf;
-              }
-            } catch (error) {
-              console.error("XOVA image pollinations error", error);
             }
           }
 

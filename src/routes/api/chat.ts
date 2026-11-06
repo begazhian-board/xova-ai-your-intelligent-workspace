@@ -78,6 +78,13 @@ async function searchWeb(query: string) {
     }));
 }
 
+/** Search live sources for questions whose answers commonly change over time. */
+function needsLiveSearch(query: string) {
+  return /\b(today|current|currently|latest|recent|right now|this week|this month|this year|news|price|weather|exchange rate|stock|score|election|president|release|version|update|202[5-9])\b|(?:اليوم|حالي(?:اً|ا)?|الآن|دلوقتي|أحدث|احدث|آخر|اخر|جديد|أخبار|اخبار|سعر|أسعار|اسعار|طقس|الطقس|سعر الصرف|نتيجة|مباراة|انتخابات|رئيس|إصدار|اصدار|تحديث|٢٠٢[٥-٩]|202[5-9])/i.test(
+    query,
+  );
+}
+
 function toModelMessages(messages: WireMessage[]): ModelMessage[] {
   return messages.map((message) => {
     if (message.role === "assistant") {
@@ -139,7 +146,7 @@ export const Route = createFileRoute("/api/chat")({
         const hasImage = (last.attachments ?? []).some((a) => a.kind === "image");
 
         let sources: Array<{ title: string; url: string; snippet: string }> | null = null;
-        if (mode === "research") {
+        if (mode === "research" || needsLiveSearch(last.content)) {
           try {
             sources = await searchWeb(last.content.slice(0, 400));
           } catch {
