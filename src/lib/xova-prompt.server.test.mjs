@@ -24,4 +24,17 @@ describe("buildSystemPrompt current date", () => {
     expect(prompt).toContain("The current date is 2026-11-06 (UTC)");
     expect(prompt).toContain("never claim the year is 2024");
   });
+
+  it("instructs the assistant to use grounded search for current and political facts", () => {
+    const prompt = buildSystemPrompt({
+      mode: "research",
+      personality: "friendly",
+      responseStyle: "balanced",
+      language: "ar",
+      searchAvailable: true,
+    });
+
+    expect(prompt).toContain("Search whenever the question depends on current, recent, or politically changing information");
+    expect(prompt).toContain("never invent citations or URLs");
+  });
 });
