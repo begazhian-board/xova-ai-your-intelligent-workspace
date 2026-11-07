@@ -8,3 +8,6 @@
 > Commits you push to the connected branch sync back to Lovable and show up in
 > the editor, so keep the branch in a working state.
 <!-- LOVABLE:END -->
+
+## Architecture decisions
+- Chat generation and Google Search grounding use the direct Google Gemini API with server-held `GEMINI_API_KEY`, avoiding Lovable AI Gateway usage as requested.

@@ -1,29 +1,11 @@
 import type { ModeId } from "./xova";
 
-/** Server-side model routing. The UI never sees these ids. */
-export function routeModel(mode: ModeId, hasImage: boolean): string {
-  if (hasImage) return "google/gemini-3.8-flash";
-  switch (mode) {
-    case "reasoning":
-    case "engineering":
-      return "google/gemini-3.1-pro-preview";
-    case "research":
-      return "google/gemini-3.8-flash";
-    case "coding":
-      return "google/gemini-3.8-flash";
-    case "vision":
-      return "google/gemini-3.8-flash";
-    default:
-      return "google/gemini-3.8-flash";
-  }
-}
-
 const MODE_PROMPT: Record<ModeId, string> = {
   instant: "Answer quickly and directly. Keep it useful and easy to scan.",
   reasoning:
     "Work through the problem carefully and rigorously before answering. Present the final reasoning as a clear, structured explanation — never expose raw internal scratch work.",
   research:
-    "Answer in a structured, research-oriented way: key findings first, then supporting detail. Only cite sources that were actually provided to you in this request. Never invent URLs, titles or citations.",
+    "Answer in a structured, research-oriented way: key findings first, then supporting detail. Use Google Search grounding for current facts and cite only sources actually returned by search. Never invent URLs, titles or citations.",
   vision:
     "Analyse any attached images precisely and describe only what is actually visible. If something is unclear or unreadable, say so.",
   coding:
@@ -84,6 +66,10 @@ export function buildSystemPrompt(config: PromptConfig, now = new Date()): strin
   if (!config.searchAvailable) {
     parts.push(
       "You have NO live web access in this deployment. Answer from your own knowledge, mention when information may be out of date, and never present invented links or citations as sources.",
+    );
+  } else {
+    parts.push(
+      "Google Search grounding is available. Search whenever the question depends on current, recent, or politically changing information. Use returned sources for factual claims and never invent citations or URLs.",
     );
   }
 

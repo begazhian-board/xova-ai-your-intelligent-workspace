@@ -1,9 +1,8 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { createClient } from "@supabase/supabase-js";
 import { streamText, type ModelMessage } from "ai";
-import { createLovableAiGatewayProvider, getLovableAiGatewayRunId } from "@/lib/ai-gateway.server";
-import { buildSystemPrompt, routeModel } from "@/lib/xova-prompt.server";
-import { createGeminiProvider, GEMINI_MODEL, GEMINI_FALLBACK_MODELS } from "@/lib/gemini.server";
+import { buildSystemPrompt } from "@/lib/xova-prompt.server";
+import { createGeminiProvider, GEMINI_MODEL } from "@/lib/gemini.server";
 import type { ModeId } from "@/lib/xova";
 
 interface WireAttachment {
@@ -50,41 +49,6 @@ async function authenticate(request: Request) {
   return data.user;
 }
 
-/** Real web search — only runs when a search provider key is configured. */
-async function searchWeb(query: string) {
-  const key = process.env["TAVILY_API_KEY"];
-  if (!key) return null;
-  const res = await fetch("https://api.tavily.com/search", {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({
-      api_key: key,
-      query,
-      max_results: 6,
-      search_depth: "advanced",
-      include_answer: false,
-    }),
-  });
-  if (!res.ok) return null;
-  const json = (await res.json()) as {
-    results?: Array<{ title?: string; url?: string; content?: string }>;
-  };
-  return (json.results ?? [])
-    .filter((r) => typeof r.url === "string")
-    .map((r) => ({
-      title: r.title?.trim() || new URL(r.url!).hostname,
-      url: r.url!,
-      snippet: r.content?.slice(0, 400) ?? "",
-    }));
-}
-
-/** Search live sources for questions whose answers commonly change over time. */
-function needsLiveSearch(query: string) {
-  return /\b(today|current|currently|latest|recent|right now|this week|this month|this year|news|price|weather|exchange rate|stock|score|election|president|release|version|update|202[5-9])\b|(?:اليوم|حالي(?:اً|ا)?|الآن|دلوقتي|أحدث|احدث|آخر|اخر|جديد|أخبار|اخبار|سعر|أسعار|اسعار|طقس|الطقس|سعر الصرف|نتيجة|مباراة|انتخابات|رئيس|إصدار|اصدار|تحديث|٢٠٢[٥-٩]|202[5-9])/i.test(
-    query,
-  );
-}
-
 function toModelMessages(messages: WireMessage[]): ModelMessage[] {
   return messages.map((message) => {
     if (message.role === "assistant") {
@@ -124,8 +88,8 @@ export const Route = createFileRoute("/api/chat")({
           return Response.json({ error: "err.auth" }, { status: 401 });
         }
 
-        const apiKey = process.env["LOVABLE_API_KEY"];
-        if (!apiKey && !process.env["GEMINI_API_KEY"]) {
+        const geminiKey = process.env["GEMINI_API_KEY"];
+        if (!geminiKey) {
           return Response.json({ error: "err.unavailable" }, { status: 500 });
         }
 
@@ -143,26 +107,7 @@ export const Route = createFileRoute("/api/chat")({
 
         const mode: ModeId = body.mode ?? "instant";
         const last = messages[messages.length - 1]!;
-        const hasImage = (last.attachments ?? []).some((a) => a.kind === "image");
-
-        let sources: Array<{ title: string; url: string; snippet: string }> | null = null;
-        if (mode === "research" || needsLiveSearch(last.content)) {
-          try {
-            sources = await searchWeb(last.content.slice(0, 400));
-          } catch {
-            sources = null;
-          }
-        }
-
         const modelMessages = toModelMessages(messages);
-        if (sources && sources.length > 0) {
-          modelMessages.splice(modelMessages.length - 1, 0, {
-            role: "system",
-            content: `Live web search results for the user's request. Use only these as sources and cite them by title where relevant:\n${sources
-              .map((s, i) => `[${i + 1}] ${s.title} — ${s.url}\n${s.snippet}`)
-              .join("\n\n")}`,
-          });
-        }
 
         const system = buildSystemPrompt({
           mode,
@@ -170,107 +115,69 @@ export const Route = createFileRoute("/api/chat")({
           customPersonality: body.customPersonality ?? null,
           responseStyle: body.responseStyle ?? "balanced",
           language: body.language ?? "en",
-          searchAvailable: Boolean(geminiKeyPresent() || (sources && sources.length > 0)),
+          searchAvailable: true,
         });
 
-        const geminiKey = process.env["GEMINI_API_KEY"];
-        const gemini = geminiKey ? createGeminiProvider(geminiKey) : null;
-        const gateway = apiKey
-          ? createLovableAiGatewayProvider(apiKey, getLovableAiGatewayRunId(request))(
-              routeModel(mode, hasImage),
-            )
-          : null;
-        const geminiModels = gemini
-          ? [GEMINI_MODEL, ...GEMINI_FALLBACK_MODELS].map((id) => gemini(id))
-          : [];
+        const google = createGeminiProvider(geminiKey);
+        const gemini = google(GEMINI_MODEL);
 
         try {
-          const start = (
-            provider: "gemini" | "gateway",
-            modelIndex: number,
-            withSearch: boolean,
-            signal: AbortSignal,
-          ) =>
+          const start = (signal: AbortSignal) =>
             streamText({
-              model: (provider === "gemini" ? geminiModels[modelIndex]! : gateway!) as never,
-              system:
-                withSearch && provider === "gemini"
-                  ? `${system}\nYou can use Google Search for live, current information (news, prices, dates, recent events). Use it whenever the answer depends on up-to-date facts.`
-                  : system,
+              model: gemini as never,
+              system,
               messages: modelMessages,
               abortSignal: signal,
               maxRetries: 0,
-              ...(withSearch && provider === "gemini" && gemini
-                ? { tools: { google_search: gemini.tools.googleSearch({}) as never } }
-                : {}),
+              tools: { google_search: google.tools.googleSearch({}) as never },
             });
 
           const encoder = new TextEncoder();
-          const prelude = `${SOURCES_PREFIX}${JSON.stringify(sources ?? [])}\n`;
-          const collected: Array<{ title: string; url: string; snippet: string }> = [...(sources ?? [])];
+          const prelude = `${SOURCES_PREFIX}[]\n`;
+          const collected: Array<{ title: string; url: string; snippet: string }> = [];
 
           const stream = new ReadableStream<Uint8Array>({
             async start(controller) {
               controller.enqueue(encoder.encode(prelude));
               let errorCode: string | null = null;
               let wroteText = false;
-              // Lovable gateway first (fast); free Gemini models are the fallback.
-              const attempts: Array<{ provider: "gemini" | "gateway"; modelIndex: number; withSearch: boolean }> = [];
-              if (gateway) attempts.push({ provider: "gateway", modelIndex: 0, withSearch: false });
-              geminiModels.forEach((_, modelIndex) => {
-                if (modelIndex === 0) attempts.push({ provider: "gemini", modelIndex, withSearch: true });
-                attempts.push({ provider: "gemini", modelIndex, withSearch: false });
-              });
-              for (const attempt of attempts) {
-                errorCode = null;
-                const local = new AbortController();
-                const onAbort = () => local.abort();
-                request.signal.addEventListener("abort", onAbort);
-                // Gemini: give up quickly if no first token within 6s.
-                let timer: ReturnType<typeof setTimeout> | undefined =
-                  attempt.provider === "gemini" ? setTimeout(() => local.abort(), 6000) : undefined;
-                const clearTimer = () => {
-                  if (timer) clearTimeout(timer);
-                  timer = undefined;
-                };
-                try {
-                  for await (const part of start(attempt.provider, attempt.modelIndex, attempt.withSearch, local.signal).fullStream) {
-                    if (part.type === "text-delta") {
-                      if (part.text) {
-                        clearTimer();
-                        wroteText = true;
-                        controller.enqueue(encoder.encode(part.text));
-                      }
-                    } else if (part.type === "source" && part.sourceType === "url") {
-                      if (!collected.some((s) => s.url === part.url)) {
-                        let title = part.title?.trim() || "";
-                        try {
-                          title ||= new URL(part.url).hostname;
-                        } catch {
-                          /* keep */
-                        }
-                        collected.push({ title, url: part.url, snippet: "" });
-                      }
-                    } else if (part.type === "error") {
-                      throw part.error;
+              const local = new AbortController();
+              const onAbort = () => local.abort();
+              request.signal.addEventListener("abort", onAbort);
+              try {
+                for await (const part of start(local.signal).fullStream) {
+                  if (part.type === "text-delta") {
+                    if (part.text) {
+                      wroteText = true;
+                      controller.enqueue(encoder.encode(part.text));
                     }
+                  } else if (part.type === "source" && part.sourceType === "url") {
+                    if (!collected.some((source) => source.url === part.url)) {
+                      let title = part.title?.trim() || "";
+                      try {
+                        title ||= new URL(part.url).hostname;
+                      } catch {
+                        /* keep */
+                      }
+                      collected.push({ title, url: part.url, snippet: "" });
+                    }
+                  } else if (part.type === "error") {
+                    throw part.error;
                   }
-                  if (!wroteText) errorCode = "err.unavailable";
-                } catch (error) {
-                  if (request.signal.aborted) {
-                    controller.close();
-                    return;
-                  }
-                  console.error("XOVA stream error", attempt.provider, attempt.withSearch ? "(search)" : "", error);
-                  const status =
-                    (error as { statusCode?: number })?.statusCode ??
-                    (error as { lastError?: { statusCode?: number } })?.lastError?.statusCode;
-                  errorCode = status === 429 ? "err.rate" : "err.unavailable";
-                } finally {
-                  clearTimer();
-                  request.signal.removeEventListener("abort", onAbort);
                 }
-                if (!errorCode || wroteText) break;
+                if (!wroteText) errorCode = "err.unavailable";
+              } catch (error) {
+                if (request.signal.aborted) {
+                  controller.close();
+                  return;
+                }
+                console.error("XOVA Gemini stream error", error);
+                const status =
+                  (error as { statusCode?: number })?.statusCode ??
+                  (error as { lastError?: { statusCode?: number } })?.lastError?.statusCode;
+                errorCode = status === 429 ? "err.rate" : "err.unavailable";
+              } finally {
+                request.signal.removeEventListener("abort", onAbort);
               }
               controller.enqueue(
                 encoder.encode(`${TRAILER_PREFIX}${JSON.stringify({ sources: collected, error: errorCode })}`),
@@ -283,7 +190,7 @@ export const Route = createFileRoute("/api/chat")({
             headers: {
               "Content-Type": "text/plain; charset=utf-8",
               "Cache-Control": "no-store",
-              "X-Xova-Search": gemini || (sources && sources.length > 0) ? "live" : "unavailable",
+              "X-Xova-Search": "live",
             },
           });
         } catch (error) {
