@@ -118,17 +118,18 @@ export const Route = createFileRoute("/api/chat")({
           searchAvailable: true,
         });
 
-        const gemini = createGeminiProvider(geminiKey)(GEMINI_MODEL);
+        const google = createGeminiProvider(geminiKey);
+        const gemini = google(GEMINI_MODEL);
 
         try {
           const start = (signal: AbortSignal) =>
             streamText({
-              model: gemini,
+              model: gemini as never,
               system,
               messages: modelMessages,
               abortSignal: signal,
               maxRetries: 0,
-              tools: { google_search: createGeminiProvider(geminiKey).tools.googleSearch({}) as never },
+              tools: { google_search: google.tools.googleSearch({}) as never },
             });
 
           const encoder = new TextEncoder();
