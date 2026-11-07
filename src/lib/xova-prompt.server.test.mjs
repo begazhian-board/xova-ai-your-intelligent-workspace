@@ -1,5 +1,12 @@
 import { describe, expect, it } from "bun:test";
+import { GEMINI_MODEL } from "./gemini.server.ts";
 import { buildSystemPrompt } from "./xova-prompt.server.ts";
+
+describe("Gemini chat model", () => {
+  it("uses gemini-2.5-flash for direct chat requests", () => {
+    expect(GEMINI_MODEL).toBe("gemini-2.5-flash");
+  });
+});
 
 describe("buildSystemPrompt current date", () => {
   it("provides the authoritative current UTC date to the assistant", () => {
