@@ -193,6 +193,14 @@ const en: Dict = {
   "err.imageBlocked": "This image couldn't be created right now. Try again, or reword the description a little.",
   "err.searchOffline":
     "Live web search isn't connected, so XOVA answered from its own knowledge without citations.",
+  "err.searchFallbackUnavailable":
+    "Google Search could not be reached, so this reply has no verified web sources.",
+  "err.searchNoSources":
+    "The answer is available, but Google Search returned no verifiable source links for this request.",
+  "err.gatewayCredits":
+    "Gemini is unavailable and the backup AI service has no credits available. Restore Gemini access or add workspace AI credits.",
+  "err.gatewayConfig": "Gemini and the backup AI service could not be reached. Check the server configuration.",
+  "err.gatewayBlocked": "Gemini and the backup AI service are currently blocked for this workspace.",
   "err.stopped": "Generation stopped.",
 
   "toast.saved": "Saved",
@@ -393,6 +401,11 @@ const ar: Dict = {
   "err.imageRate": "وصلت إلى حد الصور لهذه الساعة. حاول لاحقًا.",
   "err.imageBlocked": "مقدرناش نعمل الصورة دي دلوقتي. جرّب تاني أو غيّر الوصف شوية.",
   "err.searchOffline": "البحث المباشر على الويب غير موصول، لذلك أجاب XOVA من معرفته دون مصادر.",
+  "err.searchFallbackUnavailable": "تعذّر الوصول إلى بحث Google، لذلك لا تتضمن هذه الإجابة مصادر ويب موثقة.",
+  "err.searchNoSources": "الإجابة متاحة، لكن بحث Google لم يُرجع روابط مصادر يمكن التحقق منها لهذا الطلب.",
+  "err.gatewayCredits": "Gemini غير متاح وخدمة الذكاء الاصطناعي الاحتياطية لا تملك رصيدًا متاحًا. أعد تفعيل Gemini أو أضف رصيد مساحة العمل.",
+  "err.gatewayConfig": "تعذّر الوصول إلى Gemini والخدمة الاحتياطية. تحقق من إعدادات الخادم.",
+  "err.gatewayBlocked": "Gemini والخدمة الاحتياطية محجوبان حاليًا عن مساحة العمل هذه.",
   "err.stopped": "تم إيقاف التوليد.",
 
   "toast.saved": "تم الحفظ",

@@ -15,6 +15,9 @@ export function shouldTryChatFallback(hasVisibleText: boolean) {
   return !hasVisibleText;
 }
 
-export function shouldShowSearchUnavailableNotice(mode: ModeId, sourceCount: number) {
-  return (mode === "reasoning" || mode === "research") && sourceCount === 0;
+export function searchNoticeCode(mode: ModeId, sourceCount: number, searchUnavailable: boolean) {
+  if (mode !== "reasoning" && mode !== "research") return null;
+  if (searchUnavailable) return "err.searchFallbackUnavailable";
+  if (sourceCount === 0) return "err.searchNoSources";
+  return null;
 }
