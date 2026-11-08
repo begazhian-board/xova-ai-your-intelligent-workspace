@@ -59,10 +59,9 @@ export const Route = createFileRoute("/api/image")({
         const user = await authenticate(request);
         if (!user) return Response.json({ error: "err.auth" }, { status: 401 });
 
-        const apiKey = process.env["LOVABLE_API_KEY"];
-        if (!apiKey && !process.env["HUGGINGFACE_API_KEY"] && !process.env["GEMINI_API_KEY"]) {
-          return Response.json({ error: "err.unavailable" }, { status: 500 });
-        }
+        const geminiKey = process.env["GEMINI_API_KEY"];
+        const hfKey = process.env["HUGGINGFACE_API_KEY"];
+        if (!geminiKey && !hfKey) return Response.json({ error: "err.unavailable" }, { status: 500 });
 
         let body: WireBody;
         try {
@@ -94,110 +93,43 @@ export const Route = createFileRoute("/api/image")({
         try {
           let bytes: Uint8Array | null = null;
           let lastStatus: number | undefined;
-          // Faithful English translation of the user's own words — nothing added.
           const english = await translateToEnglish(prompt);
 
-          // 1) Primary: Lovable AI Gateway.
-          if (apiKey) {
+          // Primary: direct Gemini image API.
+          if (geminiKey) {
             try {
-              const res = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
+              const imageModel = quality === "premium" ? "gemini-3-pro-image" : "gemini-3.1-flash-image";
+              const res = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/${imageModel}:generateContent`, {
                 method: "POST",
-                headers: {
-                  "Content-Type": "application/json",
-                  "Lovable-API-Key": apiKey,
-                  "X-Lovable-AIG-SDK": "fetch",
-                },
+                headers: { "Content-Type": "application/json", "x-goog-api-key": geminiKey },
                 body: JSON.stringify({
-                  model:
-                    quality === "premium"
-                      ? "google/gemini-3-pro-image"
-                      : "google/gemini-3.1-flash-image",
-                  messages: [{ role: "user", content: english }],
-                  modalities: ["image", "text"],
-                  image_config: { aspect_ratio: aspect },
+                  contents: [{ parts: [{ text: english }] }],
+                  generationConfig: { responseModalities: ["IMAGE", "TEXT"], imageConfig: { aspectRatio: aspect } },
                 }),
               });
-              if (!res.ok) {
-                lastStatus = res.status;
-                console.error("XOVA image gateway", res.status, (await res.text()).slice(0, 300));
-              } else {
-                const json = (await res.json()) as {
-                  choices?: Array<{ message?: { images?: Array<{ image_url?: { url?: string } }> } }>;
-                };
-                const dataUrl = json.choices?.[0]?.message?.images?.[0]?.image_url?.url;
-                if (dataUrl?.startsWith("data:")) {
-                  bytes = base64ToBytes(dataUrl.slice(dataUrl.indexOf(",") + 1));
-                } else if (dataUrl) {
-                  const downloaded = await fetch(dataUrl);
-                  if (downloaded.ok) bytes = new Uint8Array(await downloaded.arrayBuffer());
-                }
-              }
-            } catch (error) {
-              console.error("XOVA image gateway error", error);
-            }
-          }
-
-          // 2) Hugging Face (only when HUGGINGFACE_API_KEY is set).
-          const hfKey = process.env["HUGGINGFACE_API_KEY"];
-          if (!bytes && hfKey) {
-            try {
-              const [width, height] =
-                aspect === "3:2" ? [1216, 832] : aspect === "2:3" ? [832, 1216] : [1024, 1024];
-              const res = await fetch(
-                "https://router.huggingface.co/hf-inference/models/black-forest-labs/FLUX.1-schnell",
-                {
-                  method: "POST",
-                  headers: {
-                    Authorization: `Bearer ${hfKey}`,
-                    "Content-Type": "application/json",
-                    Accept: "image/png",
-                  },
-                  body: JSON.stringify({ inputs: english, parameters: { width, height } }),
-                },
-              );
-              const type = res.headers.get("content-type") ?? "";
-              if (res.ok && type.startsWith("image/")) {
-                bytes = new Uint8Array(await res.arrayBuffer());
-              } else {
-                lastStatus = res.status;
-                console.error("XOVA image hf", res.status, (await res.text()).slice(0, 200));
-              }
-            } catch (error) {
-              console.error("XOVA image hf error", error);
-            }
-          }
-
-          // 3) Gemini key directly.
-          const geminiKey = process.env["GEMINI_API_KEY"];
-          if (!bytes && geminiKey) {
-            try {
-              const res = await fetch(
-                "https://generativelanguage.googleapis.com/v1beta/models/gemini-3.1-flash-image:generateContent",
-                {
-                  method: "POST",
-                  headers: { "Content-Type": "application/json", "x-goog-api-key": geminiKey },
-                  body: JSON.stringify({
-                    contents: [{ parts: [{ text: english }] }],
-                    generationConfig: {
-                      responseModalities: ["IMAGE", "TEXT"],
-                      imageConfig: { aspectRatio: aspect },
-                    },
-                  }),
-                },
-              );
               if (res.ok) {
                 const json = (await res.json()) as {
                   candidates?: Array<{ content?: { parts?: Array<{ inlineData?: { data?: string } }> } }>;
                 };
-                const data = json.candidates?.[0]?.content?.parts?.find((p) => p.inlineData?.data)
-                  ?.inlineData?.data;
+                const data = json.candidates?.[0]?.content?.parts?.find((part) => part.inlineData?.data)?.inlineData?.data;
                 if (data) bytes = base64ToBytes(data);
-              } else {
-                console.error("XOVA image gemini", res.status);
-              }
-            } catch (error) {
-              console.error("XOVA image gemini error", error);
-            }
+              } else { lastStatus = res.status; console.error("XOVA image Gemini", res.status); }
+            } catch (error) { console.error("XOVA image Gemini error", error); }
+          }
+
+          // Optional backup: Hugging Face only when its key is configured.
+          if (!bytes && hfKey) {
+            try {
+              const [width, height] = aspect === "3:2" ? [1216, 832] : aspect === "2:3" ? [832, 1216] : [1024, 1024];
+              const res = await fetch("https://router.huggingface.co/hf-inference/models/black-forest-labs/FLUX.1-schnell", {
+                method: "POST",
+                headers: { Authorization: `Bearer ${hfKey}`, "Content-Type": "application/json", Accept: "image/png" },
+                body: JSON.stringify({ inputs: english, parameters: { width, height } }),
+              });
+              const type = res.headers.get("content-type") ?? "";
+              if (res.ok && type.startsWith("image/")) bytes = new Uint8Array(await res.arrayBuffer());
+              else { lastStatus = res.status; console.error("XOVA image Hugging Face", res.status, (await res.text()).slice(0, 200)); }
+            } catch (error) { console.error("XOVA image Hugging Face error", error); }
           }
 
           if (!bytes) {

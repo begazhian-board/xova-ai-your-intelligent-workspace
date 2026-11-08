@@ -1381,3 +1381,12 @@ cd <repository-name>
 npm i
 npm run dev
 ```
+
+
+## Server-side AI configuration
+
+- `GEMINI_API_KEY`: required for direct Gemini chat and primary image generation.
+- `TAVILY_API_KEY`: enables live web search in Research mode and when a user explicitly asks for current or online information.
+- `HUGGINGFACE_API_KEY`: optional backup for image generation if direct Gemini image generation is unavailable.
+
+Set these as server environment secrets in your hosting provider. Do not commit real `.env` files or API keys. A placeholder template is available in `.env.example`.

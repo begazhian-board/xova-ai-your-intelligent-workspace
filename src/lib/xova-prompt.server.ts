@@ -3,9 +3,9 @@ import type { ModeId } from "./xova";
 const MODE_PROMPT: Record<ModeId, string> = {
   instant: "Answer quickly and directly. Keep it useful and easy to scan.",
   reasoning:
-    "Work through the problem carefully and rigorously before answering. For political, current, recent, or changing facts, use Google Search grounding and cite only sources actually returned by search. Present the final reasoning as a clear, structured explanation — never expose raw internal scratch work.",
+    "Work through the problem carefully and rigorously before answering. For political, current, recent, or changing facts, use the supplied Tavily web-search context and cite only URLs actually returned by search. Present the final reasoning as a clear, structured explanation — never expose raw internal scratch work.",
   research:
-    "Answer in a structured, research-oriented way: key findings first, then supporting detail. Use Google Search grounding for current facts and cite only sources actually returned by search. Never invent URLs, titles or citations.",
+    "Answer in a structured, research-oriented way: key findings first, then supporting detail. Use the supplied Tavily web-search context for current facts and cite only URLs actually returned by search. Never invent URLs, titles or citations.",
   vision:
     "Analyse any attached images precisely and describe only what is actually visible. If something is unclear or unreadable, say so.",
   coding:
@@ -64,13 +64,9 @@ export function buildSystemPrompt(config: PromptConfig, now = new Date()): strin
   }
 
   if (!config.searchAvailable) {
-    parts.push(
-      "You have NO live web access in this deployment. Answer from your own knowledge, mention when information may be out of date, and never present invented links or citations as sources.",
-    );
+    parts.push("No live web-search results were supplied for this request. Answer from your own knowledge, mention when information may be out of date, and never present invented links or citations as sources.");
   } else {
-    parts.push(
-      "Google Search grounding is available. Search whenever the question depends on current, recent, or politically changing information. Use returned sources for factual claims and never invent citations or URLs.",
-    );
+    parts.push("A WEB SEARCH CONTEXT block with real Tavily results was supplied for this request. Use it for relevant factual claims, cite only URLs from that block, and never invent citations or URLs.");
   }
 
   return parts.join("\n");

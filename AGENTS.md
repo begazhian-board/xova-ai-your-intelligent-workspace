@@ -10,4 +10,4 @@
 <!-- LOVABLE:END -->
 
 ## Architecture decisions
-- Chat uses server-held direct Google Gemini for native Google Search grounding and verified citation URLs, with a Lovable AI Gateway text-only fallback when Gemini fails before emitting an answer; never attribute Gemini citations to fallback output.
+- Chat uses server-held direct Google Gemini for answers and server-side Tavily search results for web research and verified source URLs. There is no Lovable AI Gateway fallback.

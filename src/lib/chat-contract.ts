@@ -1,27 +1,17 @@
 import type { ModeId } from "@/lib/xova";
 
-export type ChatProviderKind = "gemini" | "gateway";
+const SEARCH_INTENT =
+  /\b(search|look\s*up|find online|on the web|web search|latest|current|today|right now|recent|news|sources?|price|weather|exchange rate|release|version)\b|ابحث|بحث|دور|على الانترنت|عبر الانترنت|الإنترنت|الانترنت|اخر|آخر|اليوم|دلوقتي|حالي|حديث|مؤخر|أخبار|اخبار|مصادر|روابط|سعر|اسعار|أسعار|تحديث/i;
 
-export function chatProviderErrorCode(provider: ChatProviderKind, status?: number) {
-  if (status === 429) return "err.rate";
-  if (provider === "gateway" && status === 402) return "err.gatewayCredits";
-  if (provider === "gateway" && status === 401) return "err.gatewayConfig";
-  if (provider === "gateway" && status === 403) return "err.gatewayBlocked";
-  if (status && status >= 500) return "err.unavailable";
-  return "err.unavailable";
+export function shouldSearchWeb(mode: ModeId, text: string) {
+  return mode === "research" || SEARCH_INTENT.test(text);
 }
-
-export function shouldTryChatFallback(hasVisibleText: boolean) {
-  return !hasVisibleText;
+export function chatProviderErrorCode(status?: number) {
+  return status === 429 ? "err.rate" : "err.unavailable";
 }
-
-export function shouldUseGatewayFallback(status?: number) {
-  return status === undefined || status === 401 || status === 429 || (status >= 500 && status <= 599);
-}
-
-export function searchNoticeCode(mode: ModeId, sourceCount: number, searchUnavailable: boolean) {
-  if (mode !== "reasoning" && mode !== "research") return null;
-  if (searchUnavailable) return "err.searchFallbackUnavailable";
-  if (sourceCount === 0) return "err.searchNoSources";
+export function searchNoticeCode(requested: boolean, count: number, failed: boolean) {
+  if (!requested) return null;
+  if (failed) return "err.searchOffline";
+  if (!count) return "err.searchNoSources";
   return null;
 }
