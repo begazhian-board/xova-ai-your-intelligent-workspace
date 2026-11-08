@@ -140,19 +140,28 @@ export const Route = createFileRoute("/api/chat")({
               request.signal.addEventListener("abort", onAbort);
 
               const pump = async (
-                result: ReturnType<typeof streamText>,
+                fullStream: AsyncIterable<unknown>,
                 includeGroundingSources: boolean,
               ) => {
-                for await (const part of result.fullStream) {
+                for await (const rawPart of fullStream) {
+                  const part = rawPart as {
+                    type: string;
+                    text?: string;
+                    sourceType?: string;
+                    title?: string;
+                    url?: string;
+                    error?: unknown;
+                  };
                   if (part.type === "text-delta") {
-                    if (part.text) {
+                    if (typeof part.text === "string" && part.text) {
                       wroteText = true;
                       controller.enqueue(encoder.encode(part.text));
                     }
                   } else if (
                     includeGroundingSources &&
                     part.type === "source" &&
-                    part.sourceType === "url"
+                    part.sourceType === "url" &&
+                    typeof part.url === "string"
                   ) {
                     if (!collected.some((source) => source.url === part.url)) {
                       let title = part.title?.trim() || "";
@@ -183,7 +192,7 @@ export const Route = createFileRoute("/api/chat")({
                         abortSignal: local.signal,
                         maxRetries: 0,
                         tools: { google_search: google.tools.googleSearch({}) as never },
-                      }),
+                      }).fullStream,
                       true,
                     );
                     if (!wroteText) throw new Error("Gemini returned no visible answer");
@@ -221,7 +230,7 @@ export const Route = createFileRoute("/api/chat")({
                           messages: modelMessages,
                           abortSignal: local.signal,
                           maxRetries: 0,
-                        }),
+                        }).fullStream,
                         false,
                       );
                       if (!wroteText) throw new Error("Gateway returned no visible answer");
@@ -240,6 +249,9 @@ export const Route = createFileRoute("/api/chat")({
                   errorCode = geminiError
                     ? chatProviderErrorCode("gemini", providerStatus(geminiError))
                     : "err.unavailable";
+                }
+                if (geminiError && wroteText && !fallbackUsed) {
+                  errorCode = chatProviderErrorCode("gemini", providerStatus(geminiError));
                 }
                 if (!fallbackUsed && wroteText && collected.length === 0) {
                   noticeCode = searchNoticeCode(mode, collected.length, false);
