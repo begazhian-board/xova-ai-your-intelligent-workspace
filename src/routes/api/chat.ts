@@ -3,7 +3,12 @@ import { createClient } from "@supabase/supabase-js";
 import { streamText, type ModelMessage } from "ai";
 import { buildSystemPrompt } from "@/lib/xova-prompt.server";
 import { createGeminiProvider, GEMINI_MODEL } from "@/lib/gemini.server";
-import { chatProviderErrorCode, searchNoticeCode, shouldTryChatFallback } from "@/lib/chat-contract";
+import {
+  chatProviderErrorCode,
+  searchNoticeCode,
+  shouldTryChatFallback,
+  shouldUseGatewayFallback,
+} from "@/lib/chat-contract";
 import { createLovableAiGatewayProvider } from "@/lib/ai-gateway.server";
 import type { ModeId } from "@/lib/xova";
 
@@ -207,13 +212,12 @@ export const Route = createFileRoute("/api/chat")({
                 }
 
                 let fallbackUsed = false;
-                if (shouldTryChatFallback(wroteText)) {
+                const geminiStatus = providerStatus(geminiError);
+                if (shouldTryChatFallback(wroteText) && shouldUseGatewayFallback(geminiStatus)) {
                   fallbackUsed = true;
                   // These URLs ground Gemini's answer only; never attach them to a different provider's reply.
                   collected.length = 0;
-                  if (mode === "reasoning" || mode === "research") {
-                    noticeCode = "err.searchFallbackUnavailable";
-                  }
+                  noticeCode = searchNoticeCode(mode, 0, true);
 
                   const gatewayKey = process.env["LOVABLE_API_KEY"];
                   if (!gatewayKey) {
@@ -246,9 +250,7 @@ export const Route = createFileRoute("/api/chat")({
                 }
 
                 if (!wroteText && !errorCode) {
-                  errorCode = geminiError
-                    ? chatProviderErrorCode("gemini", providerStatus(geminiError))
-                    : "err.unavailable";
+                  errorCode = geminiError ? chatProviderErrorCode("gemini", geminiStatus) : "err.unavailable";
                 }
                 if (geminiError && wroteText && !fallbackUsed) {
                   errorCode = chatProviderErrorCode("gemini", providerStatus(geminiError));

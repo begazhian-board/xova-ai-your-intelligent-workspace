@@ -1,6 +1,11 @@
 import { describe, expect, it } from "bun:test";
 import { GEMINI_MODEL } from "./gemini.server.ts";
-import { chatProviderErrorCode, searchNoticeCode, shouldTryChatFallback } from "./chat-contract.ts";
+import {
+  chatProviderErrorCode,
+  searchNoticeCode,
+  shouldTryChatFallback,
+  shouldUseGatewayFallback,
+} from "./chat-contract.ts";
 import { buildSystemPrompt } from "./xova-prompt.server.ts";
 
 describe("Gemini chat model", () => {
@@ -13,6 +18,16 @@ describe("chat fallback and search status", () => {
   it("falls back only before any visible answer has started", () => {
     expect(shouldTryChatFallback(false)).toBe(true);
     expect(shouldTryChatFallback(true)).toBe(false);
+  });
+
+  it("uses Gateway fallback for missing credentials, auth errors, quota and transient server errors only", () => {
+    expect(shouldUseGatewayFallback(undefined)).toBe(true);
+    expect(shouldUseGatewayFallback(401)).toBe(true);
+    expect(shouldUseGatewayFallback(429)).toBe(true);
+    expect(shouldUseGatewayFallback(503)).toBe(true);
+    expect(shouldUseGatewayFallback(400)).toBe(false);
+    expect(shouldUseGatewayFallback(403)).toBe(false);
+    expect(shouldUseGatewayFallback(404)).toBe(false);
   });
 
   it("maps Gateway credit exhaustion to a clear actionable error", () => {
