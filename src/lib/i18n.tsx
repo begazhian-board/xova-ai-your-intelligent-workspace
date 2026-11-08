@@ -194,7 +194,7 @@ const en: Dict = {
   "err.searchOffline":
     "Live web search isn't connected or couldn't be reached, so XOVA answered from its own knowledge without citations.",
   "err.searchNoSources":
-    "Tavily returned no verifiable source links for this request."
+    "Tavily returned no verifiable source links for this request.",
   "err.stopped": "Generation stopped.",
 
   "toast.saved": "Saved",
@@ -395,7 +395,7 @@ const ar: Dict = {
   "err.imageRate": "وصلت إلى حد الصور لهذه الساعة. حاول لاحقًا.",
   "err.imageBlocked": "مقدرناش نعمل الصورة دي دلوقتي. جرّب تاني أو غيّر الوصف شوية.",
   "err.searchOffline": "البحث المباشر على الويب غير موصول أو تعذّر الوصول إليه، لذلك أجاب XOVA من معرفته دون مصادر.",
-  "err.searchNoSources": "لم يُرجع بحث Tavily روابط مصادر قابلة للتحقق لهذا الطلب."
+  "err.searchNoSources": "لم يُرجع بحث Tavily روابط مصادر قابلة للتحقق لهذا الطلب.",
   "err.stopped": "تم إيقاف التوليد.",
 
   "toast.saved": "تم الحفظ",
