@@ -3,6 +3,8 @@ import { createClient } from "@supabase/supabase-js";
 import { streamText, type ModelMessage } from "ai";
 import { buildSystemPrompt } from "@/lib/xova-prompt.server";
 import { createGeminiProvider, GEMINI_MODEL } from "@/lib/gemini.server";
+import { chatProviderErrorCode, searchNoticeCode, shouldTryChatFallback } from "@/lib/chat-contract";
+import { createLovableAiGatewayProvider } from "@/lib/ai-gateway.server";
 import type { ModeId } from "@/lib/xova";
 
 interface WireAttachment {
@@ -32,7 +34,15 @@ interface WireBody {
 const SOURCES_PREFIX = "\u241E SOURCES ";
 /** Sentinel that ends the text stream with final sources + error code. */
 const TRAILER_PREFIX = "\u241F";
-const geminiKeyPresent = () => Boolean(process.env["GEMINI_API_KEY"]);
+
+function providerStatus(error: unknown) {
+  const value = error as {
+    statusCode?: number;
+    status?: number;
+    lastError?: { statusCode?: number; status?: number };
+  };
+  return value?.statusCode ?? value?.status ?? value?.lastError?.statusCode ?? value?.lastError?.status;
+}
 
 async function authenticate(request: Request) {
   const token = request.headers.get("authorization")?.replace(/^Bearer\s+/i, "");
@@ -89,9 +99,6 @@ export const Route = createFileRoute("/api/chat")({
         }
 
         const geminiKey = process.env["GEMINI_API_KEY"];
-        if (!geminiKey) {
-          return Response.json({ error: "err.unavailable" }, { status: 500 });
-        }
 
         let body: WireBody;
         try {
@@ -106,7 +113,6 @@ export const Route = createFileRoute("/api/chat")({
         }
 
         const mode: ModeId = body.mode ?? "instant";
-        const last = messages[messages.length - 1]!;
         const modelMessages = toModelMessages(messages);
 
         const system = buildSystemPrompt({
@@ -118,20 +124,7 @@ export const Route = createFileRoute("/api/chat")({
           searchAvailable: true,
         });
 
-        const google = createGeminiProvider(geminiKey);
-        const gemini = google(GEMINI_MODEL);
-
         try {
-          const start = (signal: AbortSignal) =>
-            streamText({
-              model: gemini as never,
-              system,
-              messages: modelMessages,
-              abortSignal: signal,
-              maxRetries: 0,
-              tools: { google_search: google.tools.googleSearch({}) as never },
-            });
-
           const encoder = new TextEncoder();
           const prelude = `${SOURCES_PREFIX}[]\n`;
           const collected: Array<{ title: string; url: string; snippet: string }> = [];
@@ -140,24 +133,33 @@ export const Route = createFileRoute("/api/chat")({
             async start(controller) {
               controller.enqueue(encoder.encode(prelude));
               let errorCode: string | null = null;
+              let noticeCode: string | null = null;
               let wroteText = false;
               const local = new AbortController();
               const onAbort = () => local.abort();
               request.signal.addEventListener("abort", onAbort);
-              try {
-                for await (const part of start(local.signal).fullStream) {
+
+              const pump = async (
+                result: ReturnType<typeof streamText>,
+                includeGroundingSources: boolean,
+              ) => {
+                for await (const part of result.fullStream) {
                   if (part.type === "text-delta") {
                     if (part.text) {
                       wroteText = true;
                       controller.enqueue(encoder.encode(part.text));
                     }
-                  } else if (part.type === "source" && part.sourceType === "url") {
+                  } else if (
+                    includeGroundingSources &&
+                    part.type === "source" &&
+                    part.sourceType === "url"
+                  ) {
                     if (!collected.some((source) => source.url === part.url)) {
                       let title = part.title?.trim() || "";
                       try {
                         title ||= new URL(part.url).hostname;
                       } catch {
-                        /* keep */
+                        /* Ignore malformed provider titles; preserve the returned URL. */
                       }
                       collected.push({ title, url: part.url, snippet: "" });
                     }
@@ -165,22 +167,90 @@ export const Route = createFileRoute("/api/chat")({
                     throw part.error;
                   }
                 }
-                if (!wroteText) errorCode = "err.unavailable";
-              } catch (error) {
-                if (request.signal.aborted) {
-                  controller.close();
-                  return;
+              };
+
+              try {
+                let geminiError: unknown;
+                if (geminiKey) {
+                  try {
+                    const google = createGeminiProvider(geminiKey);
+                    const gemini = google(GEMINI_MODEL);
+                    await pump(
+                      streamText({
+                        model: gemini as never,
+                        system,
+                        messages: modelMessages,
+                        abortSignal: local.signal,
+                        maxRetries: 0,
+                        tools: { google_search: google.tools.googleSearch({}) as never },
+                      }),
+                      true,
+                    );
+                    if (!wroteText) throw new Error("Gemini returned no visible answer");
+                  } catch (error) {
+                    if (request.signal.aborted) {
+                      controller.close();
+                      return;
+                    }
+                    geminiError = error;
+                    console.error("XOVA Gemini stream error", providerStatus(error) ?? "", error);
+                  }
                 }
-                console.error("XOVA Gemini stream error", error);
-                const status =
-                  (error as { statusCode?: number })?.statusCode ??
-                  (error as { lastError?: { statusCode?: number } })?.lastError?.statusCode;
-                errorCode = status === 429 ? "err.rate" : "err.unavailable";
+
+                let fallbackUsed = false;
+                if (shouldTryChatFallback(wroteText)) {
+                  fallbackUsed = true;
+                  // These URLs ground Gemini's answer only; never attach them to a different provider's reply.
+                  collected.length = 0;
+                  if (mode === "reasoning" || mode === "research") {
+                    noticeCode = "err.searchFallbackUnavailable";
+                  }
+
+                  const gatewayKey = process.env["LOVABLE_API_KEY"];
+                  if (!gatewayKey) {
+                    errorCode = geminiError
+                      ? chatProviderErrorCode("gemini", providerStatus(geminiError))
+                      : "err.unavailable";
+                  } else {
+                    try {
+                      const gateway = createLovableAiGatewayProvider(gatewayKey);
+                      await pump(
+                        streamText({
+                          model: gateway("google/gemini-3.8-flash"),
+                          system,
+                          messages: modelMessages,
+                          abortSignal: local.signal,
+                          maxRetries: 0,
+                        }),
+                        false,
+                      );
+                      if (!wroteText) throw new Error("Gateway returned no visible answer");
+                    } catch (error) {
+                      if (request.signal.aborted) {
+                        controller.close();
+                        return;
+                      }
+                      console.error("XOVA Gateway stream error", providerStatus(error) ?? "", error);
+                      errorCode = chatProviderErrorCode("gateway", providerStatus(error));
+                    }
+                  }
+                }
+
+                if (!wroteText && !errorCode) {
+                  errorCode = geminiError
+                    ? chatProviderErrorCode("gemini", providerStatus(geminiError))
+                    : "err.unavailable";
+                }
+                if (!fallbackUsed && wroteText && collected.length === 0) {
+                  noticeCode = searchNoticeCode(mode, collected.length, false);
+                }
               } finally {
                 request.signal.removeEventListener("abort", onAbort);
               }
               controller.enqueue(
-                encoder.encode(`${TRAILER_PREFIX}${JSON.stringify({ sources: collected, error: errorCode })}`),
+                encoder.encode(
+                  `${TRAILER_PREFIX}${JSON.stringify({ sources: collected, error: errorCode, notice: noticeCode })}`,
+                ),
               );
               controller.close();
             },
@@ -190,14 +260,14 @@ export const Route = createFileRoute("/api/chat")({
             headers: {
               "Content-Type": "text/plain; charset=utf-8",
               "Cache-Control": "no-store",
-              "X-Xova-Search": "live",
+              "X-Xova-Search": geminiKey ? "live" : "unavailable",
             },
           });
         } catch (error) {
-          const status = (error as { statusCode?: number })?.statusCode;
+          const status = providerStatus(error);
           console.error("XOVA chat failure", status ?? "", error);
           return Response.json(
-            { error: status === 429 ? "err.rate" : "err.unavailable" },
+            { error: chatProviderErrorCode("gemini", status) },
             { status: 502 },
           );
         }

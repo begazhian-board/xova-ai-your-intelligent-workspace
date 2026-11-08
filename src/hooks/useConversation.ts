@@ -243,15 +243,12 @@ export function useConversation(userId: string | undefined, config: AiConfig) {
           throw new Error(code);
         }
 
-        if (mode === "research" && response.headers.get("X-Xova-Search") !== "live") {
-          setNotice("err.searchOffline");
-        }
-
         const reader = response.body.getReader();
         const decoder = new TextDecoder();
         let buffer = "";
         let text = "";
         let sources: SourceRef[] = [];
+        let streamNotice: string | null = null;
         let preludeDone = false;
 
         setStatus("streaming");
@@ -295,9 +292,11 @@ export function useConversation(userId: string | undefined, config: AiConfig) {
             const trailer = JSON.parse(text.slice(trailerAt + TRAILER_PREFIX.length)) as {
               sources?: SourceRef[];
               error?: string | null;
+              notice?: string | null;
             };
             if (Array.isArray(trailer.sources)) sources = trailer.sources;
             streamError = trailer.error ?? null;
+            streamNotice = trailer.notice ?? null;
           } catch {
             /* ignore malformed trailer */
           }
@@ -310,6 +309,7 @@ export function useConversation(userId: string | undefined, config: AiConfig) {
           sources,
           streaming: false,
         };
+        if (streamNotice) setNotice(streamNotice);
         if (!finalMessage.content) throw new Error(streamError ?? "err.unavailable");
         setMessages((current) =>
           current.map((message) => (message.id === assistantId ? finalMessage : message)),
