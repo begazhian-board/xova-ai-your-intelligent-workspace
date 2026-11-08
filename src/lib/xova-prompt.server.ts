@@ -3,7 +3,7 @@ import type { ModeId } from "./xova";
 const MODE_PROMPT: Record<ModeId, string> = {
   instant: "Answer quickly and directly. Keep it useful and easy to scan.",
   reasoning:
-    "Work through the problem carefully and rigorously before answering. Present the final reasoning as a clear, structured explanation — never expose raw internal scratch work.",
+    "Work through the problem carefully and rigorously before answering. For political, current, recent, or changing facts, use Google Search grounding and cite only sources actually returned by search. Present the final reasoning as a clear, structured explanation — never expose raw internal scratch work.",
   research:
     "Answer in a structured, research-oriented way: key findings first, then supporting detail. Use Google Search grounding for current facts and cite only sources actually returned by search. Never invent URLs, titles or citations.",
   vision:

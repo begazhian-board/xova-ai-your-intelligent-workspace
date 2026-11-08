@@ -1,10 +1,44 @@
 import { describe, expect, it } from "bun:test";
 import { GEMINI_MODEL } from "./gemini.server.ts";
+import {
+  chatProviderErrorCode,
+  searchNoticeCode,
+  shouldTryChatFallback,
+  shouldUseGatewayFallback,
+} from "./chat-contract.ts";
 import { buildSystemPrompt } from "./xova-prompt.server.ts";
 
 describe("Gemini chat model", () => {
-  it("uses gemini-2.5-flash for direct chat requests", () => {
-    expect(GEMINI_MODEL).toBe("gemini-2.5-flash");
+  it("uses Google's recommended Gemini 3.8 Flash model for direct chat requests", () => {
+    expect(GEMINI_MODEL).toBe("gemini-3.8-flash");
+  });
+});
+
+describe("chat fallback and search status", () => {
+  it("falls back only before any visible answer has started", () => {
+    expect(shouldTryChatFallback(false)).toBe(true);
+    expect(shouldTryChatFallback(true)).toBe(false);
+  });
+
+  it("uses Gateway fallback for missing credentials, auth errors, quota and transient server errors only", () => {
+    expect(shouldUseGatewayFallback(undefined)).toBe(true);
+    expect(shouldUseGatewayFallback(401)).toBe(true);
+    expect(shouldUseGatewayFallback(429)).toBe(true);
+    expect(shouldUseGatewayFallback(503)).toBe(true);
+    expect(shouldUseGatewayFallback(400)).toBe(false);
+    expect(shouldUseGatewayFallback(403)).toBe(false);
+    expect(shouldUseGatewayFallback(404)).toBe(false);
+  });
+
+  it("maps Gateway credit exhaustion to a clear actionable error", () => {
+    expect(chatProviderErrorCode("gateway", 402)).toBe("err.gatewayCredits");
+  });
+
+  it("warns reasoning and research users when grounded sources are unavailable", () => {
+    expect(searchNoticeCode("reasoning", 0, true)).toBe("err.searchFallbackUnavailable");
+    expect(searchNoticeCode("research", 0, false)).toBe("err.searchNoSources");
+    expect(searchNoticeCode("research", 2, false)).toBeNull();
+    expect(searchNoticeCode("instant", 0, true)).toBeNull();
   });
 });
 
@@ -26,15 +60,17 @@ describe("buildSystemPrompt current date", () => {
   });
 
   it("instructs the assistant to use grounded search for current and political facts", () => {
-    const prompt = buildSystemPrompt({
-      mode: "research",
-      personality: "friendly",
-      responseStyle: "balanced",
-      language: "ar",
-      searchAvailable: true,
-    });
+    for (const mode of ["reasoning", "research"]) {
+      const prompt = buildSystemPrompt({
+        mode,
+        personality: "friendly",
+        responseStyle: "balanced",
+        language: "ar",
+        searchAvailable: true,
+      });
 
-    expect(prompt).toContain("Search whenever the question depends on current, recent, or politically changing information");
-    expect(prompt).toContain("never invent citations or URLs");
+      expect(prompt).toContain("Search whenever the question depends on current, recent, or politically changing information");
+      expect(prompt).toContain("never invent citations or URLs");
+    }
   });
 });
