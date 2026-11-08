@@ -4,7 +4,10 @@ import { chatProviderErrorCode, searchNoticeCode, shouldSearchWeb } from "./chat
 import { buildSystemPrompt } from "./xova-prompt.server.ts";
 describe("Gemini chat model",()=>{it("uses direct Gemini",()=>expect(GEMINI_MODEL).toBe("gemini-3.8-flash"));});
 describe("Tavily web search routing",()=>{
- it("searches all research-mode requests",()=>expect(shouldSearchWeb("research","Explain photosynthesis")).toBe(true));
+ it("searches all reasoning and research mode requests",()=>{
+  expect(shouldSearchWeb("research","Explain photosynthesis")).toBe(true);
+  expect(shouldSearchWeb("reasoning","Compare the political systems")).toBe(true);
+ });
  it("recognizes explicit current web searches in English and Arabic",()=>{
   expect(shouldSearchWeb("instant","Find the latest news about NASA")).toBe(true);
   expect(shouldSearchWeb("instant","ابحث على الإنترنت عن آخر أخبار الفضاء")).toBe(true);
