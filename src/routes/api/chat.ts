@@ -143,13 +143,13 @@ export const Route = createFileRoute("/api/chat")({
 
         try {
           const encoder = new TextEncoder();
-          const prelude = `${SOURCES_PREFIX}${JSON.stringify(collected)}\\n`;
+          const prelude = `${SOURCES_PREFIX}${JSON.stringify(collected)}\n`;
 
           const stream = new ReadableStream<Uint8Array>({
             async start(controller) {
               controller.enqueue(encoder.encode(prelude));
               let errorCode: string | null = null;
-              let noticeCode: string | null = searchNotice;
+              const streamNotice = searchNotice;
               let wroteText = false;
               const local = new AbortController();
               const onAbort = () => local.abort();
@@ -166,8 +166,6 @@ export const Route = createFileRoute("/api/chat")({
               };
 
               try {
-                let errorCode: string | null = null;
-                const streamNotice = noticeCode;
                 if (!local.signal.aborted) {
                   try {
                     const google = createGeminiProvider(geminiKey);
@@ -183,7 +181,8 @@ export const Route = createFileRoute("/api/chat")({
                     console.error("XOVA Gemini stream error", providerStatus(error) ?? "", error);
                   }
                 }
-                if (!wroteText && !errorCode) errorCode = "err.unavailable";              } finally {
+                if (!wroteText && !errorCode) errorCode = "err.unavailable";
+              } finally {
                 request.signal.removeEventListener("abort", onAbort);
               }
               controller.enqueue(
@@ -206,7 +205,7 @@ export const Route = createFileRoute("/api/chat")({
           const status = providerStatus(error);
           console.error("XOVA chat failure", status ?? "", error);
           return Response.json(
-            { error: chatProviderErrorCode("gemini", status) },
+            { error: chatProviderErrorCode(status) },
             { status: 502 },
           );
         }
