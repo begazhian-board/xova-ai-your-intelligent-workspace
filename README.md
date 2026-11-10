@@ -1390,3 +1390,6 @@ npm run dev
 - `HUGGINGFACE_API_KEY`: optional backup for image generation if direct Gemini image generation is unavailable.
 
 Set these as server environment secrets in your hosting provider. Do not commit real `.env` files or API keys. A placeholder template is available in `.env.example`.
+
+
+<!-- Deployment trigger: documentation-only update. -->
