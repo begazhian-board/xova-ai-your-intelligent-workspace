@@ -33,12 +33,12 @@ async function authenticate(request: Request) {
 async function translateToEnglish(text: string) {
   // Keep named foods and brands out of machine translation to avoid semantic substitutions.
   const protectedText = text
-    .replace(/(?:كيس|باكيت)\\s+(?:إندومي|اندومي|اندومى)\\s+(?:ب)?(?:الكباب|كباب)\\s+المشوي/giu,
+    .replace(/(?:كيس|باكيت)\s+(?:إندومي|اندومي|اندومى)\s+(?:ب)?(?:الكباب|كباب)\s+المشوي/giu,
       "a packet of Indomie instant noodles served with grilled kebab")
     .replace(/إندومي|اندومي|اندومى/giu, "Indomie instant noodles")
-    .replace(/كباب\\s+مشوي/giu, "grilled kebab");
+    .replace(/كباب\s+مشوي/giu, "grilled kebab");
 
-  if (!/[^\\x00-\\x7F]/.test(protectedText)) return protectedText;
+  if (!/[^\x00-\x7F]/.test(protectedText)) return protectedText;
 
   try {
     const res = await fetch(
