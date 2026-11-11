@@ -141,6 +141,8 @@
 @layer base {
   * {
     border-color: var(--color-border);
+    scrollbar-width: thin;
+    scrollbar-color: color-mix(in oklab, var(--color-brand) 62%, var(--color-muted-foreground)) transparent;
   }
 
   html {
@@ -164,18 +166,24 @@
     outline-offset: 2px;
   }
 
+  /* Slim, always-visible brand scrollbar across the workspace */
   ::-webkit-scrollbar {
     width: 10px;
     height: 10px;
   }
   ::-webkit-scrollbar-thumb {
-    background: var(--color-active);
+    background: color-mix(in oklab, var(--color-brand) 62%, var(--color-muted-foreground));
     border-radius: 999px;
-    border: 3px solid transparent;
-    background-clip: content-box;
+    border: 2px solid transparent;
+    background-clip: padding-box;
+  }
+  ::-webkit-scrollbar-thumb:hover {
+    background: var(--color-brand);
+    background-clip: padding-box;
   }
   ::-webkit-scrollbar-track {
-    background: transparent;
+    background: color-mix(in oklab, var(--color-muted) 22%, transparent);
+    border-radius: 999px;
   }
 }
 
