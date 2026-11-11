@@ -30,9 +30,13 @@ async function authenticate(request: Request) {
 }
 
 /** Strictly translates Arabic image requests without inventing or embellishing details. */
-async function buildEnglishImagePrompt(text: string, apiKey?: string): Promise<string | null> {
+async function buildEnglishImagePrompt(text: string, apiKey?: string): Promise<string> {
   if (!/[^\x00-\x7F]/.test(text)) return text;
-  if (!apiKey) return null;
+  // Translation is best-effort: if Gemini is unavailable, let the image model try the original Arabic prompt.
+  if (!apiKey) {
+    console.warn("XOVA image prompt translation skipped: GEMINI_API_KEY is missing");
+    return text;
+  }
 
   try {
     const res = await fetch(
@@ -60,8 +64,9 @@ async function buildEnglishImagePrompt(text: string, apiKey?: string): Promise<s
     );
 
     if (!res.ok) {
-      console.error("XOVA image prompt translation Gemini", res.status);
-      return null;
+      const details = await res.text();
+      console.error("XOVA image prompt translation Gemini", res.status, details.slice(0, 500));
+      return text;
     }
 
     const json = (await res.json()) as {
@@ -73,11 +78,14 @@ async function buildEnglishImagePrompt(text: string, apiKey?: string): Promise<s
       .trim()
       .replace(/^["'“”]+|["'“”]+$/g, "");
 
-    if (!output || !/[a-z]/i.test(output)) return null;
+    if (!output || !/[a-z]/i.test(output)) {
+      console.error("XOVA image prompt translation returned no usable English text");
+      return text;
+    }
     return output.slice(0, 1000);
   } catch (error) {
     console.error("XOVA image prompt translation error", error);
-    return null;
+    return text;
   }
 }
 
@@ -201,9 +209,6 @@ export const Route = createFileRoute("/api/image")({
           let cloudflareStatus: number | undefined;
           let cloudflareReturnedNoImage = false;
           const english = await buildEnglishImagePrompt(prompt, geminiKey);
-          if (!english) {
-            return Response.json({ error: "err.imagePromptTranslation" }, { status: 502 });
-          }
 
           // Primary: Leonardo Phoenix 1.0 through Cloudflare Workers AI.
           // This uses the existing Cloudflare credentials and the account's Workers AI free Neuron allocation.
