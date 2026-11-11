@@ -134,7 +134,7 @@ export const Route = createFileRoute("/api/image")({
 
           if (!bytes) {
             return Response.json(
-              { error: lastStatus === 429 ? "err.rate" : "err.imageFailed" },
+              { error: lastStatus === 429 ? "err.imageProviderRate" : "err.imageFailed" },
               { status: 502 },
             );
           }
