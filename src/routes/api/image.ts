@@ -29,10 +29,10 @@ interface HordeStatusResponse {
   generations?: Array<{ img?: string; seed?: number; model?: string }>;
 }
 
-interface GeminiTranslationResult {
-  candidates?: Array<{
-    content?: {
-      parts?: Array<{ text?: string }>;
+interface LovableTranslationResult {
+  choices?: Array<{
+    message?: {
+      content?: string | Array<{ type?: string; text?: string }>;
     };
   }>;
 }
@@ -42,7 +42,7 @@ const HORDE_ANONYMOUS_KEY = "0000000000";
 const HORDE_CLIENT_AGENT = "XOVA-AI:1.0:begazhian-board";
 const IMAGE_SUBMIT_TIMEOUT_MS = 15_000;
 const IMAGE_DOWNLOAD_TIMEOUT_MS = 25_000;
-const TRANSLATION_TIMEOUT_MS = 3_000;
+const TRANSLATION_TIMEOUT_MS = 12_000;
 const HOURLY_LIMIT = 10;
 const DAILY_LIMIT = 50;
 const SIGNED_URL_TTL = 60 * 60 * 24 * 365;
@@ -65,53 +65,58 @@ async function authenticate(request: Request) {
   return data.user;
 }
 
-/** Free-tier text translation only. Image generation never calls a paid image model. */
+/** Translate Arabic prompts through Lovable AI Gateway using the project's AI credits. */
 async function translateArabicPrompt(prompt: string): Promise<string | null> {
-  if (!/[^\x00-\x7F]/.test(prompt)) return prompt;
+  if (!/[\\u0600-\\u06FF]/.test(prompt)) return prompt;
 
-  const apiKey = process.env["GEMINI_API_KEY"];
+  const apiKey = process.env["LOVABLE_API_KEY"];
   if (!apiKey) return null;
 
   try {
-    const response = await fetch(
-      "https://generativelanguage.googleapis.com/v1beta/models/gemini-3.8-flash:generateContent",
-      {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          "x-goog-api-key": apiKey,
-        },
-        signal: AbortSignal.timeout(TRANSLATION_TIMEOUT_MS),
-        body: JSON.stringify({
-          contents: [{
-            role: "user",
-            parts: [{
-              text:
-                "Translate this Arabic image description into concise English. " +
-                "Preserve every object, color, action, and relationship exactly. " +
-                "Do not add or remove details. Return only the translation.\\n\\n" +
-                prompt,
-            }],
-          }],
-          generationConfig: { maxOutputTokens: 300, temperature: 0.1 },
-        }),
+    const response = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
+      method: "POST",
+      headers: {
+        Authorization: `Bearer ${apiKey}`,
+        "Lovable-API-Key": apiKey,
+        "X-Lovable-AIG-SDK": "xova-ai",
+        "Content-Type": "application/json",
       },
-    );
+      signal: AbortSignal.timeout(TRANSLATION_TIMEOUT_MS),
+      body: JSON.stringify({
+        model: "google/gemini-3.7-flash",
+        messages: [
+          {
+            role: "system",
+            content:
+              "Translate Arabic image descriptions into concise, natural English. " +
+              "Preserve every object, color, action, position, and relationship. " +
+              "Do not add, omit, reinterpret, or embellish details. " +
+              "Return only the English translation.",
+          },
+          { role: "user", content: prompt },
+        ],
+        temperature: 0.1,
+        max_tokens: 300,
+        stream: false,
+      }),
+    });
 
     if (!response.ok) {
-      console.warn("XOVA image prompt translation unavailable", response.status);
+      const detail = await response.text();
+      console.error("XOVA Lovable prompt translation failed", response.status, detail.slice(0, 500));
       return null;
     }
 
-    const result = (await response.json()) as GeminiTranslationResult;
-    const translated = result.candidates?.[0]?.content?.parts
-      ?.map((part) => part.text ?? "")
-      .join("")
-      .trim();
+    const result = (await response.json()) as LovableTranslationResult;
+    const content = result.choices?.[0]?.message?.content;
+    const translated = (typeof content === "string"
+      ? content
+      : content?.filter((part) => part.type === "text").map((part) => part.text ?? "").join(""))
+      ?.trim();
 
     return translated && /[a-z]/i.test(translated) ? translated.slice(0, 2048) : null;
   } catch (error) {
-    console.warn("XOVA image prompt translation timed out or failed", error);
+    console.warn("XOVA Lovable prompt translation timed out or failed", error);
     return null;
   }
 }
