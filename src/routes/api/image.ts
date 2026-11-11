@@ -302,7 +302,7 @@ export const Route = createFileRoute("/api/image")({
                   : cloudflareStatus === 402
                     ? "err.imageCloudflareBilling"
                     : geminiStatus === 401 || geminiStatus === 403
-                      ? "err.imageGeminiAuth"
+                      ? "err.imageFailed"
                       : cloudflareStatus === 400 || geminiStatus === 400
                         ? "err.imageProviderRequest"
                         : cloudflareReturnedNoImage
