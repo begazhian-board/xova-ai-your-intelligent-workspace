@@ -136,7 +136,7 @@ const en: Dict = {
   "empty.noImages": "No generated images yet",
 
   "studio.title": "Image studio",
-  "studio.subtitle": "Describe an image and XOVA generates it with a real image model.",
+  "studio.subtitle": "Free community-powered image generation. Prompts and results may be shared with the AI Horde community.",
   "studio.prompt": "Prompt",
   "studio.aspect": "Aspect ratio",
   "studio.aspect.1:1": "Square",
@@ -360,7 +360,7 @@ const ar: Dict = {
   "empty.noImages": "لا صور مولّدة بعد",
 
   "studio.title": "استوديو الصور",
-  "studio.subtitle": "اوصف الصورة وXOVA يولّدها بنموذج صور حقيقي.",
+  "studio.subtitle": "توليد صور مجاني بأجهزة متطوعين. الوصف والنتائج ممكن تتشارك مع مجتمع AI Horde.",
   "studio.prompt": "الوصف",
   "studio.aspect": "الأبعاد",
   "studio.aspect.1:1": "مربعة",
