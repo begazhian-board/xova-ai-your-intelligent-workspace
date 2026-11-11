@@ -413,7 +413,8 @@ export const Route = createFileRoute("/api/image")({
               validated_backends: true,
               slow_workers: true,
               extra_slow_workers: true,
-              r2: true,
+              r2: false,
+              shared: true,
               replacement_filter: true,
             }),
           });
