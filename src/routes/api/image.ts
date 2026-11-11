@@ -187,14 +187,30 @@ export const Route = createFileRoute("/api/image")({
             return Response.json({ error }, { status: 502 });
           }
 
+          const bucketName = "xova-images";
+
+          // Ensure the private image bucket exists before uploading.
+          const { error: bucketLookupError } = await supabaseAdmin.storage.getBucket(bucketName);
+          if (bucketLookupError) {
+            const { error: createBucketError } = await supabaseAdmin.storage.createBucket(bucketName, {
+              public: false,
+              fileSizeLimit: 10 * 1024 * 1024,
+              allowedMimeTypes: ["image/png", "image/jpeg"],
+            });
+            if (createBucketError && !/already exists/i.test(createBucketError.message)) {
+              console.error("XOVA image bucket create", createBucketError.message);
+              return Response.json({ error: "err.imageStorageBucket" }, { status: 502 });
+            }
+          }
+
           const isJpeg = bytes[0] === 0xff && bytes[1] === 0xd8;
           const path = `${user.id}/${crypto.randomUUID()}.${isJpeg ? "jpg" : "png"}`;
           const { error: uploadError } = await supabaseAdmin.storage
-            .from("xova-images")
+            .from(bucketName)
             .upload(path, bytes, { contentType: isJpeg ? "image/jpeg" : "image/png", upsert: false });
           if (uploadError) {
             console.error("XOVA image upload", uploadError.message);
-            return Response.json({ error: "err.imageStorage" }, { status: 502 });
+            return Response.json({ error: "err.imageStorageUpload" }, { status: 502 });
           }
 
           const { data: signed, error: signError } = await supabaseAdmin.storage
@@ -202,7 +218,7 @@ export const Route = createFileRoute("/api/image")({
             .createSignedUrl(path, SIGNED_URL_TTL);
           if (signError || !signed?.signedUrl) {
             console.error("XOVA image sign", signError?.message);
-            return Response.json({ error: "err.imageStorage" }, { status: 502 });
+            return Response.json({ error: "err.imageStorageSign" }, { status: 502 });
           }
 
           const { data: row, error: insertError } = await supabaseAdmin
@@ -219,7 +235,7 @@ export const Route = createFileRoute("/api/image")({
             .single();
           if (insertError) {
             console.error("XOVA image record", insertError.message);
-            return Response.json({ error: "err.imageStorage" }, { status: 502 });
+            return Response.json({ error: "err.imageStorageRecord" }, { status: 502 });
           }
 
           return Response.json({
