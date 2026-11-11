@@ -9,7 +9,6 @@ interface WireBody {
 interface HordeAsyncResponse {
   id?: string;
   message?: string;
-  is_possible?: boolean;
   wait_time?: number;
   queue_position?: number;
 }
@@ -128,7 +127,7 @@ function providerError(status: number) {
 }
 
 function base64ToBytes(base64: string) {
-  const binary = atob(base64.replace(/\\s/g, ""));
+  const binary = atob(base64.replace(/\s/g, ""));
   const bytes = new Uint8Array(binary.length);
   for (let index = 0; index < binary.length; index += 1) {
     bytes[index] = binary.charCodeAt(index);
@@ -173,9 +172,6 @@ export const Route = createFileRoute("/api/image")({
           const check = (await checkResponse.json()) as HordeCheckResponse;
           if (check.faulted) {
             return Response.json({ error: "err.imageGenerationFailed" }, { status: 502 });
-          }
-          if (check.is_possible === false) {
-            return Response.json({ error: "err.imageNoWorkers" }, { status: 503 });
           }
 
           const isDone = check.done === true || (check.finished ?? 0) >= 1;
