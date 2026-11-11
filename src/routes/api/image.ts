@@ -70,7 +70,7 @@ async function translateArabicPrompt(prompt: string): Promise<string | null> {
   if (!/[\\u0600-\\u06FF]/.test(prompt)) return prompt;
 
   const apiKey = process.env["LOVABLE_API_KEY"];
-  if (!apiKey) return null;
+  if (!apiKey) throw new Error("err.imageLovableConfig");
 
   try {
     const response = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
@@ -104,7 +104,10 @@ async function translateArabicPrompt(prompt: string): Promise<string | null> {
     if (!response.ok) {
       const detail = await response.text();
       console.error("XOVA Lovable prompt translation failed", response.status, detail.slice(0, 500));
-      return null;
+      if (response.status === 402) throw new Error("err.imageLovableCredits");
+      if (response.status === 429) throw new Error("err.imageLovableRate");
+      if (response.status === 401 || response.status === 403) throw new Error("err.imageLovableAuth");
+      throw new Error("err.imageTranslationUnavailable");
     }
 
     const result = (await response.json()) as LovableTranslationResult;
@@ -116,8 +119,9 @@ async function translateArabicPrompt(prompt: string): Promise<string | null> {
 
     return translated && /[a-z]/i.test(translated) ? translated.slice(0, 2048) : null;
   } catch (error) {
+    if (error instanceof Error && error.message.startsWith("err.")) throw error;
     console.warn("XOVA Lovable prompt translation timed out or failed", error);
-    return null;
+    throw new Error("err.imageTranslationUnavailable");
   }
 }
 
@@ -390,9 +394,18 @@ export const Route = createFileRoute("/api/image")({
 
         try {
           // AI Horde runs image jobs on volunteer GPUs, so submit once and poll separately.
-          const imagePrompt = await translateArabicPrompt(prompt);
-          if (!imagePrompt) {
-            return Response.json({ error: "err.imageTranslationUnavailable" }, { status: 503 });
+          let imagePrompt: string;
+          try {
+            const translated = await translateArabicPrompt(prompt);
+            if (!translated) throw new Error("err.imageTranslationUnavailable");
+            imagePrompt = translated;
+          } catch (error) {
+            const code =
+              error instanceof Error && error.message.startsWith("err.")
+                ? error.message
+                : "err.imageTranslationUnavailable";
+            const status = code === "err.imageLovableCredits" ? 402 : code === "err.imageLovableRate" ? 429 : 503;
+            return Response.json({ error: code }, { status });
           }
 
           const width = aspect === "3:2" ? 768 : 512;
