@@ -103,29 +103,75 @@ function ImageStudio() {
         const { data: sessionData } = await supabase.auth.getSession();
         const token = sessionData.session?.access_token;
         if (!token) throw new Error("err.auth");
-        const response = await fetch("/api/image", {
+        const submitResponse = await fetch("/api/image", {
           method: "POST",
           headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
           body: JSON.stringify({ prompt: clean, aspect: useAspect }),
         });
-        const json = (await response.json()) as {
-          image?: string;
-          id?: string;
-          createdAt?: string;
+        const submitted = (await submitResponse.json()) as {
+          jobId?: string;
           error?: string;
         };
-        if (!response.ok || !json.image || !json.id) {
-          throw new Error(json.error ?? "err.imageFailed");
+        if (!submitResponse.ok || !submitted.jobId) {
+          throw new Error(submitted.error ?? "err.imageFailed");
         }
+
+        let completed:
+          | { image: string; id: string; createdAt?: string; aspect?: string; quality?: string }
+          | null = null;
+
+        // AI Horde is volunteer-powered. Keep the UI open while the request waits in its queue.
+        for (let attempt = 0; attempt < 180; attempt += 1) {
+          const query = new URLSearchParams({
+            jobId: submitted.jobId,
+            prompt: clean,
+            aspect: useAspect,
+          });
+          const pollResponse = await fetch(`/api/image?${query.toString()}`, {
+            method: "GET",
+            headers: { Authorization: `Bearer ${token}` },
+          });
+          const poll = (await pollResponse.json()) as {
+            pending?: boolean;
+            image?: string;
+            id?: string;
+            createdAt?: string;
+            aspect?: string;
+            quality?: string;
+            error?: string;
+          };
+
+          if (!pollResponse.ok) {
+            throw new Error(poll.error ?? "err.imageFailed");
+          }
+          if (poll.pending) {
+            await new Promise((resolve) => setTimeout(resolve, 3000));
+            continue;
+          }
+          if (!poll.image || !poll.id) {
+            throw new Error(poll.error ?? "err.imageFailed");
+          }
+          completed = poll as {
+            image: string;
+            id: string;
+            createdAt?: string;
+            aspect?: string;
+            quality?: string;
+          };
+          break;
+        }
+
+        if (!completed) throw new Error("err.imageQueueTimeout");
+
         setImages((current) => [
           {
-            id: json.id!,
+            id: completed!.id,
             prompt: clean,
             aspect: useAspect,
             quality: "standard",
             storage_path: "",
-            image_url: json.image!,
-            created_at: json.createdAt ?? new Date().toISOString(),
+            image_url: completed!.image,
+            created_at: completed!.createdAt ?? new Date().toISOString(),
           },
           ...current,
         ]);
