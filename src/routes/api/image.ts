@@ -47,11 +47,11 @@ async function authenticate(request: Request) {
 }
 
 /** Free-tier text translation only. Image generation never calls a paid image model. */
-async function translateArabicPrompt(prompt: string): Promise<string> {
+async function translateArabicPrompt(prompt: string): Promise<string | null> {
   if (!/[^\x00-\x7F]/.test(prompt)) return prompt;
 
   const apiKey = process.env["GEMINI_API_KEY"];
-  if (!apiKey) return prompt;
+  if (!apiKey) return null;
 
   try {
     const response = await fetch(
@@ -74,14 +74,14 @@ async function translateArabicPrompt(prompt: string): Promise<string> {
                 prompt,
             }],
           }],
-          generationConfig: { maxOutputTokens: 100 },
+          generationConfig: { maxOutputTokens: 300, temperature: 0.1 },
         }),
       },
     );
 
     if (!response.ok) {
       console.warn("XOVA image prompt translation unavailable", response.status);
-      return prompt;
+      return null;
     }
 
     const result = (await response.json()) as GeminiTranslationResult;
@@ -90,10 +90,10 @@ async function translateArabicPrompt(prompt: string): Promise<string> {
       .join("")
       .trim();
 
-    return translated && /[a-z]/i.test(translated) ? translated.slice(0, 2048) : prompt;
+    return translated && /[a-z]/i.test(translated) ? translated.slice(0, 2048) : null;
   } catch (error) {
     console.warn("XOVA image prompt translation timed out or failed", error);
-    return prompt;
+    return null;
   }
 }
 
@@ -177,6 +177,9 @@ export const Route = createFileRoute("/api/image")({
         try {
           // Translate the prompt when needed, then call Zhipu's CogView-3-Flash image API.
           const imagePrompt = await translateArabicPrompt(prompt);
+          if (!imagePrompt) {
+            return Response.json({ error: "err.imageTranslationUnavailable" }, { status: 503 });
+          }
           const size =
             aspect === "3:2" ? "1344x768" :
             aspect === "2:3" ? "768x1344" :
