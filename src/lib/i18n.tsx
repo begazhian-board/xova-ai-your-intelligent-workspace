@@ -194,7 +194,11 @@ const en: Dict = {
   "err.imageCloudflareAuth": "Cloudflare rejected the Workers AI token. Check that it has Workers AI Read permission and that the Account ID and token belong to the same account.",
   "err.imageCloudflareBilling": "Cloudflare Workers AI returned a billing or account-credit error.",
   "err.imageCloudflareResponse": "Cloudflare accepted the request but returned no image. Check the Workers AI model response in Cloudflare logs.",
-  "err.imageStorage": "The image was generated, but XOVA could not save it to Supabase Storage."
+  "err.imageStorage": "The image was generated, but XOVA could not save it to Supabase Storage.",
+  "err.imageStorageBucket": "XOVA could not create its private image bucket. Check the Supabase service-role key and Storage permissions.",
+  "err.imageStorageUpload": "The image bucket exists, but Supabase rejected the file upload.",
+  "err.imageStorageSign": "The image uploaded, but Supabase could not create its private viewing link.",
+  "err.imageStorageRecord": "The image uploaded, but XOVA could not save its record in the generated_images table.",
   "err.imageBlocked": "This image couldn't be created right now. Try again, or reword the description a little.",
   "err.searchOffline":
     "Live web search isn't connected or couldn't be reached, so XOVA answered from its own knowledge without citations.",
@@ -402,7 +406,11 @@ const ar: Dict = {
   "err.imageCloudflareAuth": "Cloudflare رفض مفتاح Workers AI. تأكد إن صلاحية Workers AI Read موجودة وإن Account ID والمفتاح من نفس الحساب.",
   "err.imageCloudflareBilling": "Cloudflare رجّع خطأ متعلق بالفوترة أو رصيد Workers AI.",
   "err.imageCloudflareResponse": "Cloudflare قبل الطلب لكنه مرجّعش صورة. محتاجين نراجع سجل Workers AI.",
-  "err.imageStorage": "الصورة اتولدت، لكن XOVA معرفش يحفظها في Supabase Storage."
+  "err.imageStorage": "الصورة اتولدت، لكن XOVA معرفش يحفظها في Supabase Storage.",
+  "err.imageStorageBucket": "XOVA معرفش ينشئ مخزن الصور الخاص. راجع مفتاح Service Role وصلاحيات التخزين في Supabase.",
+  "err.imageStorageUpload": "مخزن الصور موجود، لكن Supabase رفض رفع الملف.",
+  "err.imageStorageSign": "الصورة اترفعت، لكن Supabase معرفش يعمل رابط عرض خاص ليها.",
+  "err.imageStorageRecord": "الصورة اترفعت، لكن XOVA معرفش يسجل بياناتها في جدول generated_images.",
   "err.imageBlocked": "مقدرناش نعمل الصورة دي دلوقتي. جرّب تاني أو غيّر الوصف شوية.",
   "err.searchOffline": "البحث المباشر على الويب غير موصول أو تعذّر الوصول إليه، لذلك أجاب XOVA من معرفته دون مصادر.",
   "err.searchNoSources": "لم يُرجع بحث Tavily روابط مصادر قابلة للتحقق لهذا الطلب.",
