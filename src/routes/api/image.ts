@@ -6,14 +6,10 @@ interface WireBody {
   aspect?: "1:1" | "3:2" | "2:3";
 }
 
-interface CloudflareImageResult {
-  result?: {
-    image?: string;
-  };
-  image?: string;
-  errors?: Array<{ code?: number; message?: string }>;
-  messages?: unknown[];
-  success?: boolean;
+interface ZhipuImageResult {
+  data?: Array<{ url?: string; file_url?: string }>;
+  code?: string;
+  message?: string;
 }
 
 interface GeminiTranslationResult {
@@ -24,8 +20,9 @@ interface GeminiTranslationResult {
   }>;
 }
 
-const IMAGE_MODEL = "@cf/black-forest-labs/flux-1-schnell";
-const IMAGE_TIMEOUT_MS = 25_000;
+const IMAGE_MODEL = "cogview-3-flash";
+const IMAGE_TIMEOUT_MS = 60_000;
+const IMAGE_DOWNLOAD_TIMEOUT_MS = 25_000;
 const TRANSLATION_TIMEOUT_MS = 3_000;
 const HOURLY_LIMIT = 10;
 const DAILY_LIMIT = 50;
@@ -100,18 +97,8 @@ async function translateArabicPrompt(prompt: string): Promise<string> {
   }
 }
 
-function base64ToBytes(base64: string) {
-  const binary = atob(base64);
-  const bytes = new Uint8Array(binary.length);
-  for (let i = 0; i < binary.length; i += 1) {
-    bytes[i] = binary.charCodeAt(i);
-  }
-  return bytes;
-}
-
 function providerError(status: number) {
-  if (status === 401 || status === 403) return "err.imageCloudflareAuth";
-  if (status === 402) return "err.imageCloudflareBilling";
+  if (status === 401 || status === 403) return "err.imageZhipuAuth";
   if (status === 429) return "err.imageProviderRate";
   if (status === 400) return "err.imageProviderRequest";
   if (status >= 500) return "err.imageProviderBusy";
@@ -125,10 +112,9 @@ export const Route = createFileRoute("/api/image")({
         const user = await authenticate(request);
         if (!user) return Response.json({ error: "err.auth" }, { status: 401 });
 
-        const accountId = process.env["CLOUDFLARE_ACCOUNT_ID"];
-        const apiToken = process.env["CLOUDFLARE_API_TOKEN"];
-        if (!accountId || !apiToken) {
-          return Response.json({ error: "err.imageCloudflareConfig" }, { status: 503 });
+        const apiKey = process.env["ZHIPU_API_KEY"];
+        if (!apiKey) {
+          return Response.json({ error: "err.imageZhipuConfig" }, { status: 503 });
         }
 
         let body: WireBody;
@@ -189,57 +175,64 @@ export const Route = createFileRoute("/api/image")({
         }
 
         try {
-          // Translate Arabic with the text-only free tier when available, then call FLUX Schnell.
+          // Translate the prompt when needed, then call Zhipu's CogView-3-Flash image API.
           const imagePrompt = await translateArabicPrompt(prompt);
+          const size =
+            aspect === "3:2" ? "1344x768" :
+            aspect === "2:3" ? "768x1344" :
+            "1024x1024";
           const response = await fetch(
-            `https://api.cloudflare.com/client/v4/accounts/${accountId}/ai/run/${IMAGE_MODEL}`,
+            "https://open.bigmodel.cn/api/paas/v4/images/generations",
             {
               method: "POST",
               headers: {
-                Authorization: `Bearer ${apiToken}`,
+                Authorization: `Bearer ${apiKey}`,
                 "Content-Type": "application/json",
               },
               signal: AbortSignal.timeout(IMAGE_TIMEOUT_MS),
               body: JSON.stringify({
+                model: IMAGE_MODEL,
                 prompt: imagePrompt.slice(0, 2048),
-                steps: 4,
+                size,
               }),
             },
           );
 
           if (!response.ok) {
             const errorText = await response.text();
-            console.error("XOVA free image provider", response.status, errorText.slice(0, 500));
+            console.error("XOVA CogView image provider", response.status, errorText.slice(0, 500));
             return Response.json(
               { error: providerError(response.status) },
               { status: response.status === 429 ? 429 : 502 },
             );
           }
 
-          const contentType = (response.headers.get("content-type") ?? "").toLowerCase();
-          let bytes: Uint8Array | null = null;
-          if (contentType.startsWith("image/") || contentType === "application/octet-stream") {
-            bytes = new Uint8Array(await response.arrayBuffer());
-          } else {
-            const payload = (await response.json()) as CloudflareImageResult;
-            const encoded = payload.result?.image ?? payload.image;
-            if (encoded) {
-              bytes = base64ToBytes(
-                encoded.replace(/^data:image\/[a-zA-Z0-9.+-]+;base64,/, "").replace(/\s/g, ""),
-              );
-            } else {
-              console.error(
-                "XOVA FLUX returned no image",
-                JSON.stringify(payload.errors ?? payload.messages ?? []).slice(0, 500),
-              );
-            }
-          }
-
-          if (!bytes?.length) {
+          const payload = (await response.json()) as ZhipuImageResult;
+          const imageUrl = payload.data?.[0]?.url ?? payload.data?.[0]?.file_url;
+          if (!imageUrl || !/^https:\/\//i.test(imageUrl)) {
+            console.error("XOVA CogView returned no valid image URL", JSON.stringify(payload).slice(0, 500));
             return Response.json({ error: "err.imageNoOutput" }, { status: 502 });
           }
 
-          // FLUX Schnell returns JPEG data through Workers AI.
+          // Download the provider's temporary image URL before storing it privately in Supabase.
+          const imageResponse = await fetch(imageUrl, {
+            signal: AbortSignal.timeout(IMAGE_DOWNLOAD_TIMEOUT_MS),
+          });
+          if (!imageResponse.ok) {
+            console.error("XOVA CogView image download failed", imageResponse.status);
+            return Response.json({ error: "err.imageDownload" }, { status: 502 });
+          }
+          const imageContentType = (imageResponse.headers.get("content-type") ?? "").toLowerCase();
+          if (!imageContentType.startsWith("image/")) {
+            console.error("XOVA CogView returned a non-image file", imageContentType);
+            return Response.json({ error: "err.imageNoOutput" }, { status: 502 });
+          }
+          const bytes = new Uint8Array(await imageResponse.arrayBuffer());
+          if (!bytes.length) {
+            return Response.json({ error: "err.imageNoOutput" }, { status: 502 });
+          }
+
+          // Detect the actual downloaded image format before uploading it.
           const isJpeg = bytes[0] === 0xff && bytes[1] === 0xd8;
           const extension = isJpeg ? "jpg" : "png";
           const mimeType = isJpeg ? "image/jpeg" : "image/png";
@@ -295,7 +288,7 @@ export const Route = createFileRoute("/api/image")({
         } catch (error) {
           const name = error instanceof Error ? error.name : "";
           if (name === "TimeoutError" || name === "AbortError") {
-            console.error("XOVA FLUX request timed out", IMAGE_TIMEOUT_MS);
+            console.error("XOVA CogView request or image download timed out");
             return Response.json({ error: "err.imageTimeout" }, { status: 504 });
           }
           console.error("XOVA image error", error);
