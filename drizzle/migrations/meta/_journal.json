@@ -29,6 +29,13 @@
       "when": 1790836932547,
       "tag": "0003_conversations",
       "breakpoints": true
+    },
+    {
+      "idx": 4,
+      "version": "7",
+      "when": 1794390224948,
+      "tag": "0004_secure_xova_image_uploads",
+      "breakpoints": true
     }
   ]
 }
