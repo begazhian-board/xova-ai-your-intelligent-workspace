@@ -190,6 +190,7 @@ const en: Dict = {
   "err.speechUnsupported": "Read aloud isn't supported in this browser.",
   "err.imageFailed": "We couldn't create this image. Please try again, or rephrase your description.",
   "err.imageRate": "You reached the image limit for this hour. Try again later.",
+  "err.imageProviderRate": "The image provider rejected the request due to its quota or rate limit. This is separate from XOVA's hourly image cap.",
   "err.imageBlocked": "This image couldn't be created right now. Try again, or reword the description a little.",
   "err.searchOffline":
     "Live web search isn't connected or couldn't be reached, so XOVA answered from its own knowledge without citations.",
@@ -393,6 +394,7 @@ const ar: Dict = {
   "err.speechUnsupported": "القراءة الصوتية غير مدعومة في هذا المتصفح.",
   "err.imageFailed": "معرفناش نعمل الصورة دي. جرّب تاني أو اكتب الوصف بطريقة مختلفة.",
   "err.imageRate": "وصلت إلى حد الصور لهذه الساعة. حاول لاحقًا.",
+  "err.imageProviderRate": "مزود توليد الصور رفض الطلب بسبب حد الاستخدام أو عدد الطلبات. ده منفصل عن حد الصور الخاص بـXOVA.",
   "err.imageBlocked": "مقدرناش نعمل الصورة دي دلوقتي. جرّب تاني أو غيّر الوصف شوية.",
   "err.searchOffline": "البحث المباشر على الويب غير موصول أو تعذّر الوصول إليه، لذلك أجاب XOVA من معرفته دون مصادر.",
   "err.searchNoSources": "لم يُرجع بحث Tavily روابط مصادر قابلة للتحقق لهذا الطلب.",
