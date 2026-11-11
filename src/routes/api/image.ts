@@ -22,6 +22,7 @@ interface HordeCheckResponse {
   queue_position?: number;
   waiting?: number;
   processing?: number;
+  is_possible?: boolean;
 }
 
 interface HordeStatusResponse {
@@ -119,10 +120,20 @@ async function translateArabicPrompt(prompt: string): Promise<string | null> {
 
 function providerError(status: number) {
   if (status === 401 || status === 403) return "err.imageHordeAuth";
+  if (status === 404) return "err.imageQueueExpired";
   if (status === 429) return "err.imageProviderRate";
   if (status === 400) return "err.imageProviderRequest";
   if (status >= 500) return "err.imageProviderBusy";
   return "err.imageFailed";
+}
+
+function base64ToBytes(base64: string) {
+  const binary = atob(base64.replace(/\\s/g, ""));
+  const bytes = new Uint8Array(binary.length);
+  for (let index = 0; index < binary.length; index += 1) {
+    bytes[index] = binary.charCodeAt(index);
+  }
+  return bytes;
 }
 
 function hordeHeaders() {
@@ -163,6 +174,9 @@ export const Route = createFileRoute("/api/image")({
           if (check.faulted) {
             return Response.json({ error: "err.imageGenerationFailed" }, { status: 502 });
           }
+          if (check.is_possible === false) {
+            return Response.json({ error: "err.imageNoWorkers" }, { status: 503 });
+          }
 
           const isDone = check.done === true || (check.finished ?? 0) >= 1;
           if (!isDone) {
@@ -193,36 +207,49 @@ export const Route = createFileRoute("/api/image")({
             return Response.json({ error: "err.imageGenerationFailed" }, { status: 502 });
           }
 
-          const imageUrl = status.generations?.[0]?.img;
-          if (!imageUrl) {
+          const imagePayload = status.generations?.[0]?.img;
+          if (!imagePayload) {
             return Response.json({ pending: true, waitTime: 2, queuePosition: null });
           }
-          if (!/^https:\/\//i.test(imageUrl)) {
-            console.error("XOVA AI Horde returned an invalid image URL");
-            return Response.json({ error: "err.imageNoOutput" }, { status: 502 });
+
+          let bytes: Uint8Array;
+          let imageContentType = "image/webp";
+          if (/^https:\/\//i.test(imagePayload)) {
+            const imageResponse = await fetch(imagePayload, {
+              signal: AbortSignal.timeout(IMAGE_DOWNLOAD_TIMEOUT_MS),
+            });
+            if (!imageResponse.ok) {
+              console.error("XOVA AI Horde image download failed", imageResponse.status);
+              return Response.json({ error: "err.imageDownload" }, { status: 502 });
+            }
+            imageContentType = (imageResponse.headers.get("content-type") ?? "").toLowerCase();
+            if (!["image/png", "image/jpeg", "image/webp"].some((type) => imageContentType.includes(type))) {
+              console.error("XOVA AI Horde returned unsupported image content type", imageContentType);
+              return Response.json({ error: "err.imageNoOutput" }, { status: 502 });
+            }
+            bytes = new Uint8Array(await imageResponse.arrayBuffer());
+          } else {
+            // The API can also return the image as base64-encoded WebP data.
+            try {
+              const encoded = imagePayload.replace(/^data:image\/[a-zA-Z0-9.+-]+;base64,/, "");
+              bytes = base64ToBytes(encoded);
+              imageContentType = "image/webp";
+            } catch (error) {
+              console.error("XOVA AI Horde returned unreadable base64 image data", error);
+              return Response.json({ error: "err.imageNoOutput" }, { status: 502 });
+            }
           }
 
-          const imageResponse = await fetch(imageUrl, {
-            signal: AbortSignal.timeout(IMAGE_DOWNLOAD_TIMEOUT_MS),
-          });
-          if (!imageResponse.ok) {
-            console.error("XOVA AI Horde image download failed", imageResponse.status);
-            return Response.json({ error: "err.imageDownload" }, { status: 502 });
-          }
-
-          const imageContentType = (imageResponse.headers.get("content-type") ?? "").toLowerCase();
-          if (!["image/png", "image/jpeg", "image/webp"].some((type) => imageContentType.includes(type))) {
-            console.error("XOVA AI Horde returned unsupported image content type", imageContentType);
-            return Response.json({ error: "err.imageNoOutput" }, { status: 502 });
-          }
-
-          const bytes = new Uint8Array(await imageResponse.arrayBuffer());
           if (!bytes.length) {
             return Response.json({ error: "err.imageNoOutput" }, { status: 502 });
           }
 
           const isJpeg = imageContentType.includes("jpeg") || (bytes[0] === 0xff && bytes[1] === 0xd8);
-          const isWebp = imageContentType.includes("webp");
+          const isWebp = imageContentType.includes("webp") || (
+            bytes.length >= 12 &&
+            String.fromCharCode(...bytes.slice(0, 4)) === "RIFF" &&
+            String.fromCharCode(...bytes.slice(8, 12)) === "WEBP"
+          );
           const extension = isJpeg ? "jpg" : isWebp ? "webp" : "png";
           const mimeType = isJpeg ? "image/jpeg" : isWebp ? "image/webp" : "image/png";
 
