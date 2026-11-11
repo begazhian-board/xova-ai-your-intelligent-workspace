@@ -84,7 +84,7 @@ export const Route = createFileRoute("/api/image")({
 
         // Lovable Cloud manages the backend and does not expose a project service-role key.
         // Use the verified user's JWT with the publishable key so Storage and table RLS apply per user.
-        const accessToken = request.headers.get("authorization")?.replace(/^Bearer\\s+/i, "");
+        const accessToken = request.headers.get("authorization")?.replace(/^Bearer\s+/i, "");
         const supabaseUrl = process.env["SUPABASE_URL"] ?? process.env["VITE_SUPABASE_URL"];
         const publishableKey =
           process.env["SUPABASE_PUBLISHABLE_KEY"] ?? process.env["VITE_SUPABASE_PUBLISHABLE_KEY"];
