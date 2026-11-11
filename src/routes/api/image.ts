@@ -61,7 +61,12 @@ export const Route = createFileRoute("/api/image")({
 
         const geminiKey = process.env["GEMINI_API_KEY"];
         const hfKey = process.env["HUGGINGFACE_API_KEY"];
-        if (!geminiKey && !hfKey) return Response.json({ error: "err.unavailable" }, { status: 500 });
+        const cloudflareAccountId = process.env["CLOUDFLARE_ACCOUNT_ID"];
+        const cloudflareApiToken = process.env["CLOUDFLARE_API_TOKEN"];
+        const hasCloudflareImage = Boolean(cloudflareAccountId && cloudflareApiToken);
+        if (!hasCloudflareImage && !geminiKey && !hfKey) {
+          return Response.json({ error: "err.unavailable" }, { status: 500 });
+        }
 
         let body: WireBody;
         try {
@@ -95,8 +100,36 @@ export const Route = createFileRoute("/api/image")({
           let lastStatus: number | undefined;
           const english = await translateToEnglish(prompt);
 
-          // Primary: direct Gemini image API.
-          if (geminiKey) {
+          // Primary: Cloudflare Workers AI (FLUX.1 Schnell).
+          // Uses the account's daily free Workers AI allocation; credentials stay server-side.
+          if (hasCloudflareImage) {
+            try {
+              const res = await fetch(
+                `https://api.cloudflare.com/client/v4/accounts/${cloudflareAccountId}/ai/run/@cf/black-forest-labs/flux-1-schnell`,
+                {
+                  method: "POST",
+                  headers: {
+                    Authorization: `Bearer ${cloudflareApiToken}`,
+                    "Content-Type": "application/json",
+                  },
+                  body: JSON.stringify({ prompt: english.slice(0, 2048), steps: 4 }),
+                },
+              );
+              if (res.ok) {
+                const json = (await res.json()) as { result?: { image?: string }; success?: boolean };
+                if (json.result?.image) bytes = base64ToBytes(json.result.image);
+                else console.error("XOVA image Cloudflare: response did not contain result.image");
+              } else {
+                lastStatus = res.status;
+                console.error("XOVA image Cloudflare", res.status, (await res.text()).slice(0, 300));
+              }
+            } catch (error) {
+              console.error("XOVA image Cloudflare error", error);
+            }
+          }
+
+          // Secondary: direct Gemini image API, when configured.
+          if (!bytes && geminiKey) {
             try {
               const imageModel = quality === "premium" ? "gemini-3-pro-image" : "gemini-3.1-flash-image";
               const res = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/${imageModel}:generateContent`, {
