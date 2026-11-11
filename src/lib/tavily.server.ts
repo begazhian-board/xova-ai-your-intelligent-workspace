@@ -5,8 +5,11 @@ interface TavilyResponse { results?: Array<{ title?: string; url?: string; conte
 export async function searchTavily(query: string, apiKey: string): Promise<TavilySearchResult[]> {
   const cleanQuery = query.trim().slice(0, 500);
   if (!cleanQuery) return [];
+  // Do not let a slow web-search provider hold the whole chat request indefinitely.
   const response = await fetch("https://api.tavily.com/search", {
-    method: "POST", headers: { "Content-Type": "application/json" },
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    signal: AbortSignal.timeout(6_000),
     body: JSON.stringify({ api_key: apiKey, query: cleanQuery, topic: "general", search_depth: "basic", max_results: 5, include_answer: false, include_raw_content: false }),
   });
   if (!response.ok) throw new Error(`Tavily search failed with status ${response.status}`);
