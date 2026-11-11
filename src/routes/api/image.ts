@@ -9,6 +9,12 @@ interface WireBody {
   quality?: "standard" | "premium";
 }
 
+/** Lovable-hosted deployment of this same app — the only runtime holding the managed AI key. */
+const MANAGED_BACKEND_URL = "https://xova-flow-ai.lovable.app/api/image";
+const PROXY_MARKER = "X-Xova-Proxied";
+const IMAGE_MODEL = "openai/gpt-image-2.5-sunburst";
+const SIZES = { "1:1": "1024x1024", "3:2": "1536x1024", "2:3": "1024x1536" } as const;
+
 const ASPECTS = new Set(["1:1", "3:2", "2:3"]);
 
 /** Generations allowed per user per rolling hour. */
@@ -71,7 +77,29 @@ export const Route = createFileRoute("/api/image")({
 
         const apiKey = process.env["LOVABLE_API_KEY"];
         if (!apiKey) {
-          return Response.json({ error: "err.imageConfig" }, { status: 500 });
+          // External host (e.g. Cloudflare Pages): the managed key only exists in the
+          // Lovable-hosted backend, so forward the already-authenticated request there.
+          if (request.headers.get(PROXY_MARKER)) {
+            return Response.json({ error: "err.imageConfig" }, { status: 500 });
+          }
+          try {
+            const upstream = await fetch(MANAGED_BACKEND_URL, {
+              method: "POST",
+              headers: {
+                "Content-Type": "application/json",
+                Authorization: request.headers.get("authorization") ?? "",
+                [PROXY_MARKER]: "1",
+              },
+              body: await request.text(),
+            });
+            return new Response(upstream.body, {
+              status: upstream.status,
+              headers: { "Content-Type": upstream.headers.get("content-type") ?? "application/json" },
+            });
+          } catch (error) {
+            console.error("XOVA image proxy error", error);
+            return Response.json({ error: "err.imageFailed" }, { status: 502 });
+          }
         }
 
         let body: WireBody;
@@ -85,7 +113,7 @@ export const Route = createFileRoute("/api/image")({
         if (!prompt) return Response.json({ error: "err.generic" }, { status: 400 });
         if (prompt.length > 2000) return Response.json({ error: "err.generic" }, { status: 400 });
 
-        const aspect = body.aspect && ASPECTS.has(body.aspect) ? body.aspect : "1:1";
+        const aspect: keyof typeof SIZES = body.aspect && ASPECTS.has(body.aspect) ? body.aspect : "1:1";
         const quality = body.quality === "premium" ? "premium" : "standard";
 
         const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
@@ -112,7 +140,7 @@ export const Route = createFileRoute("/api/image")({
 
           // Lovable AI Gateway only.
           try {
-            const res = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
+            const res = await fetch("https://ai.gateway.lovable.dev/v1/images/generations", {
               method: "POST",
               headers: {
                 "Content-Type": "application/json",
@@ -120,27 +148,23 @@ export const Route = createFileRoute("/api/image")({
                 "X-Lovable-AIG-SDK": "fetch",
               },
               body: JSON.stringify({
-                model:
-                  quality === "premium"
-                    ? "google/gemini-3-pro-image"
-                    : "google/gemini-3.1-flash-image",
-                messages: [{ role: "user", content: english }],
-                modalities: ["image", "text"],
-                image_config: { aspect_ratio: aspect },
+                model: IMAGE_MODEL,
+                prompt: english,
+                size: SIZES[aspect],
+                quality: quality === "premium" ? "high" : "low",
+                n: 1,
               }),
             });
             if (!res.ok) {
               lastStatus = res.status;
               console.error("XOVA image gateway", res.status, (await res.text()).slice(0, 300));
             } else {
-              const json = (await res.json()) as {
-                choices?: Array<{ message?: { images?: Array<{ image_url?: { url?: string } }> } }>;
-              };
-              const dataUrl = json.choices?.[0]?.message?.images?.[0]?.image_url?.url;
-              if (dataUrl?.startsWith("data:")) {
-                bytes = base64ToBytes(dataUrl.slice(dataUrl.indexOf(",") + 1));
-              } else if (dataUrl) {
-                const downloaded = await fetch(dataUrl);
+              const json = (await res.json()) as { data?: Array<{ b64_json?: string; url?: string }> };
+              const item = json.data?.[0];
+              if (item?.b64_json) {
+                bytes = base64ToBytes(item.b64_json);
+              } else if (item?.url) {
+                const downloaded = await fetch(item.url);
                 if (downloaded.ok) bytes = new Uint8Array(await downloaded.arrayBuffer());
               }
             }
