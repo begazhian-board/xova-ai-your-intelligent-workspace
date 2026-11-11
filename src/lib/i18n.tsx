@@ -118,7 +118,7 @@ const en: Dict = {
   "settings.save": "Save changes",
   "settings.saved": "Settings saved",
   "settings.privacy.desc":
-    "Messages are sent to the AI provider to produce answers, and stored in your own account only. Nobody else can read them.",
+    "Messages are sent to AI providers to produce answers. Image prompts go to volunteer workers, and anonymous image results may be shared with LAION to improve its dataset.",
   "settings.about.desc":
     "XOVA AI is a general-purpose AI workspace. Answers come from live AI models; web search, voice and image features are only active when their provider is connected.",
 
@@ -136,7 +136,7 @@ const en: Dict = {
   "empty.noImages": "No generated images yet",
 
   "studio.title": "Image studio",
-  "studio.subtitle": "Free community-powered image generation. Prompts and results may be shared with the AI Horde community.",
+  "studio.subtitle": "Free community-powered image generation. Anonymous image results may be shared with LAION to improve its dataset.",
   "studio.prompt": "Prompt",
   "studio.aspect": "Aspect ratio",
   "studio.aspect.1:1": "Square",
@@ -342,7 +342,7 @@ const ar: Dict = {
   "settings.save": "حفظ التغييرات",
   "settings.saved": "تم حفظ الإعدادات",
   "settings.privacy.desc":
-    "تُرسل الرسائل إلى مزود الذكاء الاصطناعي لتوليد الإجابات، وتُخزن في حسابك وحدك. لا يمكن لأحد آخر قراءتها.",
+    "تُرسل الرسائل لمزودي الذكاء الاصطناعي لإنتاج الإجابات. أوصاف الصور تُرسل لأجهزة متطوعين، وقد تُشارك الصور الناتجة من الطلبات المجهولة مع LAION لتحسين قاعدة بياناته.",
   "settings.about.desc":
     "XOVA AI مساحة عمل ذكية عامة. الإجابات من نماذج حقيقية؛ وميزات البحث والصوت والصور تعمل فقط عند توصيل مزودها.",
 
@@ -360,7 +360,7 @@ const ar: Dict = {
   "empty.noImages": "لا صور مولّدة بعد",
 
   "studio.title": "استوديو الصور",
-  "studio.subtitle": "توليد صور مجاني بأجهزة متطوعين. الوصف والنتائج ممكن تتشارك مع مجتمع AI Horde.",
+  "studio.subtitle": "توليد صور مجاني بأجهزة متطوعين. الصور الناتجة من الطلبات المجهولة ممكن تتشارك مع LAION لتحسين قاعدة بياناته.",
   "studio.prompt": "الوصف",
   "studio.aspect": "الأبعاد",
   "studio.aspect.1:1": "مربعة",
