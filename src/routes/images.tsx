@@ -25,7 +25,7 @@ export const Route = createFileRoute("/images")({
       {
         name: "description",
         content:
-          "Generate real AI images from a text prompt inside XOVA AI: pick an aspect ratio and quality, then download or regenerate from your private image history.",
+          "Generate images from direct Arabic or English prompts and manage your private image history.",
       },
       { property: "og:title", content: "Image studio — XOVA AI by Begad" },
       {
@@ -40,8 +40,6 @@ export const Route = createFileRoute("/images")({
 });
 
 type Aspect = "1:1" | "3:2" | "2:3";
-type Quality = "standard" | "premium";
-
 interface ImageRow {
   id: string;
   prompt: string;
@@ -53,8 +51,6 @@ interface ImageRow {
 }
 
 const ASPECTS: Aspect[] = ["1:1", "3:2", "2:3"];
-const QUALITIES: Quality[] = ["standard", "premium"];
-
 const ASPECT_CLASS: Record<string, string> = {
   "1:1": "aspect-square",
   "3:2": "aspect-[3/2]",
@@ -68,7 +64,6 @@ function ImageStudio() {
 
   const [prompt, setPrompt] = useState("");
   const [aspect, setAspect] = useState<Aspect>("1:1");
-  const [quality, setQuality] = useState<Quality>("standard");
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [images, setImages] = useState<ImageRow[]>([]);
@@ -99,7 +94,7 @@ function ImageStudio() {
   }, [user]);
 
   const generate = useCallback(
-    async (text: string, useAspect: Aspect, useQuality: Quality) => {
+    async (text: string, useAspect: Aspect) => {
       const clean = text.trim();
       if (!clean || busy) return;
       setBusy(true);
@@ -111,7 +106,7 @@ function ImageStudio() {
         const response = await fetch("/api/image", {
           method: "POST",
           headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
-          body: JSON.stringify({ prompt: clean, aspect: useAspect, quality: useQuality }),
+          body: JSON.stringify({ prompt: clean, aspect: useAspect }),
         });
         const json = (await response.json()) as {
           image?: string;
@@ -127,7 +122,7 @@ function ImageStudio() {
             id: json.id!,
             prompt: clean,
             aspect: useAspect,
-            quality: useQuality,
+            quality: "standard",
             storage_path: "",
             image_url: json.image!,
             created_at: json.createdAt ?? new Date().toISOString(),
@@ -275,34 +270,10 @@ function ImageStudio() {
               </div>
             </fieldset>
 
-            <fieldset className="flex flex-col gap-2">
-              <legend className="text-xxs font-semibold uppercase tracking-wide text-muted-foreground">
-                {t("studio.quality")}
-              </legend>
-              <div className="flex gap-1.5 rounded-full border border-border bg-surface p-1">
-                {QUALITIES.map((value) => (
-                  <button
-                    key={value}
-                    type="button"
-                    aria-pressed={quality === value}
-                    onClick={() => setQuality(value)}
-                    className={cn(
-                      "xv-focus rounded-full px-3 py-1.5 text-xs font-medium transition-all",
-                      quality === value
-                        ? "bg-brand-soft text-brand shadow-sm"
-                        : "text-muted-foreground hover:bg-hover hover:text-foreground",
-                    )}
-                  >
-                    {t(`studio.quality.${value}`)}
-                  </button>
-                ))}
-              </div>
-            </fieldset>
-
-            <button
+                        <button
               type="button"
               disabled={busy || prompt.trim().length === 0}
-              onClick={() => void generate(prompt, aspect, quality)}
+              onClick={() => void generate(prompt, aspect)}
               className="xv-focus ms-auto inline-flex items-center gap-2 rounded-full bg-brand px-5 py-2.5 text-sm font-semibold text-brand-foreground shadow-md shadow-brand/20 transition-all hover:opacity-90 active:scale-[0.98] disabled:opacity-45 disabled:shadow-none"
             >
               {busy ? (
@@ -393,11 +364,7 @@ function ImageStudio() {
                         type="button"
                         disabled={busy}
                         onClick={() =>
-                          void generate(
-                            row.prompt,
-                            (ASPECT_CLASS[row.aspect] ? row.aspect : "1:1") as Aspect,
-                            row.quality === "premium" ? "premium" : "standard",
-                          )
+                          void generate(row.prompt, (ASPECT_CLASS[row.aspect] ? row.aspect : "1:1") as Aspect)
                         }
                         aria-label={t("msg.regenerate")}
                         title={t("msg.regenerate")}
