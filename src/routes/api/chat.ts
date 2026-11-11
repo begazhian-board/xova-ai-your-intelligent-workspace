@@ -169,22 +169,35 @@ export const Route = createFileRoute("/api/chat")({
                 if (!local.signal.aborted) {
                   try {
                     const google = createGeminiProvider(geminiKey);
-                    // Use the low-latency Flash-Lite model for everyday chat.
-                    // Keep the stronger Flash model for reasoning, research, coding and other modes.
+                    // Keep Instant on Flash-Lite for low latency.
                     const isInstant = mode === "instant";
-                    const gemini = google(isInstant ? "gemini-3.5-flash-lite" : GEMINI_MODEL);
-                    const completion = streamText({
-                      model: gemini as never, system, messages: modelMessages,
-                      abortSignal: local.signal, maxRetries: 0,
-                      ...(!isInstant ? {
-                        providerOptions: {
-                          google: {
-                            thinkingConfig: { thinkingLevel: "medium" },
+                    const primaryModel = isInstant ? "gemini-3.5-flash-lite" : GEMINI_MODEL;
+                    const runModel = (modelId: string, thinkingLevel?: "medium") => {
+                      const completion = streamText({
+                        model: google(modelId) as never, system, messages: modelMessages,
+                        abortSignal: local.signal, maxRetries: 0,
+                        ...(thinkingLevel ? {
+                          providerOptions: {
+                            google: { thinkingConfig: { thinkingLevel } },
                           },
-                        },
-                      } : {}),
-                    });
-                    await pump(completion.fullStream);
+                        } : {}),
+                      });
+                      return pump(completion.fullStream);
+                    };
+
+                    try {
+                      await runModel(primaryModel, isInstant ? undefined : "medium");
+                    } catch (primaryError) {
+                      const status = providerStatus(primaryError);
+                      // Gemini 3.8 Flash can temporarily return 503 while capacity is constrained.
+                      // Retry the search/reasoning answer once on the stable 3.6 Flash model.
+                      if (!request.signal.aborted && !wroteText && !isInstant && status === 503) {
+                        console.warn("XOVA Gemini primary model overloaded; retrying with gemini-3.6-flash");
+                        await runModel("gemini-3.6-flash");
+                      } else {
+                        throw primaryError;
+                      }
+                    }
                     if (!wroteText) throw new Error("Gemini returned no visible answer");
                   } catch (error) {
                     if (request.signal.aborted) { controller.close(); return; }
