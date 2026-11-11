@@ -66,7 +66,7 @@ async function buildEnglishImagePrompt(text: string, apiKey?: string) {
                 "User request: " + text,
             }],
           }],
-          generationConfig: { temperature: 0.1, maxOutputTokens: 300 },
+          generationConfig: { temperature: 0.1, maxOutputTokens: 160 },
         }),
       },
     );
@@ -180,10 +180,10 @@ export const Route = createFileRoute("/api/image")({
                   body: JSON.stringify({
                     prompt: faithfulImagePrompt.slice(0, 2000),
                     negative_prompt: "unrelated subjects, unintended objects, incorrect product, wrong food, unrelated buildings or architecture",
-                    guidance: 7,
+                    guidance: 5,
                     width,
                     height,
-                    num_steps: 25,
+                    num_steps: 8,
                   }),
                 },
               );
