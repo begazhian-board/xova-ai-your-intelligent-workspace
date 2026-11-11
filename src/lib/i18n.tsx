@@ -146,7 +146,7 @@ const en: Dict = {
   "studio.quality.standard": "Standard",
   "studio.quality.premium": "Premium",
   "studio.generate": "Generate image",
-  "studio.generating": "Generating your image...",
+  "studio.generating": "Waiting for free community GPUs... This can take a few minutes.",
   "studio.history": "Your images",
   "studio.back": "Back to chat",
   "studio.open": "Open image studio",
@@ -189,30 +189,20 @@ const en: Dict = {
   "err.voiceUnsupported": "Voice input isn't supported in this browser.",
   "err.speechUnsupported": "Read aloud isn't supported in this browser.",
   "err.imageFailed": "Image generation failed. Please retry with a simpler description.",
-
-  "err.imageProviderRequest": "Google rejected the image request settings.",
+  "err.imageProviderRequest": "AI Horde rejected the image settings. Try a simpler prompt.",
   "err.imageRate": "You reached XOVA's image limit for this hour. Try again later.",
-  "err.imageProviderRate": "Google's image service reached its usage limit. Try again later.",
-
-
-
-
-
-
-
-
-
-
-  "err.imageZhipuConfig": "Add the Zhipu API key to the server environment.",
-  "err.imageZhipuAuth": "Zhipu rejected the API key. Check that it is active and has CogView access.",
-  "err.imageUnusedBilling": "",
-  "err.imageProviderRate": "Zhipu image generation is rate-limited right now. Try again later.",
-  "err.imageProviderBusy": "Zhipu's image service is temporarily busy. Try again shortly.",
-  "err.imageProviderRequest": "Zhipu rejected the image request settings.",
-  "err.imageTimeout": "Image generation took too long and was stopped.",
-  "err.imageNoOutput": "Zhipu returned no usable image. Check the server logs.",
+  "err.imageProviderRate": "AI Horde is receiving too many requests. Try again later.",
+  "err.imageProviderBusy": "AI Horde is temporarily unavailable. Try again shortly.",
+  "err.imageHordeAuth": "AI Horde rejected the anonymous request. Try again later.",
+  "err.imageNoWorkers": "No volunteer image workers can take this request right now. Try again later.",
+  "err.imageGenerationFailed": "The volunteer image worker could not complete this image.",
+  "err.imageSubmitTimeout": "XOVA could not submit the image request in time.",
+  "err.imageTimeout": "The image download took too long. Try again.",
+  "err.imageQueueTimeout": "The free image queue is taking too long. Your request may have expired; try again.",
+  "err.imageQueueExpired": "This image request expired before a worker completed it. Try again.",
+  "err.imageNoOutput": "AI Horde completed the request but returned no image.",
   "err.imageTranslationUnavailable": "Could not translate this image prompt. Check the Gemini text API key, or enter the prompt in English.",
-  "err.imageDownload": "The image was generated, but XOVA could not download it from Zhipu.",
+  "err.imageDownload": "The image was generated, but XOVA could not download it.",
   "err.imageDailyLimit": "You reached XOVA's daily free image limit. Try again tomorrow.",
   "err.imageStorage": "The image was generated, but XOVA could not save it to Supabase Storage.",
   "err.imageStorageAccess": "XOVA cannot access the generated_images table with your signed-in account. Check its authenticated-user RLS policies.",
@@ -221,6 +211,7 @@ const en: Dict = {
   "err.imageStorageSign": "The image uploaded, but Supabase could not create its private viewing link.",
   "err.imageStorageRecord": "The image uploaded, but XOVA could not save its record in the generated_images table.",
   "err.imageBlocked": "This image couldn't be created right now. Try again, or reword the description a little.",
+
   "err.searchOffline":
     "Live web search isn't connected or couldn't be reached, so XOVA answered from its own knowledge without citations.",
   "err.searchNoSources":
@@ -379,7 +370,7 @@ const ar: Dict = {
   "studio.quality.standard": "عادية",
   "studio.quality.premium": "عالية",
   "studio.generate": "توليد صورة",
-  "studio.generating": "جاري توليد صورتك...",
+  "studio.generating": "مستني دورك على أجهزة المتطوعين المجانية... ممكن ياخد كام دقيقة.",
   "studio.history": "صورك",
   "studio.back": "رجوع إلى المحادثة",
   "studio.open": "فتح استوديو الصور",
@@ -422,30 +413,20 @@ const ar: Dict = {
   "err.voiceUnsupported": "الإدخال الصوتي غير مدعوم في هذا المتصفح.",
   "err.speechUnsupported": "القراءة الصوتية غير مدعومة في هذا المتصفح.",
   "err.imageFailed": "توليد الصورة فشل. جرّب تاني بوصف أبسط.",
-
-  "err.imageProviderRequest": "Google رفض إعدادات طلب الصورة.",
+  "err.imageProviderRequest": "AI Horde رفض إعدادات الصورة. جرّب وصف أبسط.",
   "err.imageRate": "وصلت لحد الصور المسموح بيه في XOVA للساعة دي.",
-  "err.imageProviderRate": "وصلت لحد استخدام خدمة صور Google. جرّب لاحقًا.",
-
-
-
-
-
-
-
-
-
-
-  "err.imageCloudflareConfig": "مفتاح Zhipu مش موجود في إعدادات السيرفر.",
-  "err.imageCloudflareAuth": "Zhipu رفض مفتاح API. راجع إن المفتاح شغال وعنده صلاحية CogView.",
-  "err.imageCloudflareBilling": "",
-  "err.imageProviderRate": "Zhipu محدد عدد طلبات الصور حاليًا. جرّب بعد شوية.",
-  "err.imageProviderBusy": "خدمة الصور في Zhipu مشغولة مؤقتًا. جرّب بعد شوية.",
-  "err.imageProviderRequest": "Zhipu رفض إعدادات طلب الصورة.",
-  "err.imageTimeout": "توليد الصورة أخد وقت طويل واتوقف.",
-  "err.imageNoOutput": "Zhipu مرجّعش صورة صالحة. محتاجين نراجع سجل السيرفر.",
+  "err.imageProviderRate": "طلبات كتير على AI Horde دلوقتي. جرّب بعد شوية.",
+  "err.imageProviderBusy": "AI Horde مش متاح مؤقتًا. جرّب بعد شوية.",
+  "err.imageHordeAuth": "AI Horde رفض الطلب المجهول. جرّب تاني بعد شوية.",
+  "err.imageNoWorkers": "مفيش أجهزة متطوعين متاحة للصورة دي حاليًا. جرّب بعدين.",
+  "err.imageGenerationFailed": "الجهاز المتطوع معرفش يكمل توليد الصورة.",
+  "err.imageSubmitTimeout": "XOVA معرفش يرسل طلب الصورة في الوقت المحدد.",
+  "err.imageTimeout": "تنزيل الصورة أخد وقت طويل. جرّب تاني.",
+  "err.imageQueueTimeout": "طابور الصور المجاني طول زيادة. ممكن الطلب انتهت صلاحيته؛ جرّب تاني.",
+  "err.imageQueueExpired": "طلب الصورة انتهت صلاحيته قبل ما جهاز يخلصه. جرّب تاني.",
+  "err.imageNoOutput": "AI Horde خلص الطلب لكن مرجّعش صورة.",
   "err.imageTranslationUnavailable": "معرفناش نترجم وصف الصورة. راجع مفتاح Gemini النصي أو اكتب الوصف بالإنجليزي.",
-  "err.imageDownload": "الصورة اتولدت، لكن XOVA معرفش ينزّلها من Zhipu.",
+  "err.imageDownload": "الصورة اتولدت، لكن XOVA معرفش ينزّلها.",
   "err.imageDailyLimit": "وصلت للحد المجاني اليومي للصور في XOVA. جرّب بكرة.",
   "err.imageStorage": "الصورة اتولدت، لكن XOVA معرفش يحفظها في Supabase Storage.",
   "err.imageStorageAccess": "XOVA مش قادر يوصل لجدول الصور بحسابك. محتاجين نراجع صلاحيات المستخدمين في قاعدة البيانات.",
@@ -454,6 +435,7 @@ const ar: Dict = {
   "err.imageStorageSign": "الصورة اترفعت، لكن Supabase معرفش يعمل رابط عرض خاص ليها.",
   "err.imageStorageRecord": "الصورة اترفعت، لكن XOVA معرفش يسجل بياناتها في جدول generated_images.",
   "err.imageBlocked": "مقدرناش نعمل الصورة دي دلوقتي. جرّب تاني أو غيّر الوصف شوية.",
+
   "err.searchOffline": "البحث المباشر على الويب غير موصول أو تعذّر الوصول إليه، لذلك أجاب XOVA من معرفته دون مصادر.",
   "err.searchNoSources": "لم يُرجع بحث Tavily روابط مصادر قابلة للتحقق لهذا الطلب.",
   "err.stopped": "تم إيقاف التوليد.",
