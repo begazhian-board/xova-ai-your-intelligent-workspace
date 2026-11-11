@@ -88,6 +88,56 @@ function base64ToBytes(base64: string) {
   return bytes;
 }
 
+/** Cloudflare model outputs differ: Phoenix may return base64 as result:string, while FLUX returns result.image. */
+async function readCloudflareImageResponse(response: Response, provider: string): Promise<Uint8Array | null> {
+  const contentType = (response.headers.get("content-type") ?? "").toLowerCase();
+
+  if (contentType.startsWith("image/") || contentType === "application/octet-stream") {
+    const bytes = new Uint8Array(await response.arrayBuffer());
+    return bytes.length ? bytes : null;
+  }
+
+  const raw = await response.text();
+  try {
+    const payload = JSON.parse(raw) as {
+      result?: string | { image?: string };
+      image?: string;
+      errors?: unknown[];
+      success?: boolean;
+      messages?: unknown[];
+    };
+    const encoded =
+      typeof payload.result === "string"
+        ? payload.result
+        : payload.result?.image ?? payload.image;
+
+    if (encoded) {
+      const base64 = encoded.replace(/^data:image\\/[a-zA-Z0-9.+-]+;base64,/, "").replace(/\\s/g, "");
+      const bytes = base64ToBytes(base64);
+      if (bytes.length) return bytes;
+    }
+
+    console.error(
+      `XOVA image ${provider}: no base64 image in response`,
+      JSON.stringify(payload.errors ?? payload.messages ?? []).slice(0, 500),
+    );
+  } catch {
+    // Some model responses may provide the encoded image as the raw body.
+    const rawBase64 = raw.trim().replace(/^data:image\\/[a-zA-Z0-9.+-]+;base64,/, "").replace(/\\s/g, "");
+    if (/^[A-Za-z0-9+/]+={0,2}$/.test(rawBase64) && rawBase64.length > 1000) {
+      try {
+        const bytes = base64ToBytes(rawBase64);
+        if (bytes.length) return bytes;
+      } catch {
+        // Fall through to the provider diagnostic below.
+      }
+    }
+  }
+
+  console.error(`XOVA image ${provider}: unexpected response`, response.status, contentType, raw.slice(0, 500));
+  return null;
+}
+
 export const Route = createFileRoute("/api/image")({
   server: {
     handlers: {
@@ -180,28 +230,8 @@ export const Route = createFileRoute("/api/image")({
               );
 
               if (res.ok) {
-                const contentType = (res.headers.get("content-type") ?? "").toLowerCase();
-                if (contentType.startsWith("image/") || contentType === "application/octet-stream") {
-                  bytes = new Uint8Array(await res.arrayBuffer());
-                } else if (contentType.includes("application/json")) {
-                  const json = (await res.json()) as {
-                    image?: string;
-                    result?: { image?: string };
-                    errors?: unknown[];
-                  };
-                  const imageData = json.image ?? json.result?.image;
-                  if (imageData) bytes = base64ToBytes(imageData);
-                  else {
-                    cloudflareReturnedNoImage = true;
-                    console.error(
-                      "XOVA Phoenix: response did not contain an image",
-                      JSON.stringify(json.errors ?? []).slice(0, 300),
-                    );
-                  }
-                } else {
-                  cloudflareReturnedNoImage = true;
-                  console.error("XOVA Phoenix: unexpected content type", contentType);
-                }
+                bytes = await readCloudflareImageResponse(res, "Phoenix");
+                if (!bytes) cloudflareReturnedNoImage = true;
               } else {
                 cloudflareStatus = res.status;
                 console.error("XOVA Phoenix", res.status, (await res.text()).slice(0, 300));
@@ -227,19 +257,8 @@ export const Route = createFileRoute("/api/image")({
                 },
               );
               if (res.ok) {
-                const json = (await res.json()) as {
-                  result?: { image?: string };
-                  errors?: unknown[];
-                };
-                if (json.result?.image) {
-                  bytes = base64ToBytes(json.result.image);
-                } else {
-                  cloudflareReturnedNoImage = true;
-                  console.error(
-                    "XOVA FLUX fallback: response did not contain result.image",
-                    JSON.stringify(json.errors ?? []).slice(0, 300),
-                  );
-                }
+                bytes = await readCloudflareImageResponse(res, "FLUX fallback");
+                if (!bytes) cloudflareReturnedNoImage = true;
               } else {
                 cloudflareStatus = res.status;
                 console.error("XOVA FLUX fallback", res.status, (await res.text()).slice(0, 300));
