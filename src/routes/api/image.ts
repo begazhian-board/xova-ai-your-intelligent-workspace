@@ -29,7 +29,7 @@ async function authenticate(request: Request) {
   return data.user;
 }
 
-/** Free, keyless translation to English; returns the original text on any failure. */
+/** Free fallback translation; returns the original text if translation is unavailable. */
 async function translateToEnglish(text: string) {
   if (!/[^\x00-\x7F]/.test(text)) return text;
   try {
@@ -43,6 +43,51 @@ async function translateToEnglish(text: string) {
   } catch {
     return text;
   }
+}
+
+/** Uses the existing Gemini Flash free-tier text API to preserve the user's exact subject in English. */
+async function buildEnglishImagePrompt(text: string, apiKey?: string) {
+  if (!/[^\x00-\x7F]/.test(text) || !apiKey) return translateToEnglish(text);
+
+  try {
+    const res = await fetch(
+      "https://generativelanguage.googleapis.com/v1beta/models/gemini-3.8-flash:generateContent",
+      {
+        method: "POST",
+        headers: { "Content-Type": "application/json", "x-goog-api-key": apiKey },
+        body: JSON.stringify({
+          contents: [{
+            parts: [{
+              text:
+                "Convert the user's image request into a clear, literal English image-generation prompt. " +
+                "Preserve the exact requested subject, product names, food names, quantities, colors, and relationships. " +
+                "Do not replace, reinterpret, add, or invent subjects or background objects. " +
+                "Keep proper names and brand names unchanged. Return only the English prompt.\n\n" +
+                "User request: " + text,
+            }],
+          }],
+          generationConfig: { temperature: 0.1, maxOutputTokens: 300 },
+        }),
+      },
+    );
+
+    if (res.ok) {
+      const json = (await res.json()) as {
+        candidates?: Array<{ content?: { parts?: Array<{ text?: string }> } }>;
+      };
+      const output = json.candidates?.[0]?.content?.parts
+        ?.map((part) => part.text ?? "")
+        .join("")
+        .trim();
+      if (output) return output.slice(0, 2000);
+    } else {
+      console.error("XOVA image prompt Gemini", res.status);
+    }
+  } catch (error) {
+    console.error("XOVA image prompt Gemini error", error);
+  }
+
+  return translateToEnglish(text);
 }
 
 function base64ToBytes(base64: string) {
@@ -60,11 +105,10 @@ export const Route = createFileRoute("/api/image")({
         if (!user) return Response.json({ error: "err.auth" }, { status: 401 });
 
         const geminiKey = process.env["GEMINI_API_KEY"];
-        const hfKey = process.env["HUGGINGFACE_API_KEY"];
         const cloudflareAccountId = process.env["CLOUDFLARE_ACCOUNT_ID"];
         const cloudflareApiToken = process.env["CLOUDFLARE_API_TOKEN"];
         const hasCloudflareImage = Boolean(cloudflareAccountId && cloudflareApiToken);
-        if (!hasCloudflareImage && !geminiKey && !hfKey) {
+        if (!hasCloudflareImage) {
           return Response.json({ error: "err.unavailable" }, { status: 500 });
         }
 
@@ -113,17 +157,72 @@ export const Route = createFileRoute("/api/image")({
 
         try {
           let bytes: Uint8Array | null = null;
-          let lastStatus: number | undefined;
           let cloudflareStatus: number | undefined;
           let cloudflareReturnedNoImage = false;
-          const english = await translateToEnglish(prompt);
+          const english = await buildEnglishImagePrompt(prompt, geminiKey);
           const faithfulImagePrompt =
-            `Create an image that faithfully shows this exact requested subject: ${english}. Keep the named objects and their relationship accurate. Do not replace the requested subject with unrelated buildings, places, architecture, or objects.`;
+            `Create an image of exactly this requested subject: ${english}. Preserve every named item, product, food, quantity, and relationship. Do not substitute unrelated subjects or add unrequested objects.`;
 
-
-          // Primary: Cloudflare Workers AI (FLUX.1 Schnell).
-          // Uses the account's daily free Workers AI allocation; credentials stay server-side.
+          // Primary: Leonardo Phoenix 1.0 through Cloudflare Workers AI.
+          // This uses the existing Cloudflare credentials and the account's Workers AI free Neuron allocation.
           if (hasCloudflareImage) {
+            try {
+              const [width, height] =
+                aspect === "3:2" ? [1536, 1024] : aspect === "2:3" ? [1024, 1536] : [1024, 1024];
+              const res = await fetch(
+                `https://api.cloudflare.com/client/v4/accounts/${cloudflareAccountId}/ai/run/@cf/leonardo/phoenix-1.0`,
+                {
+                  method: "POST",
+                  headers: {
+                    Authorization: `Bearer ${cloudflareApiToken}`,
+                    "Content-Type": "application/json",
+                  },
+                  body: JSON.stringify({
+                    prompt: faithfulImagePrompt.slice(0, 2000),
+                    negative_prompt: "unrelated subjects, unintended objects, incorrect product, wrong food, unrelated buildings or architecture",
+                    guidance: 7,
+                    width,
+                    height,
+                    num_steps: 25,
+                  }),
+                },
+              );
+
+              if (res.ok) {
+                const contentType = (res.headers.get("content-type") ?? "").toLowerCase();
+                if (contentType.startsWith("image/") || contentType === "application/octet-stream") {
+                  bytes = new Uint8Array(await res.arrayBuffer());
+                } else if (contentType.includes("application/json")) {
+                  const json = (await res.json()) as {
+                    image?: string;
+                    result?: { image?: string };
+                    errors?: unknown[];
+                  };
+                  const imageData = json.image ?? json.result?.image;
+                  if (imageData) bytes = base64ToBytes(imageData);
+                  else {
+                    cloudflareReturnedNoImage = true;
+                    console.error(
+                      "XOVA Phoenix: response did not contain an image",
+                      JSON.stringify(json.errors ?? []).slice(0, 300),
+                    );
+                  }
+                } else {
+                  cloudflareReturnedNoImage = true;
+                  console.error("XOVA Phoenix: unexpected content type", contentType);
+                }
+              } else {
+                cloudflareStatus = res.status;
+                console.error("XOVA Phoenix", res.status, (await res.text()).slice(0, 300));
+              }
+            } catch (error) {
+              cloudflareReturnedNoImage = true;
+              console.error("XOVA Phoenix error", error);
+            }
+          }
+
+          // Free fallback: FLUX.1 Schnell, also covered by the Cloudflare Workers AI free allocation.
+          if (!bytes && hasCloudflareImage) {
             try {
               const res = await fetch(
                 `https://api.cloudflare.com/client/v4/accounts/${cloudflareAccountId}/ai/run/@cf/black-forest-labs/flux-1-schnell`,
@@ -137,66 +236,34 @@ export const Route = createFileRoute("/api/image")({
                 },
               );
               if (res.ok) {
-                const json = (await res.json()) as { result?: { image?: string }; success?: boolean; errors?: unknown[] };
+                const json = (await res.json()) as {
+                  result?: { image?: string };
+                  errors?: unknown[];
+                };
                 if (json.result?.image) {
                   bytes = base64ToBytes(json.result.image);
                 } else {
                   cloudflareReturnedNoImage = true;
-                  console.error("XOVA image Cloudflare: response did not contain result.image", JSON.stringify(json.errors ?? []).slice(0, 300));
+                  console.error(
+                    "XOVA FLUX fallback: response did not contain result.image",
+                    JSON.stringify(json.errors ?? []).slice(0, 300),
+                  );
                 }
               } else {
                 cloudflareStatus = res.status;
-                lastStatus = res.status;
-                console.error("XOVA image Cloudflare", res.status, (await res.text()).slice(0, 300));
+                console.error("XOVA FLUX fallback", res.status, (await res.text()).slice(0, 300));
               }
             } catch (error) {
               cloudflareReturnedNoImage = true;
-              console.error("XOVA image Cloudflare error", error);
+              console.error("XOVA FLUX fallback error", error);
             }
-          }
-
-          // Secondary: direct Gemini image API, when configured.
-          if (!bytes && geminiKey) {
-            try {
-              const imageModel = quality === "premium" ? "gemini-3-pro-image" : "gemini-3.1-flash-image";
-              const res = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/${imageModel}:generateContent`, {
-                method: "POST",
-                headers: { "Content-Type": "application/json", "x-goog-api-key": geminiKey },
-                body: JSON.stringify({
-                  contents: [{ parts: [{ text: english }] }],
-                  generationConfig: { responseModalities: ["IMAGE", "TEXT"], imageConfig: { aspectRatio: aspect } },
-                }),
-              });
-              if (res.ok) {
-                const json = (await res.json()) as {
-                  candidates?: Array<{ content?: { parts?: Array<{ inlineData?: { data?: string } }> } }>;
-                };
-                const data = json.candidates?.[0]?.content?.parts?.find((part) => part.inlineData?.data)?.inlineData?.data;
-                if (data) bytes = base64ToBytes(data);
-              } else { lastStatus = res.status; console.error("XOVA image Gemini", res.status); }
-            } catch (error) { console.error("XOVA image Gemini error", error); }
-          }
-
-          // Optional backup: Hugging Face only when its key is configured.
-          if (!bytes && hfKey) {
-            try {
-              const [width, height] = aspect === "3:2" ? [1216, 832] : aspect === "2:3" ? [832, 1216] : [1024, 1024];
-              const res = await fetch("https://router.huggingface.co/hf-inference/models/black-forest-labs/FLUX.1-schnell", {
-                method: "POST",
-                headers: { Authorization: `Bearer ${hfKey}`, "Content-Type": "application/json", Accept: "image/png" },
-                body: JSON.stringify({ inputs: english, parameters: { width, height } }),
-              });
-              const type = res.headers.get("content-type") ?? "";
-              if (res.ok && type.startsWith("image/")) bytes = new Uint8Array(await res.arrayBuffer());
-              else { lastStatus = res.status; console.error("XOVA image Hugging Face", res.status, (await res.text()).slice(0, 200)); }
-            } catch (error) { console.error("XOVA image Hugging Face error", error); }
           }
 
           if (!bytes) {
             const error =
               cloudflareStatus === 401 || cloudflareStatus === 403
                 ? "err.imageCloudflareAuth"
-                : cloudflareStatus === 429 || lastStatus === 429
+                : cloudflareStatus === 429
                   ? "err.imageProviderRate"
                   : cloudflareStatus === 402
                     ? "err.imageCloudflareBilling"
