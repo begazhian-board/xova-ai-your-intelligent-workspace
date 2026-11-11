@@ -211,7 +211,7 @@ export const Route = createFileRoute("/api/image")({
           let cloudflareStatus: number | undefined;
           let cloudflareReturnedNoImage = false;
 
-          // Primary: Google's stable Gemini 3.1 Flash Image endpoint.
+          // Primary: Google's stable Gemini 3.1 Flash Image API; Cloudflare is the fallback.
           // Pass the user's original prompt directly, including Arabic.
           if (geminiKey) {
             try {
