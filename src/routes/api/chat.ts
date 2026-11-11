@@ -173,6 +173,13 @@ export const Route = createFileRoute("/api/chat")({
                     await pump(streamText({
                       model: gemini as never, system, messages: modelMessages,
                       abortSignal: local.signal, maxRetries: 0,
+                      providerOptions: {
+                        google: {
+                          thinkingConfig: {
+                            thinkingLevel: mode === "instant" ? "low" : "medium",
+                          },
+                        },
+                      },
                     }).fullStream);
                     if (!wroteText) throw new Error("Gemini returned no visible answer");
                   } catch (error) {
