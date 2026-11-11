@@ -21,7 +21,6 @@ interface HordeCheckResponse {
   queue_position?: number;
   waiting?: number;
   processing?: number;
-  is_possible?: boolean;
 }
 
 interface HordeStatusResponse {
@@ -429,10 +428,6 @@ export const Route = createFileRoute("/api/image")({
           }
 
           const submitted = (await response.json()) as HordeAsyncResponse;
-          if (submitted.is_possible === false) {
-            console.warn("XOVA AI Horde request currently not possible", submitted.message);
-            return Response.json({ error: "err.imageNoWorkers" }, { status: 503 });
-          }
           if (!submitted.id) {
             console.error("XOVA AI Horde returned no request ID", JSON.stringify(submitted).slice(0, 500));
             return Response.json({ error: "err.imageNoOutput" }, { status: 502 });
