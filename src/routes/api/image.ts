@@ -31,7 +31,7 @@ async function authenticate(request: Request) {
 
 /** Strictly translates Arabic image requests without inventing or embellishing details. */
 async function buildEnglishImagePrompt(text: string, apiKey?: string): Promise<string | null> {
-  if (!/[^\\x00-\\x7F]/.test(text)) return text;
+  if (!/[^\x00-\x7F]/.test(text)) return text;
   if (!apiKey) return null;
 
   try {
