@@ -30,7 +30,7 @@ const SIGNED_URL_TTL = 60 * 60 * 24 * 365;
 const ASPECTS = new Set(["1:1", "3:2", "2:3"]);
 
 async function authenticate(request: Request) {
-  const token = request.headers.get("authorization")?.replace(/^Bearer\\s+/i, "");
+  const token = request.headers.get("authorization")?.replace(/^Bearer\s+/i, "");
   if (!token) return null;
 
   const url = process.env["SUPABASE_URL"] ?? process.env["VITE_SUPABASE_URL"];
@@ -92,7 +92,7 @@ export const Route = createFileRoute("/api/image")({
         }
 
         const aspect = body.aspect && ASPECTS.has(body.aspect) ? body.aspect : "1:1";
-        const accessToken = request.headers.get("authorization")?.replace(/^Bearer\\s+/i, "");
+        const accessToken = request.headers.get("authorization")?.replace(/^Bearer\s+/i, "");
         const supabaseUrl = process.env["SUPABASE_URL"] ?? process.env["VITE_SUPABASE_URL"];
         const publishableKey =
           process.env["SUPABASE_PUBLISHABLE_KEY"] ?? process.env["VITE_SUPABASE_PUBLISHABLE_KEY"];
@@ -100,7 +100,7 @@ export const Route = createFileRoute("/api/image")({
           return Response.json({ error: "err.auth" }, { status: 401 });
         }
 
-        const supabaseUser = createClient(url, publishableKey, {
+        const supabaseUser = createClient(supabaseUrl, publishableKey, {
           global: { headers: { Authorization: `Bearer ${accessToken}` } },
           auth: { persistSession: false, autoRefreshToken: false },
         });
