@@ -189,6 +189,8 @@ const en: Dict = {
   "err.voiceUnsupported": "Voice input isn't supported in this browser.",
   "err.speechUnsupported": "Read aloud isn't supported in this browser.",
   "err.imageFailed": "We couldn't create this image. Please try again, or rephrase your description.",
+  "err.imageConfig": "Image generation isn't configured on this server yet.",
+  "err.imageTranslate": "We couldn't translate your description, so no image was made. Please try again.",
   "err.imageRate": "You reached the image limit for this hour. Try again later.",
   "err.imageBlocked": "This image couldn't be created right now. Try again, or reword the description a little.",
   "err.searchOffline":
@@ -398,6 +400,8 @@ const ar: Dict = {
   "err.voiceUnsupported": "الإدخال الصوتي غير مدعوم في هذا المتصفح.",
   "err.speechUnsupported": "القراءة الصوتية غير مدعومة في هذا المتصفح.",
   "err.imageFailed": "معرفناش نعمل الصورة دي. جرّب تاني أو اكتب الوصف بطريقة مختلفة.",
+  "err.imageConfig": "توليد الصور غير مُعدّ على هذا الخادم حاليًا.",
+  "err.imageTranslate": "معرفناش نترجم الوصف، فمتعملتش صورة. جرّب تاني.",
   "err.imageRate": "وصلت إلى حد الصور لهذه الساعة. حاول لاحقًا.",
   "err.imageBlocked": "مقدرناش نعمل الصورة دي دلوقتي. جرّب تاني أو غيّر الوصف شوية.",
   "err.searchOffline": "البحث المباشر على الويب غير موصول، لذلك أجاب XOVA من معرفته دون مصادر.",
