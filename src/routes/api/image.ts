@@ -112,7 +112,7 @@ async function readCloudflareImageResponse(response: Response, provider: string)
         : payload.result?.image ?? payload.image;
 
     if (encoded) {
-      const base64 = encoded.replace(/^data:image\\/[a-zA-Z0-9.+-]+;base64,/, "").replace(/\\s/g, "");
+      const base64 = encoded.replace(/^data:image\/[a-zA-Z0-9.+-]+;base64,/, "").replace(/\s/g, "");
       const bytes = base64ToBytes(base64);
       if (bytes.length) return bytes;
     }
@@ -123,7 +123,7 @@ async function readCloudflareImageResponse(response: Response, provider: string)
     );
   } catch {
     // Some model responses may provide the encoded image as the raw body.
-    const rawBase64 = raw.trim().replace(/^data:image\\/[a-zA-Z0-9.+-]+;base64,/, "").replace(/\\s/g, "");
+    const rawBase64 = raw.trim().replace(/^data:image\/[a-zA-Z0-9.+-]+;base64,/, "").replace(/\s/g, "");
     if (/^[A-Za-z0-9+/]+={0,2}$/.test(rawBase64) && rawBase64.length > 1000) {
       try {
         const bytes = base64ToBytes(rawBase64);
