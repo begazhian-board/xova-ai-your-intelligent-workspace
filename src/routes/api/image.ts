@@ -98,6 +98,8 @@ export const Route = createFileRoute("/api/image")({
         try {
           let bytes: Uint8Array | null = null;
           let lastStatus: number | undefined;
+          let cloudflareStatus: number | undefined;
+          let cloudflareReturnedNoImage = false;
           const english = await translateToEnglish(prompt);
 
           // Primary: Cloudflare Workers AI (FLUX.1 Schnell).
@@ -116,14 +118,20 @@ export const Route = createFileRoute("/api/image")({
                 },
               );
               if (res.ok) {
-                const json = (await res.json()) as { result?: { image?: string }; success?: boolean };
-                if (json.result?.image) bytes = base64ToBytes(json.result.image);
-                else console.error("XOVA image Cloudflare: response did not contain result.image");
+                const json = (await res.json()) as { result?: { image?: string }; success?: boolean; errors?: unknown[] };
+                if (json.result?.image) {
+                  bytes = base64ToBytes(json.result.image);
+                } else {
+                  cloudflareReturnedNoImage = true;
+                  console.error("XOVA image Cloudflare: response did not contain result.image", JSON.stringify(json.errors ?? []).slice(0, 300));
+                }
               } else {
+                cloudflareStatus = res.status;
                 lastStatus = res.status;
                 console.error("XOVA image Cloudflare", res.status, (await res.text()).slice(0, 300));
               }
             } catch (error) {
+              cloudflareReturnedNoImage = true;
               console.error("XOVA image Cloudflare error", error);
             }
           }
@@ -166,10 +174,17 @@ export const Route = createFileRoute("/api/image")({
           }
 
           if (!bytes) {
-            return Response.json(
-              { error: lastStatus === 429 ? "err.imageProviderRate" : "err.imageFailed" },
-              { status: 502 },
-            );
+            const error =
+              cloudflareStatus === 401 || cloudflareStatus === 403
+                ? "err.imageCloudflareAuth"
+                : cloudflareStatus === 429 || lastStatus === 429
+                  ? "err.imageProviderRate"
+                  : cloudflareStatus === 402
+                    ? "err.imageCloudflareBilling"
+                    : cloudflareReturnedNoImage
+                      ? "err.imageCloudflareResponse"
+                      : "err.imageFailed";
+            return Response.json({ error }, { status: 502 });
           }
 
           const isJpeg = bytes[0] === 0xff && bytes[1] === 0xd8;
@@ -179,7 +194,7 @@ export const Route = createFileRoute("/api/image")({
             .upload(path, bytes, { contentType: isJpeg ? "image/jpeg" : "image/png", upsert: false });
           if (uploadError) {
             console.error("XOVA image upload", uploadError.message);
-            return Response.json({ error: "err.imageFailed" }, { status: 502 });
+            return Response.json({ error: "err.imageStorage" }, { status: 502 });
           }
 
           const { data: signed, error: signError } = await supabaseAdmin.storage
@@ -187,7 +202,7 @@ export const Route = createFileRoute("/api/image")({
             .createSignedUrl(path, SIGNED_URL_TTL);
           if (signError || !signed?.signedUrl) {
             console.error("XOVA image sign", signError?.message);
-            return Response.json({ error: "err.imageFailed" }, { status: 502 });
+            return Response.json({ error: "err.imageStorage" }, { status: 502 });
           }
 
           const { data: row, error: insertError } = await supabaseAdmin
@@ -204,7 +219,7 @@ export const Route = createFileRoute("/api/image")({
             .single();
           if (insertError) {
             console.error("XOVA image record", insertError.message);
-            return Response.json({ error: "err.imageFailed" }, { status: 502 });
+            return Response.json({ error: "err.imageStorage" }, { status: 502 });
           }
 
           return Response.json({
