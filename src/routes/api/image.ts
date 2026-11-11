@@ -202,7 +202,7 @@ export const Route = createFileRoute("/api/image")({
           let cloudflareReturnedNoImage = false;
           const english = await buildEnglishImagePrompt(prompt, geminiKey);
           if (!english) {
-            return Response.json({ error: "err.imageFailed" }, { status: 502 });
+            return Response.json({ error: "err.imagePromptTranslation" }, { status: 502 });
           }
 
           // Primary: Leonardo Phoenix 1.0 through Cloudflare Workers AI.
@@ -277,7 +277,9 @@ export const Route = createFileRoute("/api/image")({
                   ? "err.imageProviderRate"
                   : cloudflareStatus === 402
                     ? "err.imageCloudflareBilling"
-                    : cloudflareReturnedNoImage
+                    : cloudflareStatus === 400
+                      ? "err.imageProviderRequest"
+                      : cloudflareReturnedNoImage
                       ? "err.imageCloudflareResponse"
                       : "err.imageFailed";
             return Response.json({ error }, { status: 502 });
