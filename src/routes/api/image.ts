@@ -82,15 +82,31 @@ export const Route = createFileRoute("/api/image")({
         const aspect = body.aspect && ASPECTS.has(body.aspect) ? body.aspect : "1:1";
         const quality = body.quality === "premium" ? "premium" : "standard";
 
-        const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+        // Lovable Cloud manages the backend and does not expose a project service-role key.
+        // Use the verified user's JWT with the publishable key so Storage and table RLS apply per user.
+        const accessToken = request.headers.get("authorization")?.replace(/^Bearer\\s+/i, "");
+        const supabaseUrl = process.env["SUPABASE_URL"] ?? process.env["VITE_SUPABASE_URL"];
+        const publishableKey =
+          process.env["SUPABASE_PUBLISHABLE_KEY"] ?? process.env["VITE_SUPABASE_PUBLISHABLE_KEY"];
+        if (!accessToken || !supabaseUrl || !publishableKey) {
+          return Response.json({ error: "err.auth" }, { status: 401 });
+        }
+        const supabaseUser = createClient(supabaseUrl, publishableKey, {
+          global: { headers: { Authorization: `Bearer ${accessToken}` } },
+          auth: { persistSession: false, autoRefreshToken: false },
+        });
 
         // Rate limit per user, rolling hour.
         const since = new Date(Date.now() - 60 * 60 * 1000).toISOString();
-        const { count } = await supabaseAdmin
+        const { count, error: countError } = await supabaseUser
           .from("generated_images")
           .select("id", { count: "exact", head: true })
           .eq("user_id", user.id)
           .gte("created_at", since);
+        if (countError) {
+          console.error("XOVA image rate-limit query", countError.message);
+          return Response.json({ error: "err.imageStorageAccess" }, { status: 502 });
+        }
         if ((count ?? 0) >= RATE_LIMIT) {
           return Response.json({ error: "err.imageRate" }, { status: 429 });
         }
@@ -187,41 +203,32 @@ export const Route = createFileRoute("/api/image")({
             return Response.json({ error }, { status: 502 });
           }
 
+          // The private bucket is provisioned in Lovable Cloud.
+          // Upload using the user's own JWT; never depend on an unavailable service-role secret.
           const bucketName = "xova-images";
-
-          // Ensure the private image bucket exists before uploading.
-          const { error: bucketLookupError } = await supabaseAdmin.storage.getBucket(bucketName);
-          if (bucketLookupError) {
-            const { error: createBucketError } = await supabaseAdmin.storage.createBucket(bucketName, {
-              public: false,
-              fileSizeLimit: 10 * 1024 * 1024,
-              allowedMimeTypes: ["image/png", "image/jpeg"],
-            });
-            if (createBucketError && !/already exists/i.test(createBucketError.message)) {
-              console.error("XOVA image bucket create", createBucketError.message);
-              return Response.json({ error: "err.imageStorageBucket" }, { status: 502 });
-            }
-          }
-
           const isJpeg = bytes[0] === 0xff && bytes[1] === 0xd8;
           const path = `${user.id}/${crypto.randomUUID()}.${isJpeg ? "jpg" : "png"}`;
-          const { error: uploadError } = await supabaseAdmin.storage
+          const { error: uploadError } = await supabaseUser.storage
             .from(bucketName)
             .upload(path, bytes, { contentType: isJpeg ? "image/jpeg" : "image/png", upsert: false });
           if (uploadError) {
             console.error("XOVA image upload", uploadError.message);
-            return Response.json({ error: "err.imageStorageUpload" }, { status: 502 });
+            const missingBucket = /bucket not found|not found/i.test(uploadError.message);
+            return Response.json(
+              { error: missingBucket ? "err.imageStorageBucket" : "err.imageStorageUpload" },
+              { status: 502 },
+            );
           }
 
-          const { data: signed, error: signError } = await supabaseAdmin.storage
-            .from("xova-images")
+          const { data: signed, error: signError } = await supabaseUser.storage
+            .from(bucketName)
             .createSignedUrl(path, SIGNED_URL_TTL);
           if (signError || !signed?.signedUrl) {
             console.error("XOVA image sign", signError?.message);
             return Response.json({ error: "err.imageStorageSign" }, { status: 502 });
           }
 
-          const { data: row, error: insertError } = await supabaseAdmin
+          const { data: row, error: insertError } = await supabaseUser
             .from("generated_images")
             .insert({
               user_id: user.id,
