@@ -191,6 +191,10 @@ const en: Dict = {
   "err.imageFailed": "We couldn't create this image. Please try again, or rephrase your description.",
   "err.imageRate": "You reached the image limit for this hour. Try again later.",
   "err.imageProviderRate": "The image provider rejected the request due to its quota or rate limit. This is separate from XOVA's hourly image cap.",
+  "err.imageCloudflareAuth": "Cloudflare rejected the Workers AI token. Check that it has Workers AI Read permission and that the Account ID and token belong to the same account.",
+  "err.imageCloudflareBilling": "Cloudflare Workers AI returned a billing or account-credit error.",
+  "err.imageCloudflareResponse": "Cloudflare accepted the request but returned no image. Check the Workers AI model response in Cloudflare logs.",
+  "err.imageStorage": "The image was generated, but XOVA could not save it to Supabase Storage."
   "err.imageBlocked": "This image couldn't be created right now. Try again, or reword the description a little.",
   "err.searchOffline":
     "Live web search isn't connected or couldn't be reached, so XOVA answered from its own knowledge without citations.",
@@ -395,6 +399,10 @@ const ar: Dict = {
   "err.imageFailed": "معرفناش نعمل الصورة دي. جرّب تاني أو اكتب الوصف بطريقة مختلفة.",
   "err.imageRate": "وصلت إلى حد الصور لهذه الساعة. حاول لاحقًا.",
   "err.imageProviderRate": "مزود توليد الصور رفض الطلب بسبب حد الاستخدام أو عدد الطلبات. ده منفصل عن حد الصور الخاص بـXOVA.",
+  "err.imageCloudflareAuth": "Cloudflare رفض مفتاح Workers AI. تأكد إن صلاحية Workers AI Read موجودة وإن Account ID والمفتاح من نفس الحساب.",
+  "err.imageCloudflareBilling": "Cloudflare رجّع خطأ متعلق بالفوترة أو رصيد Workers AI.",
+  "err.imageCloudflareResponse": "Cloudflare قبل الطلب لكنه مرجّعش صورة. محتاجين نراجع سجل Workers AI.",
+  "err.imageStorage": "الصورة اتولدت، لكن XOVA معرفش يحفظها في Supabase Storage."
   "err.imageBlocked": "مقدرناش نعمل الصورة دي دلوقتي. جرّب تاني أو غيّر الوصف شوية.",
   "err.searchOffline": "البحث المباشر على الويب غير موصول أو تعذّر الوصول إليه، لذلك أجاب XOVA من معرفته دون مصادر.",
   "err.searchNoSources": "لم يُرجع بحث Tavily روابط مصادر قابلة للتحقق لهذا الطلب.",
