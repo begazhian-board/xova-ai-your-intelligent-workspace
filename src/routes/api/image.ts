@@ -44,7 +44,7 @@ async function buildEnglishImagePrompt(text: string, apiKey?: string): Promise<s
       {
         method: "POST",
         headers: { "Content-Type": "application/json", "x-goog-api-key": apiKey },
-        signal: AbortSignal.timeout(8_000),
+        signal: AbortSignal.timeout(4_000),
         body: JSON.stringify({
           contents: [{
             parts: [{
@@ -158,7 +158,7 @@ export const Route = createFileRoute("/api/image")({
         const cloudflareAccountId = process.env["CLOUDFLARE_ACCOUNT_ID"];
         const cloudflareApiToken = process.env["CLOUDFLARE_API_TOKEN"];
         const hasCloudflareImage = Boolean(cloudflareAccountId && cloudflareApiToken);
-        if (!hasCloudflareImage) {
+        if (!geminiKey && !hasCloudflareImage) {
           return Response.json({ error: "err.unavailable" }, { status: 500 });
         }
 
@@ -207,51 +207,107 @@ export const Route = createFileRoute("/api/image")({
 
         try {
           let bytes: Uint8Array | null = null;
+          let geminiStatus: number | undefined;
           let cloudflareStatus: number | undefined;
           let cloudflareReturnedNoImage = false;
-          const english = await buildEnglishImagePrompt(prompt, geminiKey);
 
-          // Fast path: FLUX.1 Schnell uses its minimum 4 steps.
-          // A hard timeout prevents a slow provider from keeping the request open indefinitely.
-          try {
-            const res = await fetch(
-              `https://api.cloudflare.com/client/v4/accounts/${cloudflareAccountId}/ai/run/@cf/black-forest-labs/flux-1-schnell`,
-              {
-                method: "POST",
-                headers: {
-                  Authorization: `Bearer ${cloudflareApiToken}`,
-                  "Content-Type": "application/json",
+          // Primary: Google's stable Gemini 3.1 Flash Image endpoint.
+          // Pass the user's original prompt directly, including Arabic.
+          if (geminiKey) {
+            try {
+              const res = await fetch(
+                "https://generativelanguage.googleapis.com/v1beta/models/gemini-3.1-flash-image:generateContent",
+                {
+                  method: "POST",
+                  headers: { "Content-Type": "application/json", "x-goog-api-key": geminiKey },
+                  signal: AbortSignal.timeout(32_000),
+                  body: JSON.stringify({
+                    contents: [{ parts: [{ text: prompt }] }],
+                    generationConfig: {
+                      responseModalities: ["IMAGE", "TEXT"],
+                      imageConfig: { aspectRatio: aspect },
+                    },
+                  }),
                 },
-                body: JSON.stringify({ prompt: english.slice(0, 2048), steps: 4 }),
-                signal: AbortSignal.timeout(45_000),
-              },
-            );
+              );
 
-            if (res.ok) {
-              bytes = await readCloudflareImageResponse(res, "FLUX Schnell");
-              if (!bytes) cloudflareReturnedNoImage = true;
-            } else {
-              cloudflareStatus = res.status;
-              console.error("XOVA FLUX Schnell", res.status, (await res.text()).slice(0, 300));
+              if (res.ok) {
+                const json = (await res.json()) as {
+                  candidates?: Array<{
+                    content?: {
+                      parts?: Array<{ inlineData?: { data?: string; mimeType?: string } }>;
+                    };
+                    finishReason?: string;
+                  }>;
+                  promptFeedback?: { blockReason?: string };
+                };
+                const imageData = json.candidates?.[0]?.content?.parts
+                  ?.find((part) => part.inlineData?.data)?.inlineData?.data;
+                if (imageData) {
+                  bytes = base64ToBytes(imageData);
+                } else {
+                  cloudflareReturnedNoImage = true;
+                  console.error(
+                    "XOVA Gemini image returned no image",
+                    json.promptFeedback?.blockReason ?? json.candidates?.[0]?.finishReason ?? "empty response",
+                  );
+                }
+              } else {
+                geminiStatus = res.status;
+                console.error("XOVA Gemini image", res.status, (await res.text()).slice(0, 500));
+              }
+            } catch (error) {
+              cloudflareReturnedNoImage = true;
+              console.error("XOVA Gemini image error or timeout", error);
             }
-          } catch (error) {
-            cloudflareReturnedNoImage = true;
-            console.error("XOVA FLUX Schnell error or timeout", error);
+          }
+
+          // Fallback: Cloudflare FLUX.1 Schnell, four steps only.
+          if (!bytes && hasCloudflareImage) {
+            try {
+              // Translate only when fallback is needed; if translation fails, use the original Arabic prompt.
+              const fallbackPrompt = await buildEnglishImagePrompt(prompt, geminiKey);
+              const res = await fetch(
+                `https://api.cloudflare.com/client/v4/accounts/${cloudflareAccountId}/ai/run/@cf/black-forest-labs/flux-1-schnell`,
+                {
+                  method: "POST",
+                  headers: {
+                    Authorization: `Bearer ${cloudflareApiToken}`,
+                    "Content-Type": "application/json",
+                  },
+                  body: JSON.stringify({ prompt: fallbackPrompt.slice(0, 2048), steps: 4 }),
+                  signal: AbortSignal.timeout(25_000),
+                },
+              );
+
+              if (res.ok) {
+                bytes = await readCloudflareImageResponse(res, "FLUX Schnell fallback");
+                if (!bytes) cloudflareReturnedNoImage = true;
+              } else {
+                cloudflareStatus = res.status;
+                console.error("XOVA FLUX Schnell fallback", res.status, (await res.text()).slice(0, 500));
+              }
+            } catch (error) {
+              cloudflareReturnedNoImage = true;
+              console.error("XOVA FLUX Schnell fallback error or timeout", error);
+            }
           }
 
           if (!bytes) {
             const error =
               cloudflareStatus === 401 || cloudflareStatus === 403
                 ? "err.imageCloudflareAuth"
-                : cloudflareStatus === 429
+                : cloudflareStatus === 429 || geminiStatus === 429
                   ? "err.imageProviderRate"
                   : cloudflareStatus === 402
                     ? "err.imageCloudflareBilling"
-                    : cloudflareStatus === 400
-                      ? "err.imageProviderRequest"
-                      : cloudflareReturnedNoImage
-                      ? "err.imageCloudflareResponse"
-                      : "err.imageFailed";
+                    : geminiStatus === 401 || geminiStatus === 403
+                      ? "err.imageGeminiAuth"
+                      : cloudflareStatus === 400 || geminiStatus === 400
+                        ? "err.imageProviderRequest"
+                        : cloudflareReturnedNoImage
+                          ? "err.imageCloudflareResponse"
+                          : "err.imageFailed";
             return Response.json({ error }, { status: 502 });
           }
 
