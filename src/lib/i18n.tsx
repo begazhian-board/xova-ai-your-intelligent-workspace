@@ -194,6 +194,7 @@ const en: Dict = {
   "err.imageRate": "You reached the image limit for this hour. Try again later.",
   "err.imageProviderRate": "The image provider rejected the request due to its quota or rate limit. This is separate from XOVA's hourly image cap.",
   "err.imageCloudflareAuth": "Cloudflare rejected the Workers AI token. Check that it has Workers AI Read permission and that the Account ID and token belong to the same account.",
+  "err.imageGeminiAuth": "Google rejected the Gemini API key. Check that the key is active and the Gemini API is enabled.",
   "err.imageCloudflareBilling": "Cloudflare Workers AI returned a billing or account-credit error.",
   "err.imageCloudflareResponse": "Cloudflare accepted the request but returned no image. Check the Workers AI model response in Cloudflare logs.",
   "err.imageStorage": "The image was generated, but XOVA could not save it to Supabase Storage.",
@@ -409,6 +410,7 @@ const ar: Dict = {
   "err.imageRate": "وصلت إلى حد الصور لهذه الساعة. حاول لاحقًا.",
   "err.imageProviderRate": "مزود توليد الصور رفض الطلب بسبب حد الاستخدام أو عدد الطلبات. ده منفصل عن حد الصور الخاص بـXOVA.",
   "err.imageCloudflareAuth": "Cloudflare رفض مفتاح Workers AI. تأكد إن صلاحية Workers AI Read موجودة وإن Account ID والمفتاح من نفس الحساب.",
+  "err.imageGeminiAuth": "Google رفض مفتاح Gemini. تأكد إن المفتاح شغال وإن Gemini API مفعّلة للمشروع."
   "err.imageCloudflareBilling": "Cloudflare رجّع خطأ متعلق بالفوترة أو رصيد Workers AI.",
   "err.imageCloudflareResponse": "Cloudflare قبل الطلب لكنه مرجّعش صورة. محتاجين نراجع سجل Workers AI.",
   "err.imageStorage": "الصورة اتولدت، لكن XOVA معرفش يحفظها في Supabase Storage.",
