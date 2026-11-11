@@ -153,7 +153,7 @@ export const Route = createFileRoute("/api/image")({
         }
 
         const supabaseUser = createClient(supabaseUrl, publishableKey, {
-          global: { headers: { Authorization: \`Bearer \${accessToken}\` } },
+          global: { headers: { Authorization: `Bearer ${accessToken}` } },
           auth: { persistSession: false, autoRefreshToken: false },
         });
 
@@ -192,11 +192,11 @@ export const Route = createFileRoute("/api/image")({
           // Translate Arabic with the text-only free tier when available, then call FLUX Schnell.
           const imagePrompt = await translateArabicPrompt(prompt);
           const response = await fetch(
-            \`https://api.cloudflare.com/client/v4/accounts/\${accountId}/ai/run/\${IMAGE_MODEL}\`,
+            `https://api.cloudflare.com/client/v4/accounts/${accountId}/ai/run/${IMAGE_MODEL}`,
             {
               method: "POST",
               headers: {
-                Authorization: \`Bearer \${apiToken}\`,
+                Authorization: `Bearer ${apiToken}`,
                 "Content-Type": "application/json",
               },
               signal: AbortSignal.timeout(IMAGE_TIMEOUT_MS),
@@ -243,7 +243,7 @@ export const Route = createFileRoute("/api/image")({
           const isJpeg = bytes[0] === 0xff && bytes[1] === 0xd8;
           const extension = isJpeg ? "jpg" : "png";
           const mimeType = isJpeg ? "image/jpeg" : "image/png";
-          const path = \`\${user.id}/\${crypto.randomUUID()}.\${extension}\`;
+          const path = `${user.id}/${crypto.randomUUID()}.${extension}`;
 
           const { error: uploadError } = await supabaseUser.storage
             .from("xova-images")
