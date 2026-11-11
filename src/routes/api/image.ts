@@ -29,28 +29,19 @@ async function authenticate(request: Request) {
   return data.user;
 }
 
-/** Translate Arabic image prompts while protecting common food names and product names. */
+/** Free, keyless translation to English; returns the original text on any failure. */
 async function translateToEnglish(text: string) {
-  // Keep named foods and brands out of machine translation to avoid semantic substitutions.
-  const protectedText = text
-    .replace(/(?:كيس|باكيت)\s+(?:إندومي|اندومي|اندومى)\s+(?:ب)?(?:الكباب|كباب)\s+المشوي/giu,
-      "a packet of Indomie instant noodles served with grilled kebab")
-    .replace(/إندومي|اندومي|اندومى/giu, "Indomie instant noodles")
-    .replace(/كباب\s+مشوي/giu, "grilled kebab");
-
-  if (!/[^\x00-\x7F]/.test(protectedText)) return protectedText;
-
+  if (!/[^\x00-\x7F]/.test(text)) return text;
   try {
     const res = await fetch(
-      `https://translate.googleapis.com/translate_a/single?client=gtx&sl=auto&tl=en&dt=t&q=${encodeURIComponent(protectedText)}`,
-      { signal: AbortSignal.timeout(5_000) },
+      `https://translate.googleapis.com/translate_a/single?client=gtx&sl=auto&tl=en&dt=t&q=${encodeURIComponent(text)}`,
     );
-    if (!res.ok) return protectedText;
+    if (!res.ok) return text;
     const json = (await res.json()) as Array<Array<[string]>>;
     const out = (json[0] ?? []).map((seg) => seg[0]).join("").trim();
-    return out || protectedText;
+    return out || text;
   } catch {
-    return protectedText;
+    return text;
   }
 }
 
