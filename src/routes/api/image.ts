@@ -54,7 +54,7 @@ async function buildEnglishImagePrompt(text: string, apiKey?: string): Promise<s
                 "Arabic request: " + text,
             }],
           }],
-          generationConfig: { temperature: 0, maxOutputTokens: 128 },
+          generationConfig: { maxOutputTokens: 128 },
         }),
       },
     );
