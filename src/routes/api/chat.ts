@@ -169,18 +169,22 @@ export const Route = createFileRoute("/api/chat")({
                 if (!local.signal.aborted) {
                   try {
                     const google = createGeminiProvider(geminiKey);
-                    const gemini = google(GEMINI_MODEL);
-                    await pump(streamText({
+                    // Use the low-latency Flash-Lite model for everyday chat.
+                    // Keep the stronger Flash model for reasoning, research, coding and other modes.
+                    const isInstant = mode === "instant";
+                    const gemini = google(isInstant ? "gemini-3.5-flash-lite" : GEMINI_MODEL);
+                    const completion = streamText({
                       model: gemini as never, system, messages: modelMessages,
                       abortSignal: local.signal, maxRetries: 0,
-                      providerOptions: {
-                        google: {
-                          thinkingConfig: {
-                            thinkingLevel: mode === "instant" ? "low" : "medium",
+                      ...(!isInstant ? {
+                        providerOptions: {
+                          google: {
+                            thinkingConfig: { thinkingLevel: "medium" },
                           },
                         },
-                      },
-                    }).fullStream);
+                      } : {}),
+                    });
+                    await pump(completion.fullStream);
                     if (!wroteText) throw new Error("Gemini returned no visible answer");
                   } catch (error) {
                     if (request.signal.aborted) { controller.close(); return; }
