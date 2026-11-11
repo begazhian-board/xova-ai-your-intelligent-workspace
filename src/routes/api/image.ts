@@ -40,10 +40,11 @@ async function buildEnglishImagePrompt(text: string, apiKey?: string): Promise<s
 
   try {
     const res = await fetch(
-      "https://generativelanguage.googleapis.com/v1beta/models/gemini-3.8-flash:generateContent",
+      "https://generativelanguage.googleapis.com/v1beta/models/gemini-3.5-flash-lite:generateContent",
       {
         method: "POST",
         headers: { "Content-Type": "application/json", "x-goog-api-key": apiKey },
+        signal: AbortSignal.timeout(8_000),
         body: JSON.stringify({
           contents: [{
             parts: [{
@@ -210,68 +211,32 @@ export const Route = createFileRoute("/api/image")({
           let cloudflareReturnedNoImage = false;
           const english = await buildEnglishImagePrompt(prompt, geminiKey);
 
-          // Primary: Leonardo Phoenix 1.0 through Cloudflare Workers AI.
-          // This uses the existing Cloudflare credentials and the account's Workers AI free Neuron allocation.
-          if (hasCloudflareImage) {
-            try {
-              const [width, height] =
-                aspect === "3:2" ? [1536, 1024] : aspect === "2:3" ? [1024, 1536] : [1024, 1024];
-              const res = await fetch(
-                `https://api.cloudflare.com/client/v4/accounts/${cloudflareAccountId}/ai/run/@cf/leonardo/phoenix-1.0`,
-                {
-                  method: "POST",
-                  headers: {
-                    Authorization: `Bearer ${cloudflareApiToken}`,
-                    "Content-Type": "application/json",
-                  },
-                  body: JSON.stringify({
-                    prompt: english.slice(0, 1000),
-                    guidance: 8,
-                    width,
-                    height,
-                    num_steps: 25,
-                  }),
+          // Fast path: FLUX.1 Schnell uses its minimum 4 steps.
+          // A hard timeout prevents a slow provider from keeping the request open indefinitely.
+          try {
+            const res = await fetch(
+              `https://api.cloudflare.com/client/v4/accounts/${cloudflareAccountId}/ai/run/@cf/black-forest-labs/flux-1-schnell`,
+              {
+                method: "POST",
+                headers: {
+                  Authorization: `Bearer ${cloudflareApiToken}`,
+                  "Content-Type": "application/json",
                 },
-              );
+                body: JSON.stringify({ prompt: english.slice(0, 2048), steps: 4 }),
+                signal: AbortSignal.timeout(45_000),
+              },
+            );
 
-              if (res.ok) {
-                bytes = await readCloudflareImageResponse(res, "Phoenix");
-                if (!bytes) cloudflareReturnedNoImage = true;
-              } else {
-                cloudflareStatus = res.status;
-                console.error("XOVA Phoenix", res.status, (await res.text()).slice(0, 300));
-              }
-            } catch (error) {
-              cloudflareReturnedNoImage = true;
-              console.error("XOVA Phoenix error", error);
+            if (res.ok) {
+              bytes = await readCloudflareImageResponse(res, "FLUX Schnell");
+              if (!bytes) cloudflareReturnedNoImage = true;
+            } else {
+              cloudflareStatus = res.status;
+              console.error("XOVA FLUX Schnell", res.status, (await res.text()).slice(0, 300));
             }
-          }
-
-          // Free fallback: FLUX.1 Schnell, also covered by the Cloudflare Workers AI free allocation.
-          if (!bytes && hasCloudflareImage) {
-            try {
-              const res = await fetch(
-                `https://api.cloudflare.com/client/v4/accounts/${cloudflareAccountId}/ai/run/@cf/black-forest-labs/flux-1-schnell`,
-                {
-                  method: "POST",
-                  headers: {
-                    Authorization: `Bearer ${cloudflareApiToken}`,
-                    "Content-Type": "application/json",
-                  },
-                  body: JSON.stringify({ prompt: english.slice(0, 2048), steps: 4 }),
-                },
-              );
-              if (res.ok) {
-                bytes = await readCloudflareImageResponse(res, "FLUX fallback");
-                if (!bytes) cloudflareReturnedNoImage = true;
-              } else {
-                cloudflareStatus = res.status;
-                console.error("XOVA FLUX fallback", res.status, (await res.text()).slice(0, 300));
-              }
-            } catch (error) {
-              cloudflareReturnedNoImage = true;
-              console.error("XOVA FLUX fallback error", error);
-            }
+          } catch (error) {
+            cloudflareReturnedNoImage = true;
+            console.error("XOVA FLUX Schnell error or timeout", error);
           }
 
           if (!bytes) {
