@@ -29,19 +29,59 @@ async function authenticate(request: Request) {
   return data.user;
 }
 
-/** Free, keyless translation to English; returns the original text on any failure. */
-async function translateToEnglish(text: string) {
+/** Translate Arabic image prompts with Cloudflare's multilingual model. */
+async function translateToEnglish(text: string, accountId?: string, apiToken?: string) {
   if (!/[^\x00-\x7F]/.test(text)) return text;
+
+  // Protect the product name so the translator does not turn "Indomie" into an unrelated word.
+  const protectedText = text.replace(/إندومي|اندومي|اندومى/giu, "INDOMIE_BRAND_TOKEN");
+
+  if (accountId && apiToken) {
+    try {
+      const res = await fetch(
+        `https://api.cloudflare.com/client/v4/accounts/${accountId}/ai/run/@cf/meta/m2m100-1.2b`,
+        {
+          method: "POST",
+          headers: {
+            Authorization: `Bearer ${apiToken}`,
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({
+            text: protectedText,
+            source_lang: "ar",
+            target_lang: "en",
+          }),
+          signal: AbortSignal.timeout(8_000),
+        },
+      );
+      if (res.ok) {
+        const json = (await res.json()) as {
+          result?: { translated_text?: string };
+        };
+        const translated = json.result?.translated_text?.trim();
+        if (translated) {
+          return translated.replace(/INDOMIE_BRAND_TOKEN/gi, "Indomie instant noodles");
+        }
+      } else {
+        console.error("XOVA image translation", res.status, (await res.text()).slice(0, 240));
+      }
+    } catch (error) {
+      console.error("XOVA image translation error", error);
+    }
+  }
+
+  // Fallback if Workers AI translation is unavailable.
   try {
     const res = await fetch(
-      `https://translate.googleapis.com/translate_a/single?client=gtx&sl=auto&tl=en&dt=t&q=${encodeURIComponent(text)}`,
+      `https://translate.googleapis.com/translate_a/single?client=gtx&sl=auto&tl=en&dt=t&q=${encodeURIComponent(protectedText)}`,
+      { signal: AbortSignal.timeout(5_000) },
     );
-    if (!res.ok) return text;
+    if (!res.ok) return protectedText.replace(/INDOMIE_BRAND_TOKEN/gi, "Indomie instant noodles");
     const json = (await res.json()) as Array<Array<[string]>>;
     const out = (json[0] ?? []).map((seg) => seg[0]).join("").trim();
-    return out || text;
+    return (out || protectedText).replace(/INDOMIE_BRAND_TOKEN/gi, "Indomie instant noodles");
   } catch {
-    return text;
+    return protectedText.replace(/INDOMIE_BRAND_TOKEN/gi, "Indomie instant noodles");
   }
 }
 
@@ -116,7 +156,10 @@ export const Route = createFileRoute("/api/image")({
           let lastStatus: number | undefined;
           let cloudflareStatus: number | undefined;
           let cloudflareReturnedNoImage = false;
-          const english = await translateToEnglish(prompt);
+          const english = await translateToEnglish(prompt, cloudflareAccountId, cloudflareApiToken);
+          const faithfulImagePrompt =
+            `Create an image that faithfully shows this exact requested subject: ${english}. Keep the named objects and their relationship accurate. Do not replace the requested subject with unrelated buildings, places, architecture, or objects.`;
+
 
           // Primary: Cloudflare Workers AI (FLUX.1 Schnell).
           // Uses the account's daily free Workers AI allocation; credentials stay server-side.
@@ -130,7 +173,7 @@ export const Route = createFileRoute("/api/image")({
                     Authorization: `Bearer ${cloudflareApiToken}`,
                     "Content-Type": "application/json",
                   },
-                  body: JSON.stringify({ prompt: english.slice(0, 2048), steps: 4 }),
+                  body: JSON.stringify({ prompt: faithfulImagePrompt.slice(0, 2048), steps: 4 }),
                 },
               );
               if (res.ok) {
