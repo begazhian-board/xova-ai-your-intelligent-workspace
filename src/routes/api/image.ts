@@ -29,25 +29,10 @@ async function authenticate(request: Request) {
   return data.user;
 }
 
-/** Free fallback translation; returns the original text if translation is unavailable. */
-async function translateToEnglish(text: string) {
-  if (!/[^\x00-\x7F]/.test(text)) return text;
-  try {
-    const res = await fetch(
-      `https://translate.googleapis.com/translate_a/single?client=gtx&sl=auto&tl=en&dt=t&q=${encodeURIComponent(text)}`,
-    );
-    if (!res.ok) return text;
-    const json = (await res.json()) as Array<Array<[string]>>;
-    const out = (json[0] ?? []).map((seg) => seg[0]).join("").trim();
-    return out || text;
-  } catch {
-    return text;
-  }
-}
-
-/** Uses the existing Gemini Flash free-tier text API to preserve the user's exact subject in English. */
-async function buildEnglishImagePrompt(text: string, apiKey?: string) {
-  if (!/[^\x00-\x7F]/.test(text) || !apiKey) return translateToEnglish(text);
+/** Strictly translates Arabic image requests without inventing or embellishing details. */
+async function buildEnglishImagePrompt(text: string, apiKey?: string): Promise<string | null> {
+  if (!/[^\\x00-\\x7F]/.test(text)) return text;
+  if (!apiKey) return null;
 
   try {
     const res = await fetch(
@@ -59,35 +44,41 @@ async function buildEnglishImagePrompt(text: string, apiKey?: string) {
           contents: [{
             parts: [{
               text:
-                "Convert the user's image request into a clear, literal English image-generation prompt. " +
-                "Preserve the exact requested subject, product names, food names, quantities, colors, and relationships. " +
-                "Do not replace, reinterpret, add, or invent subjects or background objects. " +
-                "Keep proper names and brand names unchanged. Return only the English prompt.\n\n" +
-                "User request: " + text,
+                "Translate the following Arabic image request into English as literally as possible. " +
+                "This is translation only, not creative prompt writing. " +
+                "Do not add objects, locations, people, styles, lighting, backgrounds, or details. " +
+                "Do not replace or reinterpret any food, product, brand, or named subject. " +
+                "Write brand and food names phonetically when needed (for example, اندومي = Indomie). " +
+                "Keep the same objects and relationships in the same order. " +
+                "Return only the translated request in one sentence, with no explanation or quotation marks.\\n\\n" +
+                "Arabic request: " + text,
             }],
           }],
-          generationConfig: { temperature: 0.1, maxOutputTokens: 160 },
+          generationConfig: { temperature: 0, maxOutputTokens: 128 },
         }),
       },
     );
 
-    if (res.ok) {
-      const json = (await res.json()) as {
-        candidates?: Array<{ content?: { parts?: Array<{ text?: string }> } }>;
-      };
-      const output = json.candidates?.[0]?.content?.parts
-        ?.map((part) => part.text ?? "")
-        .join("")
-        .trim();
-      if (output) return output.slice(0, 2000);
-    } else {
-      console.error("XOVA image prompt Gemini", res.status);
+    if (!res.ok) {
+      console.error("XOVA image prompt translation Gemini", res.status);
+      return null;
     }
-  } catch (error) {
-    console.error("XOVA image prompt Gemini error", error);
-  }
 
-  return translateToEnglish(text);
+    const json = (await res.json()) as {
+      candidates?: Array<{ content?: { parts?: Array<{ text?: string }> } }>;
+    };
+    const output = json.candidates?.[0]?.content?.parts
+      ?.map((part) => part.text ?? "")
+      .join("")
+      .trim()
+      .replace(/^["'“”]+|["'“”]+$/g, "");
+
+    if (!output || !/[a-z]/i.test(output)) return null;
+    return output.slice(0, 1000);
+  } catch (error) {
+    console.error("XOVA image prompt translation error", error);
+    return null;
+  }
 }
 
 function base64ToBytes(base64: string) {
@@ -160,8 +151,9 @@ export const Route = createFileRoute("/api/image")({
           let cloudflareStatus: number | undefined;
           let cloudflareReturnedNoImage = false;
           const english = await buildEnglishImagePrompt(prompt, geminiKey);
-          const faithfulImagePrompt =
-            `Create an image of exactly this requested subject: ${english}. Preserve every named item, product, food, quantity, and relationship. Do not substitute unrelated subjects or add unrequested objects.`;
+          if (!english) {
+            return Response.json({ error: "err.imageFailed" }, { status: 502 });
+          }
 
           // Primary: Leonardo Phoenix 1.0 through Cloudflare Workers AI.
           // This uses the existing Cloudflare credentials and the account's Workers AI free Neuron allocation.
@@ -178,12 +170,11 @@ export const Route = createFileRoute("/api/image")({
                     "Content-Type": "application/json",
                   },
                   body: JSON.stringify({
-                    prompt: faithfulImagePrompt.slice(0, 2000),
-                    negative_prompt: "unrelated subjects, unintended objects, incorrect product, wrong food, unrelated buildings or architecture",
-                    guidance: 5,
+                    prompt: english.slice(0, 1000),
+                    guidance: 8,
                     width,
                     height,
-                    num_steps: 8,
+                    num_steps: 25,
                   }),
                 },
               );
@@ -232,7 +223,7 @@ export const Route = createFileRoute("/api/image")({
                     Authorization: `Bearer ${cloudflareApiToken}`,
                     "Content-Type": "application/json",
                   },
-                  body: JSON.stringify({ prompt: faithfulImagePrompt.slice(0, 2048), steps: 4 }),
+                  body: JSON.stringify({ prompt: english.slice(0, 2048), steps: 4 }),
                 },
               );
               if (res.ok) {
