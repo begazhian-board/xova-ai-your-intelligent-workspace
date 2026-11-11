@@ -6,26 +6,29 @@ interface WireBody {
   aspect?: "1:1" | "3:2" | "2:3";
 }
 
-interface GeminiImageResponse {
-  candidates?: Array<{
-    content?: {
-      parts?: Array<{
-        inlineData?: {
-          data?: string;
-          mimeType?: string;
-        };
-      }>;
-    };
-    finishReason?: string;
-  }>;
-  promptFeedback?: {
-    blockReason?: string;
+interface CloudflareImageResult {
+  result?: {
+    image?: string;
   };
+  image?: string;
+  errors?: Array<{ code?: number; message?: string }>;
+  messages?: unknown[];
+  success?: boolean;
 }
 
-const IMAGE_MODEL = "gemini-3.1-flash-lite-image";
-const IMAGE_TIMEOUT_MS = 26_000;
-const RATE_LIMIT = 10;
+interface GeminiTranslationResult {
+  candidates?: Array<{
+    content?: {
+      parts?: Array<{ text?: string }>;
+    };
+  }>;
+}
+
+const IMAGE_MODEL = "@cf/black-forest-labs/flux-1-schnell";
+const IMAGE_TIMEOUT_MS = 25_000;
+const TRANSLATION_TIMEOUT_MS = 3_000;
+const HOURLY_LIMIT = 10;
+const DAILY_LIMIT = 50;
 const SIGNED_URL_TTL = 60 * 60 * 24 * 365;
 const ASPECTS = new Set(["1:1", "3:2", "2:3"]);
 
@@ -46,16 +49,69 @@ async function authenticate(request: Request) {
   return data.user;
 }
 
+/** Free-tier text translation only. Image generation never calls a paid image model. */
+async function translateArabicPrompt(prompt: string): Promise<string> {
+  if (!/[^\x00-\x7F]/.test(prompt)) return prompt;
+
+  const apiKey = process.env["GEMINI_API_KEY"];
+  if (!apiKey) return prompt;
+
+  try {
+    const response = await fetch(
+      "https://generativelanguage.googleapis.com/v1beta/models/gemini-3.8-flash:generateContent",
+      {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          "x-goog-api-key": apiKey,
+        },
+        signal: AbortSignal.timeout(TRANSLATION_TIMEOUT_MS),
+        body: JSON.stringify({
+          contents: [{
+            role: "user",
+            parts: [{
+              text:
+                "Translate this Arabic image description into concise English. " +
+                "Preserve every object, color, action, and relationship exactly. " +
+                "Do not add or remove details. Return only the translation.\\n\\n" +
+                prompt,
+            }],
+          }],
+          generationConfig: { maxOutputTokens: 100 },
+        }),
+      },
+    );
+
+    if (!response.ok) {
+      console.warn("XOVA image prompt translation unavailable", response.status);
+      return prompt;
+    }
+
+    const result = (await response.json()) as GeminiTranslationResult;
+    const translated = result.candidates?.[0]?.content?.parts
+      ?.map((part) => part.text ?? "")
+      .join("")
+      .trim();
+
+    return translated && /[a-z]/i.test(translated) ? translated.slice(0, 2048) : prompt;
+  } catch (error) {
+    console.warn("XOVA image prompt translation timed out or failed", error);
+    return prompt;
+  }
+}
+
 function base64ToBytes(base64: string) {
   const binary = atob(base64);
   const bytes = new Uint8Array(binary.length);
-  for (let i = 0; i < binary.length; i += 1) bytes[i] = binary.charCodeAt(i);
+  for (let i = 0; i < binary.length; i += 1) {
+    bytes[i] = binary.charCodeAt(i);
+  }
   return bytes;
 }
 
-function imageErrorForStatus(status: number) {
-  if (status === 401) return "err.imageGeminiAuth";
-  if (status === 403) return "err.imageModelAccess";
+function providerError(status: number) {
+  if (status === 401 || status === 403) return "err.imageCloudflareAuth";
+  if (status === 402) return "err.imageCloudflareBilling";
   if (status === 429) return "err.imageProviderRate";
   if (status === 400) return "err.imageProviderRequest";
   if (status >= 500) return "err.imageProviderBusy";
@@ -69,14 +125,10 @@ export const Route = createFileRoute("/api/image")({
         const user = await authenticate(request);
         if (!user) return Response.json({ error: "err.auth" }, { status: 401 });
 
-        // Paid model use is deliberately opt-in; this prevents accidental API charges.
-        if (process.env["XOVA_IMAGE_GENERATION_ENABLED"] !== "true") {
-          return Response.json({ error: "err.imageDisabled" }, { status: 503 });
-        }
-
-        const geminiKey = process.env["GEMINI_API_KEY"];
-        if (!geminiKey) {
-          return Response.json({ error: "err.imageKeyMissing" }, { status: 503 });
+        const accountId = process.env["CLOUDFLARE_ACCOUNT_ID"];
+        const apiToken = process.env["CLOUDFLARE_API_TOKEN"];
+        if (!accountId || !apiToken) {
+          return Response.json({ error: "err.imageCloudflareConfig" }, { status: 503 });
         }
 
         let body: WireBody;
@@ -101,85 +153,97 @@ export const Route = createFileRoute("/api/image")({
         }
 
         const supabaseUser = createClient(supabaseUrl, publishableKey, {
-          global: { headers: { Authorization: `Bearer ${accessToken}` } },
+          global: { headers: { Authorization: \`Bearer \${accessToken}\` } },
           auth: { persistSession: false, autoRefreshToken: false },
         });
 
-        const since = new Date(Date.now() - 60 * 60 * 1000).toISOString();
-        const { count, error: countError } = await supabaseUser
-          .from("generated_images")
-          .select("id", { count: "exact", head: true })
-          .eq("user_id", user.id)
-          .gte("created_at", since);
+        // Enforce a per-user hourly and daily ceiling before contacting the image provider.
+        const now = new Date();
+        const hourStart = new Date(now.getTime() - 60 * 60 * 1000).toISOString();
+        const dayStart = new Date(
+          Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), now.getUTCDate()),
+        ).toISOString();
 
-        if (countError) {
-          console.error("XOVA image rate-limit query", countError.message);
+        const [hourCount, dayCount] = await Promise.all([
+          supabaseUser
+            .from("generated_images")
+            .select("id", { count: "exact", head: true })
+            .eq("user_id", user.id)
+            .gte("created_at", hourStart),
+          supabaseUser
+            .from("generated_images")
+            .select("id", { count: "exact", head: true })
+            .eq("user_id", user.id)
+            .gte("created_at", dayStart),
+        ]);
+
+        if (hourCount.error || dayCount.error) {
+          console.error("XOVA image usage check", hourCount.error?.message, dayCount.error?.message);
           return Response.json({ error: "err.imageStorageAccess" }, { status: 502 });
         }
-        if ((count ?? 0) >= RATE_LIMIT) {
+        if ((hourCount.count ?? 0) >= HOURLY_LIMIT) {
           return Response.json({ error: "err.imageRate" }, { status: 429 });
+        }
+        if ((dayCount.count ?? 0) >= DAILY_LIMIT) {
+          return Response.json({ error: "err.imageDailyLimit" }, { status: 429 });
         }
 
         try {
-          // One direct Arabic-or-English prompt to the fast native image model.
-          // No translator call, Cloudflare Workers AI, FLUX, or Phoenix fallback.
+          // Translate Arabic with the text-only free tier when available, then call FLUX Schnell.
+          const imagePrompt = await translateArabicPrompt(prompt);
           const response = await fetch(
-            `https://generativelanguage.googleapis.com/v1beta/models/${IMAGE_MODEL}:generateContent`,
+            \`https://api.cloudflare.com/client/v4/accounts/\${accountId}/ai/run/\${IMAGE_MODEL}\`,
             {
               method: "POST",
               headers: {
+                Authorization: \`Bearer \${apiToken}\`,
                 "Content-Type": "application/json",
-                "x-goog-api-key": geminiKey,
               },
               signal: AbortSignal.timeout(IMAGE_TIMEOUT_MS),
               body: JSON.stringify({
-                contents: [{ role: "user", parts: [{ text: prompt }] }],
-                generationConfig: {
-                  responseModalities: ["IMAGE"],
-                  imageConfig: {
-                    aspectRatio: aspect,
-                    imageSize: "1K",
-                  },
-                },
+                prompt: imagePrompt.slice(0, 2048),
+                steps: 4,
               }),
             },
           );
 
           if (!response.ok) {
             const errorText = await response.text();
-            console.error("XOVA Gemini image API", response.status, errorText.slice(0, 600));
+            console.error("XOVA free image provider", response.status, errorText.slice(0, 500));
             return Response.json(
-              { error: imageErrorForStatus(response.status) },
+              { error: providerError(response.status) },
               { status: response.status === 429 ? 429 : 502 },
             );
           }
 
-          const result = (await response.json()) as GeminiImageResponse;
-          const parts = result.candidates?.[0]?.content?.parts ?? [];
-          const imagePart = parts.find((part) => part.inlineData?.data);
-          const imageData = imagePart?.inlineData?.data;
-
-          if (!imageData) {
-            const blocked = Boolean(
-              result.promptFeedback?.blockReason ||
-              result.candidates?.[0]?.finishReason === "SAFETY",
-            );
-            console.error(
-              "XOVA Gemini returned no image",
-              result.promptFeedback?.blockReason ??
-                result.candidates?.[0]?.finishReason ??
-                "No inline image part",
-            );
-            return Response.json(
-              { error: blocked ? "err.imageBlocked" : "err.imageNoOutput" },
-              { status: 502 },
-            );
+          const contentType = (response.headers.get("content-type") ?? "").toLowerCase();
+          let bytes: Uint8Array | null = null;
+          if (contentType.startsWith("image/") || contentType === "application/octet-stream") {
+            bytes = new Uint8Array(await response.arrayBuffer());
+          } else {
+            const payload = (await response.json()) as CloudflareImageResult;
+            const encoded = payload.result?.image ?? payload.image;
+            if (encoded) {
+              bytes = base64ToBytes(
+                encoded.replace(/^data:image\/[a-zA-Z0-9.+-]+;base64,/, "").replace(/\s/g, ""),
+              );
+            } else {
+              console.error(
+                "XOVA FLUX returned no image",
+                JSON.stringify(payload.errors ?? payload.messages ?? []).slice(0, 500),
+              );
+            }
           }
 
-          const bytes = base64ToBytes(imageData);
-          const mimeType = imagePart?.inlineData?.mimeType ?? "image/png";
-          const extension = mimeType === "image/jpeg" ? "jpg" : mimeType === "image/webp" ? "webp" : "png";
-          const path = `${user.id}/${crypto.randomUUID()}.${extension}`;
+          if (!bytes?.length) {
+            return Response.json({ error: "err.imageNoOutput" }, { status: 502 });
+          }
+
+          // FLUX Schnell returns JPEG data through Workers AI.
+          const isJpeg = bytes[0] === 0xff && bytes[1] === 0xd8;
+          const extension = isJpeg ? "jpg" : "png";
+          const mimeType = isJpeg ? "image/jpeg" : "image/png";
+          const path = \`\${user.id}/\${crypto.randomUUID()}.\${extension}\`;
 
           const { error: uploadError } = await supabaseUser.storage
             .from("xova-images")
@@ -231,7 +295,7 @@ export const Route = createFileRoute("/api/image")({
         } catch (error) {
           const name = error instanceof Error ? error.name : "";
           if (name === "TimeoutError" || name === "AbortError") {
-            console.error("XOVA Gemini image timed out", IMAGE_TIMEOUT_MS);
+            console.error("XOVA FLUX request timed out", IMAGE_TIMEOUT_MS);
             return Response.json({ error: "err.imageTimeout" }, { status: 504 });
           }
           console.error("XOVA image error", error);

@@ -196,13 +196,22 @@ const en: Dict = {
 
 
 
-  "err.imageDisabled": "Image generation is disabled until an adult approves the paid image model.",
-  "err.imageKeyMissing": "The server is missing its Gemini image API key.",
-  "err.imageGeminiAuth": "Google rejected the Gemini API key. Check the key configuration.",
-  "err.imageModelAccess": "This image model is not available to the current Google API project or usage tier.",
-  "err.imageProviderBusy": "Google's image service is temporarily unavailable. Try again later.",
-  "err.imageTimeout": "Image generation took longer than 26 seconds and was stopped. Try a shorter prompt.",
-  "err.imageNoOutput": "Google returned no image for this request. Try simplifying the description.",
+
+
+
+
+
+
+
+  "err.imageCloudflareConfig": "Cloudflare Workers AI credentials are missing from the server.",
+  "err.imageCloudflareAuth": "Cloudflare rejected the Workers AI token. Check its Workers AI Read permission and account ID.",
+  "err.imageCloudflareBilling": "Cloudflare rejected the request at the account or billing level. No payment setup was changed.",
+  "err.imageProviderRate": "Cloudflare's free daily image quota or request rate limit was reached. Try again after it resets.",
+  "err.imageProviderBusy": "Cloudflare's image service is temporarily busy. Try again shortly.",
+  "err.imageProviderRequest": "Cloudflare rejected the image request settings.",
+  "err.imageTimeout": "Image generation took longer than 25 seconds and was stopped.",
+  "err.imageNoOutput": "Cloudflare returned no image. Check the Workers AI response in the logs.",
+  "err.imageDailyLimit": "You reached XOVA's daily free image limit. Try again tomorrow.",
   "err.imageStorage": "The image was generated, but XOVA could not save it to Supabase Storage.",
   "err.imageStorageAccess": "XOVA cannot access the generated_images table with your signed-in account. Check its authenticated-user RLS policies.",
   "err.imageStorageBucket": "XOVA could not create its private image bucket. Check the Supabase service-role key and Storage permissions.",
@@ -418,13 +427,22 @@ const ar: Dict = {
 
 
 
-  "err.imageDisabled": "توليد الصور متوقف لحد موافقة ولي الأمر على الموديل المدفوع.",
-  "err.imageKeyMissing": "مفتاح Gemini الخاص بالصور مش موجود على السيرفر.",
-  "err.imageGeminiAuth": "Google رفض مفتاح Gemini. راجع إعداد المفتاح.",
-  "err.imageModelAccess": "موديل الصور مش متاح لمشروع Google أو مستوى الاستخدام الحالي.",
-  "err.imageProviderBusy": "خدمة صور Google مش متاحة مؤقتًا. جرّب بعد شوية.",
-  "err.imageTimeout": "توليد الصورة عدى 26 ثانية واتوقف. جرّب وصف أقصر.",
-  "err.imageNoOutput": "Google مرجّعش صورة للطلب ده. جرّب تبسّط الوصف.",
+
+
+
+
+
+
+
+  "err.imageCloudflareConfig": "بيانات Cloudflare Workers AI مش موجودة على السيرفر.",
+  "err.imageCloudflareAuth": "Cloudflare رفض مفتاح Workers AI. راجع صلاحية Workers AI Read ومعرّف الحساب.",
+  "err.imageCloudflareBilling": "Cloudflare رفض الطلب بسبب إعدادات الحساب أو الفوترة. إحنا ما غيّرناش أي إعداد دفع.",
+  "err.imageProviderRate": "وصلت لحد الاستخدام المجاني اليومي أو حد الطلبات في Cloudflare. جرّب بعد ما الحصة تتجدد.",
+  "err.imageProviderBusy": "خدمة الصور في Cloudflare مشغولة مؤقتًا. جرّب بعد شوية.",
+  "err.imageProviderRequest": "Cloudflare رفض إعدادات طلب الصورة.",
+  "err.imageTimeout": "توليد الصورة عدى 25 ثانية واتوقف.",
+  "err.imageNoOutput": "Cloudflare مرجّعش صورة. محتاجين نراجع استجابة Workers AI في السجل.",
+  "err.imageDailyLimit": "وصلت للحد المجاني اليومي للصور في XOVA. جرّب بكرة.",
   "err.imageStorage": "الصورة اتولدت، لكن XOVA معرفش يحفظها في Supabase Storage.",
   "err.imageStorageAccess": "XOVA مش قادر يوصل لجدول الصور بحسابك. محتاجين نراجع صلاحيات المستخدمين في قاعدة البيانات.",
   "err.imageStorageBucket": "XOVA معرفش ينشئ مخزن الصور الخاص. راجع مفتاح Service Role وصلاحيات التخزين في Supabase.",
