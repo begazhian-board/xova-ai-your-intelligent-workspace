@@ -17,6 +17,7 @@ import { useAuth } from "@/hooks/useAuth";
 import { supabase } from "@/integrations/supabase/client";
 import { useI18n } from "@/lib/i18n";
 import { cn } from "@/lib/utils";
+import { downloadWatermarkedImage } from "@/lib/image-watermark";
 
 export const Route = createFileRoute("/images")({
   head: () => ({
@@ -25,7 +26,7 @@ export const Route = createFileRoute("/images")({
       {
         name: "description",
         content:
-          "Generate images from direct Arabic or English prompts and manage your private image history.",
+          "Generate real AI images from a text prompt inside XOVA AI: pick an aspect ratio and quality, then download or regenerate from your private image history.",
       },
       { property: "og:title", content: "Image studio — XOVA AI by Begad" },
       {
@@ -40,6 +41,8 @@ export const Route = createFileRoute("/images")({
 });
 
 type Aspect = "1:1" | "3:2" | "2:3";
+type Quality = "standard" | "premium";
+
 interface ImageRow {
   id: string;
   prompt: string;
@@ -51,6 +54,8 @@ interface ImageRow {
 }
 
 const ASPECTS: Aspect[] = ["1:1", "3:2", "2:3"];
+const QUALITIES: Quality[] = ["standard", "premium"];
+
 const ASPECT_CLASS: Record<string, string> = {
   "1:1": "aspect-square",
   "3:2": "aspect-[3/2]",
@@ -64,6 +69,7 @@ function ImageStudio() {
 
   const [prompt, setPrompt] = useState("");
   const [aspect, setAspect] = useState<Aspect>("1:1");
+  const [quality, setQuality] = useState<Quality>("standard");
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [images, setImages] = useState<ImageRow[]>([]);
@@ -94,7 +100,7 @@ function ImageStudio() {
   }, [user]);
 
   const generate = useCallback(
-    async (text: string, useAspect: Aspect) => {
+    async (text: string, useAspect: Aspect, useQuality: Quality) => {
       const clean = text.trim();
       if (!clean || busy) return;
       setBusy(true);
@@ -103,75 +109,29 @@ function ImageStudio() {
         const { data: sessionData } = await supabase.auth.getSession();
         const token = sessionData.session?.access_token;
         if (!token) throw new Error("err.auth");
-        const submitResponse = await fetch("/api/image", {
+        const response = await fetch("/api/image", {
           method: "POST",
           headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
-          body: JSON.stringify({ prompt: clean, aspect: useAspect }),
+          body: JSON.stringify({ prompt: clean, aspect: useAspect, quality: useQuality }),
         });
-        const submitted = (await submitResponse.json()) as {
-          jobId?: string;
+        const json = (await response.json()) as {
+          image?: string;
+          id?: string;
+          createdAt?: string;
           error?: string;
         };
-        if (!submitResponse.ok || !submitted.jobId) {
-          throw new Error(submitted.error ?? "err.imageFailed");
+        if (!response.ok || !json.image || !json.id) {
+          throw new Error(json.error ?? "err.imageFailed");
         }
-
-        let completed:
-          | { image: string; id: string; createdAt?: string; aspect?: string; quality?: string }
-          | null = null;
-
-        // AI Horde is volunteer-powered. Keep the UI open while the request waits in its queue.
-        for (let attempt = 0; attempt < 180; attempt += 1) {
-          const query = new URLSearchParams({
-            jobId: submitted.jobId,
-            prompt: clean,
-            aspect: useAspect,
-          });
-          const pollResponse = await fetch(`/api/image?${query.toString()}`, {
-            method: "GET",
-            headers: { Authorization: `Bearer ${token}` },
-          });
-          const poll = (await pollResponse.json()) as {
-            pending?: boolean;
-            image?: string;
-            id?: string;
-            createdAt?: string;
-            aspect?: string;
-            quality?: string;
-            error?: string;
-          };
-
-          if (!pollResponse.ok) {
-            throw new Error(poll.error ?? "err.imageFailed");
-          }
-          if (poll.pending) {
-            await new Promise((resolve) => setTimeout(resolve, 3000));
-            continue;
-          }
-          if (!poll.image || !poll.id) {
-            throw new Error(poll.error ?? "err.imageFailed");
-          }
-          completed = poll as {
-            image: string;
-            id: string;
-            createdAt?: string;
-            aspect?: string;
-            quality?: string;
-          };
-          break;
-        }
-
-        if (!completed) throw new Error("err.imageQueueTimeout");
-
         setImages((current) => [
           {
-            id: completed!.id,
+            id: json.id!,
             prompt: clean,
             aspect: useAspect,
-            quality: "standard",
+            quality: useQuality,
             storage_path: "",
-            image_url: completed!.image,
-            created_at: completed!.createdAt ?? new Date().toISOString(),
+            image_url: json.image!,
+            created_at: json.createdAt ?? new Date().toISOString(),
           },
           ...current,
         ]);
@@ -188,42 +148,12 @@ function ImageStudio() {
 
   const download = useCallback(async (row: ImageRow) => {
     try {
-      const response = await fetch(row.image_url);
-      const blob = await response.blob();
-      const bitmap = await createImageBitmap(blob);
-      const canvas = document.createElement("canvas");
-      canvas.width = bitmap.width;
-      canvas.height = bitmap.height;
-      const ctx = canvas.getContext("2d");
-      if (!ctx) throw new Error("no-canvas");
-      ctx.drawImage(bitmap, 0, 0);
-      // Bake the XOVA AI watermark into the downloaded file.
-      const fontSize = Math.max(18, Math.round(bitmap.width * 0.028));
-      const pad = Math.round(fontSize * 0.9);
-      ctx.font = `600 ${fontSize}px system-ui, sans-serif`;
-      const text = "XOVA AI";
-      const metrics = ctx.measureText(text);
-      const x = bitmap.width - metrics.width - pad;
-      const y = bitmap.height - pad;
-      ctx.fillStyle = "rgba(0, 0, 0, 0.35)";
-      ctx.fillText(text, x + 1.5, y + 1.5);
-      ctx.fillStyle = "rgba(255, 255, 255, 0.85)";
-      ctx.fillText(text, x, y);
-      bitmap.close();
-      const watermarked = await new Promise<Blob | null>((resolve) =>
-        canvas.toBlob(resolve, "image/png"),
-      );
-      if (!watermarked) throw new Error("no-blob");
-      const url = URL.createObjectURL(watermarked);
-      const link = document.createElement("a");
-      link.href = url;
-      link.download = `xova-${row.id}.png`;
-      link.click();
-      URL.revokeObjectURL(url);
-    } catch {
-      window.open(row.image_url, "_blank", "noopener");
+      await downloadWatermarkedImage(row.image_url, `xova-${row.id}.png`);
+    } catch (error) {
+      console.error("XOVA watermarked image download failed", error);
+      toast.error(t("err.generic"));
     }
-  }, []);
+  }, [t]);
 
   const remove = useCallback(
     async (row: ImageRow) => {
@@ -316,10 +246,34 @@ function ImageStudio() {
               </div>
             </fieldset>
 
-                        <button
+            <fieldset className="flex flex-col gap-2">
+              <legend className="text-xxs font-semibold uppercase tracking-wide text-muted-foreground">
+                {t("studio.quality")}
+              </legend>
+              <div className="flex gap-1.5 rounded-full border border-border bg-surface p-1">
+                {QUALITIES.map((value) => (
+                  <button
+                    key={value}
+                    type="button"
+                    aria-pressed={quality === value}
+                    onClick={() => setQuality(value)}
+                    className={cn(
+                      "xv-focus rounded-full px-3 py-1.5 text-xs font-medium transition-all",
+                      quality === value
+                        ? "bg-brand-soft text-brand shadow-sm"
+                        : "text-muted-foreground hover:bg-hover hover:text-foreground",
+                    )}
+                  >
+                    {t(`studio.quality.${value}`)}
+                  </button>
+                ))}
+              </div>
+            </fieldset>
+
+            <button
               type="button"
               disabled={busy || prompt.trim().length === 0}
-              onClick={() => void generate(prompt, aspect)}
+              onClick={() => void generate(prompt, aspect, quality)}
               className="xv-focus ms-auto inline-flex items-center gap-2 rounded-full bg-brand px-5 py-2.5 text-sm font-semibold text-brand-foreground shadow-md shadow-brand/20 transition-all hover:opacity-90 active:scale-[0.98] disabled:opacity-45 disabled:shadow-none"
             >
               {busy ? (
@@ -410,7 +364,11 @@ function ImageStudio() {
                         type="button"
                         disabled={busy}
                         onClick={() =>
-                          void generate(row.prompt, (ASPECT_CLASS[row.aspect] ? row.aspect : "1:1") as Aspect)
+                          void generate(
+                            row.prompt,
+                            (ASPECT_CLASS[row.aspect] ? row.aspect : "1:1") as Aspect,
+                            row.quality === "premium" ? "premium" : "standard",
+                          )
                         }
                         aria-label={t("msg.regenerate")}
                         title={t("msg.regenerate")}

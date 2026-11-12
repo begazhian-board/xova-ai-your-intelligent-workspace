@@ -17,6 +17,7 @@ interface AiConfig {
   customPersonality?: string | null;
   responseStyle: string;
   language: string;
+  displayName?: string | null;
 }
 
 interface DbRow {
@@ -132,14 +133,12 @@ export function useConversation(userId: string | undefined, config: AiConfig) {
 
   /** Returns the active conversation id, creating a titled conversation on first use. */
   const ensureConversation = useCallback(
-    async (firstText: string) => {
+    async () => {
       if (activeIdRef.current) return activeIdRef.current;
       if (!userId) return null;
-      const clean = firstText.replace(/\s+/g, " ").trim();
-      const title = clean ? (clean.length > 60 ? `${clean.slice(0, 57)}…` : clean) : null;
       const { data, error: dbError } = await supabase
         .from("conversations")
-        .insert({ user_id: userId, title })
+        .insert({ user_id: userId, title: null })
         .select("id,title,updated_at")
         .single();
       if (dbError || !data) {
@@ -189,7 +188,7 @@ export function useConversation(userId: string | undefined, config: AiConfig) {
   );
 
   const runCompletion = useCallback(
-    async (history: ChatMessage[], mode: ModeId) => {
+    async (history: ChatMessage[], mode: ModeId, generateTitle = false) => {
       const controller = new AbortController();
       abortRef.current = controller;
       setError(null);
@@ -224,6 +223,8 @@ export function useConversation(userId: string | undefined, config: AiConfig) {
             customPersonality: configRef.current.customPersonality,
             responseStyle: configRef.current.responseStyle,
             language: configRef.current.language,
+            preferredName: configRef.current.displayName ?? null,
+            generateTitle,
             messages: history.map((message) => ({
               role: message.role,
               content: message.content,
@@ -286,6 +287,7 @@ export function useConversation(userId: string | undefined, config: AiConfig) {
         }
 
         let streamError: string | null = null;
+        let generatedTitle: string | null = null;
         const trailerAt = text.indexOf(TRAILER_PREFIX);
         if (trailerAt !== -1) {
           try {
@@ -293,10 +295,13 @@ export function useConversation(userId: string | undefined, config: AiConfig) {
               sources?: SourceRef[];
               error?: string | null;
               notice?: string | null;
+              title?: string | null;
             };
             if (Array.isArray(trailer.sources)) sources = trailer.sources;
             streamError = trailer.error ?? null;
             streamNotice = trailer.notice ?? null;
+            generatedTitle =
+              typeof trailer.title === "string" ? trailer.title.trim().slice(0, 60) : null;
           } catch {
             /* ignore malformed trailer */
           }
@@ -315,6 +320,19 @@ export function useConversation(userId: string | undefined, config: AiConfig) {
           current.map((message) => (message.id === assistantId ? finalMessage : message)),
         );
         await persist(finalMessage);
+        if (generatedTitle && activeIdRef.current) {
+          const conversationId = activeIdRef.current;
+          setConversations((list) =>
+            list.map((conversation) =>
+              conversation.id === conversationId ? { ...conversation, title: generatedTitle } : conversation,
+            ),
+          );
+          const { error: titleError } = await supabase
+            .from("conversations")
+            .update({ title: generatedTitle })
+            .eq("id", conversationId);
+          if (titleError) console.error("conversation title save", titleError.message);
+        }
         if (streamError) setError(streamError);
       } catch (caught) {
         const aborted = caught instanceof DOMException && caught.name === "AbortError";
@@ -353,12 +371,13 @@ export function useConversation(userId: string | undefined, config: AiConfig) {
       };
       const history = [...messages.filter((m) => !m.streaming), userMessage];
       setMessages(history);
-      if (!(await ensureConversation(text))) {
+      if (!(await ensureConversation())) {
         setError("err.generic");
         return;
       }
       void persist(userMessage);
-      await runCompletion(history, mode);
+      const isThirdUserMessage = history.filter((message) => message.role === "user").length === 3;
+      await runCompletion(history, mode, isThirdUserMessage);
     },
     [messages, persist, runCompletion, userId, ensureConversation],
   );
@@ -428,7 +447,7 @@ export function useConversation(userId: string | undefined, config: AiConfig) {
         createdAt: new Date().toISOString(),
       };
       setMessages((current) => [...current.filter((m) => !m.streaming), userMessage]);
-      if (!(await ensureConversation(prompt))) {
+      if (!(await ensureConversation())) {
         setError("err.generic");
         return undefined;
       }

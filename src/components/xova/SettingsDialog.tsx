@@ -37,11 +37,20 @@ interface SettingsDialogProps {
   onDeleteConversation: () => void;
 }
 
-function Field({ label, children }: { label: string; children: React.ReactNode }) {
+function Field({
+  label,
+  children,
+  description,
+}: {
+  label: string;
+  children: React.ReactNode;
+  description?: string;
+}) {
   return (
     <label className="flex flex-col gap-1.5">
       <span className="text-xs font-medium text-muted-foreground">{label}</span>
       {children}
+      {description && <span className="text-xxs leading-relaxed text-faint">{description}</span>}
     </label>
   );
 }
@@ -237,10 +246,15 @@ export function SettingsDialog({
 
             {section === "account" && (
               <div className="flex flex-col gap-4">
-                <Field label={t("settings.displayName")}>
+                <Field
+                  label={t("settings.displayName")}
+                  description={t("settings.displayName.help")}
+                >
                   <input
                     value={displayName}
                     onChange={(event) => setDisplayName(event.target.value)}
+                    maxLength={48}
+                    placeholder={t("settings.displayName.placeholder")}
                     className={inputClass}
                   />
                 </Field>
