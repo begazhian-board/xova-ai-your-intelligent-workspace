@@ -25,6 +25,7 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { useI18n } from "@/lib/i18n";
 import { cn } from "@/lib/utils";
+import { downloadWatermarkedImage } from "@/lib/image-watermark";
 import type { ChatMessage } from "@/lib/xova";
 
 interface MessageProps {
@@ -151,14 +152,19 @@ export function Message({ message, onRegenerate, onEdit }: MessageProps) {
               </span>
             </span>
             <figcaption className="flex gap-1.5 border-t border-border bg-subtle px-2 py-1.5">
-              <a
-                href={message.imageUrl}
-                download="xova-image.png"
+              <button
+                type="button"
+                onClick={() => {
+                  void downloadWatermarkedImage(message.imageUrl!, "xova-image.png").catch((error) => {
+                    console.error("XOVA watermarked image download failed", error);
+                    toast.error(t("err.generic"));
+                  });
+                }}
                 className="xv-focus inline-flex items-center gap-1.5 rounded-md px-2 py-1 text-xs text-muted-foreground hover:bg-hover hover:text-foreground"
               >
                 <Download className="h-3.5 w-3.5" />
                 {t("msg.download")}
-              </a>
+              </button>
               <button
                 type="button"
                 onClick={onRegenerate}
