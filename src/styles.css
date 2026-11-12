@@ -1127,3 +1127,65 @@
     border-radius: 0;
   }
 }
+
+
+/* Shared frosted surfaces make the light theme feel consistent across every screen. */
+:root:not(.dark) {
+  --rail: oklch(0.96 0.025 265 / 76%);
+  --surface: oklch(1 0 0 / 72%);
+  --elevated: oklch(0.99 0.012 265 / 78%);
+  --composer: oklch(1 0 0 / 76%);
+  --subtle: oklch(0.95 0.028 268 / 58%);
+  --hover: oklch(0.93 0.04 270 / 70%);
+  --active: oklch(0.91 0.055 275 / 76%);
+  --card: oklch(1 0 0 / 72%);
+  --popover: oklch(1 0 0 / 92%);
+}
+
+:root:not(.dark) .xv-shell :is(
+  [class*="bg-surface"],
+  [class*="bg-elevated"],
+  [class*="bg-subtle"],
+  [class*="bg-composer"],
+  [class*="bg-card"]
+) {
+  backdrop-filter: blur(16px) saturate(145%);
+  -webkit-backdrop-filter: blur(16px) saturate(145%);
+}
+
+:root:not(.dark) .xv-studio-shell :is(
+  [class*="bg-surface"],
+  [class*="bg-elevated"],
+  [class*="bg-subtle"],
+  [class*="bg-composer"],
+  [class*="bg-card"]
+) {
+  backdrop-filter: blur(16px) saturate(145%);
+  -webkit-backdrop-filter: blur(16px) saturate(145%);
+}
+
+:root:not(.dark) .xv-shell [role="dialog"],
+:root:not(.dark) .xv-studio-shell [role="dialog"] {
+  border: 1px solid oklch(0.82 0.06 270 / 56%);
+  background: linear-gradient(145deg, oklch(1 0 0 / 91%), oklch(0.94 0.04 265 / 82%));
+  box-shadow: 0 22px 58px oklch(0.4 0.09 270 / 14%);
+  backdrop-filter: blur(28px) saturate(155%);
+  -webkit-backdrop-filter: blur(28px) saturate(155%);
+}
+
+:root:not(.dark) .xv-sidebar-panel .xv-sidebar-footer {
+  border-radius: 18px 18px 0 0;
+}
+
+:root:not(.dark) .xv-sidebar-panel .xv-sidebar-new-chat:hover {
+  border-color: oklch(0.7 0.13 275 / 58%);
+  box-shadow: 0 10px 26px oklch(0.54 0.16 275 / 17%), inset 0 1px 0 white;
+}
+
+.dark .xv-sidebar-panel .xv-sidebar-new-chat:hover {
+  box-shadow: 0 10px 30px oklch(0.48 0.2 285 / 38%), inset 0 1px 0 oklch(1 0 0 / 20%);
+}
+
+.dark .xv-sidebar-panel .xv-sidebar-header .text-faint {
+  color: oklch(0.7 0.04 265);
+}
