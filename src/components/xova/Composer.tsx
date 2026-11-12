@@ -211,7 +211,7 @@ export function Composer({
   };
 
   return (
-    <div className="px-3 pb-3 sm:px-6 sm:pb-5">
+    <div className="px-4 pb-4 sm:px-6 sm:pb-5 xl:px-8">
       <div className="mx-auto w-full max-w-3xl">
         <div
           onDragOver={(event) => {
@@ -284,10 +284,10 @@ export function Composer({
             onKeyDown={onKeyDown}
             onPaste={onPaste}
             placeholder={imageMode ? t("composer.imagePlaceholder") : t("composer.placeholder")}
-            className="max-h-60 w-full resize-none bg-transparent px-4 pb-1 pt-3.5 text-[0.95rem] leading-relaxed text-foreground outline-none placeholder:text-muted-foreground"
+            className="max-h-60 w-full resize-none bg-transparent px-5 pb-2 pt-4 text-[0.95rem] leading-relaxed text-foreground outline-none placeholder:text-muted-foreground"
           />
 
-          <div className="flex items-center gap-1.5 px-2.5 pb-2.5 pt-1">
+          <div className="flex items-center gap-1.5 px-3 pb-3 pt-1">
             <input
               ref={fileRef}
               type="file"
@@ -374,7 +374,7 @@ export function Composer({
           </div>
         </div>
 
-        <p className="mt-2 text-center text-xxs text-faint" aria-live="polite">
+        <p className="mt-2.5 text-center text-[11px] text-faint" aria-live="polite">
           {listening
             ? t("state.listening")
             : enterToSend
