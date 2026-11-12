@@ -83,7 +83,7 @@ export function Sidebar({
     return (
       <nav
         aria-label={t("nav.conversation")}
-        className="hidden w-[60px] shrink-0 flex-col items-center gap-2 border-e border-border bg-rail py-3 md:flex"
+        className="hidden w-[60px] shrink-0 flex-col items-center gap-2 border-s border-border bg-rail py-3 md:flex"
       >
         <button
           type="button"
@@ -128,7 +128,7 @@ export function Sidebar({
     <nav
       aria-label={t("nav.conversation")}
       dir={dir}
-      className="xv-sidebar flex h-full w-full shrink-0 flex-col border-e border-border md:w-[248px]"
+      className="xv-sidebar flex h-full w-full shrink-0 flex-col border-s border-border md:w-[248px]"
     >
       <div className="flex items-center gap-2 px-4 py-4">
         <XovaWordmark className="min-w-0 flex-1" />
