@@ -138,7 +138,6 @@ const en: Dict = {
   "empty.noImages": "No generated images yet",
 
   "studio.title": "Image studio",
-  "studio.subtitle": "Free community-powered image generation. Anonymous image results may be shared with LAION to improve its dataset.",
   "studio.prompt": "Prompt",
   "studio.aspect": "Aspect ratio",
   "studio.aspect.1:1": "Square",
@@ -384,7 +383,6 @@ const ar: Dict = {
   "empty.noImages": "لا صور مولّدة بعد",
 
   "studio.title": "استوديو الصور",
-  "studio.subtitle": "توليد صور مجاني بأجهزة متطوعين. الصور الناتجة من الطلبات المجهولة ممكن تتشارك مع LAION لتحسين قاعدة بياناته.",
   "studio.prompt": "الوصف",
   "studio.aspect": "الأبعاد",
   "studio.aspect.1:1": "مربعة",
