@@ -30,7 +30,7 @@ export function QuickTools({ onPick }: QuickToolsProps) {
   ];
 
   return (
-    <aside dir={dir} className="xv-tools-rail hidden h-full w-[248px] shrink-0 flex-col gap-4 border-e border-border/70 p-4 xl:flex">
+    <aside dir={dir} className="xv-tools-rail relative z-10 hidden h-full w-[248px] shrink-0 flex-col gap-4 border-e border-border/70 p-4 xl:flex">
       <div className="flex items-center justify-between">
         <h2 className="text-sm font-semibold">{lang === "ar" ? "أدوات سريعة" : "Quick tools"}</h2>
         <span className="grid h-8 w-8 place-items-center rounded-xl bg-brand/10 text-brand">
