@@ -1,6 +1,6 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { createClient } from "@supabase/supabase-js";
-import { generateText, streamText, type ModelMessage } from "ai";
+import { streamText, type ModelMessage } from "ai";
 import { buildSystemPrompt } from "@/lib/xova-prompt.server";
 import { createGeminiProvider, GEMINI_MODEL } from "@/lib/gemini.server";
 import { chatProviderErrorCode, searchNoticeCode } from "@/lib/chat-contract";
@@ -28,7 +28,6 @@ interface WireBody {
   responseStyle?: string;
   language?: string;
   preferredName?: string | null;
-  generateTitle?: boolean;
 }
 
 interface TavilyResult {
@@ -189,49 +188,6 @@ async function searchWithTavily(query: string, apiKey: string, signal: AbortSign
   }
 }
 
-async function generateConversationTitle(messages: WireMessage[], apiKey: string): Promise<string | null> {
-  const context: string[] = [];
-  let userMessages = 0;
-
-  for (const message of messages) {
-    const content = message.content.trim().slice(0, 700);
-    if (content) context.push(`${message.role === "user" ? "User" : "XOVA"}: ${content}`);
-    if (message.role === "user") {
-      userMessages += 1;
-      if (userMessages === 3) break;
-    }
-  }
-
-  if (userMessages < 3 || context.length === 0) return null;
-
-  try {
-    const google = createGeminiProvider(apiKey);
-    const result = await generateText({
-      model: google(GEMINI_MODEL),
-      system:
-        "Create a short, clear conversation title based on the first three user messages and the preceding assistant replies. " +
-        "Return only the title, with no quotation marks or punctuation at the end. " +
-        "Use the same language as the user's messages. Prefer 2 to 6 words. " +
-        "If the messages are unrelated, choose the clearest main topic or use a concise general title.",
-      prompt: context.join("\n\n"),
-      maxOutputTokens: 24,
-      temperature: 0.2,
-      maxRetries: 0,
-    });
-
-    const title = result.text
-      .trim()
-      .replace(/^["'“”]+|["'“”]+$/g, "")
-      .replace(/[.!؟?]+$/g, "")
-      .replace(/\s+/g, " ")
-      .slice(0, 60);
-    return title || null;
-  } catch (error) {
-    console.error("XOVA conversation title generation failed", error);
-    return null;
-  }
-}
-
 export const Route = createFileRoute("/api/chat")({
   server: {
     handlers: {
@@ -340,50 +296,25 @@ export const Route = createFileRoute("/api/chat")({
               };
 
               try {
-                const google = createGeminiProvider(geminiKey);
-                const chatModels = [GEMINI_MODEL, "gemini-3.7-flash", "gemini-3.5-flash"] as const;
-                let lastProviderError: unknown = null;
-
-                for (let modelIndex = 0; modelIndex < chatModels.length; modelIndex += 1) {
-                  const modelName = chatModels[modelIndex]!;
-                  try {
-                    await pump(
-                      streamText({
-                        model: google(modelName),
-                        system,
-                        messages: modelMessages,
-                        abortSignal: local.signal,
-                        maxRetries: 1,
-                      }).fullStream,
-                    );
-                    if (!wroteText) throw new Error("Gemini returned no visible answer");
-                    lastProviderError = null;
-                    break;
-                  } catch (error) {
-                    if (request.signal.aborted) {
-                      controller.close();
-                      return;
-                    }
-                    lastProviderError = error;
-                    const status = providerStatus(error);
-                    if (!wroteText && modelIndex < chatModels.length - 1 && shouldTryFallbackModel(status)) {
-                      console.warn("XOVA Gemini model failed; trying fallback", modelName, status ?? "unknown");
-                      continue;
-                    }
-                    break;
+                try {
+                  const google = createGeminiProvider(geminiKey);
+                  await pump(
+                    streamText({
+                      model: google(GEMINI_MODEL),
+                      system,
+                      messages: modelMessages,
+                      abortSignal: local.signal,
+                      maxRetries: 0,
+                    }).fullStream,
+                  );
+                  if (!wroteText) throw new Error("Gemini returned no visible answer");
+                } catch (error) {
+                  if (request.signal.aborted) {
+                    controller.close();
+                    return;
                   }
-                }
-
-                if (lastProviderError || !wroteText) {
-                  const status = providerStatus(lastProviderError);
-                  console.error("XOVA Gemini stream failed", status ?? "unknown", lastProviderError);
-                  errorCode = chatProviderErrorCode(status);
-                }
-
-                let generatedTitle: string | null = null;
-                const userMessageCount = messages.filter((message) => message.role === "user").length;
-                if (body.generateTitle === true && userMessageCount === 3 && !request.signal.aborted) {
-                  generatedTitle = await generateConversationTitle(messages, geminiKey);
+                  console.error("XOVA Gemini stream failed", providerStatus(error) ?? "unknown", error);
+                  errorCode = chatProviderErrorCode(providerStatus(error));
                 }
 
                 const noticeCode = searchNoticeCode(mode === "research", collected.length, searchUnavailable);
@@ -393,7 +324,6 @@ export const Route = createFileRoute("/api/chat")({
                       sources: collected,
                       error: errorCode,
                       notice: noticeCode,
-                      title: generatedTitle,
                     })}`,
                   ),
                 );
