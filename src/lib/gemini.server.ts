@@ -6,4 +6,4 @@ export function createGeminiProvider(apiKey: string) {
 }
 
 /** Direct Gemini chat model; Google Search grounding is enabled in the chat route. */
-export const GEMINI_MODEL = "gemini-3.8-flash";
+export const GEMINI_MODEL = "gemini-3.5-flash-lite";
