@@ -373,3 +373,83 @@
     transition-duration: 0.01ms !important;
   }
 }
+
+
+/* XOVA workspace refresh — layered dark surfaces with restrained blue/violet light. */
+@utility xv-shell {
+  background:
+    radial-gradient(ellipse 48rem 32rem at 50% -18%, color-mix(in oklab, var(--brand) 17%, transparent), transparent 72%),
+    radial-gradient(ellipse 30rem 28rem at 100% 100%, color-mix(in oklab, var(--brand) 8%, transparent), transparent 76%),
+    var(--background);
+}
+
+.dark .xv-shell {
+  background:
+    radial-gradient(ellipse 48rem 32rem at 50% -18%, oklch(0.55 0.2 275 / 20%), transparent 72%),
+    radial-gradient(ellipse 28rem 28rem at 100% 100%, oklch(0.48 0.2 245 / 10%), transparent 76%),
+    var(--background);
+}
+
+@utility xv-sidebar {
+  background: color-mix(in oklab, var(--rail) 92%, transparent);
+  backdrop-filter: blur(22px);
+}
+
+.dark .xv-sidebar {
+  background:
+    linear-gradient(180deg, oklch(0.17 0.025 270 / 92%), oklch(0.145 0.018 255 / 97%));
+}
+
+@utility xv-main-panel {
+  background: color-mix(in oklab, var(--background) 80%, transparent);
+}
+
+@utility xv-topbar {
+  background: color-mix(in oklab, var(--background) 78%, transparent);
+}
+
+@utility xv-tools-rail {
+  background: color-mix(in oklab, var(--rail) 76%, transparent);
+  backdrop-filter: blur(24px);
+}
+
+.dark .xv-tools-rail {
+  background: linear-gradient(180deg, oklch(0.17 0.02 270 / 84%), oklch(0.15 0.014 255 / 92%));
+}
+
+@utility xv-hero-mark {
+  box-shadow:
+    0 14px 44px color-mix(in oklab, var(--brand) 18%, transparent),
+    inset 0 0 28px color-mix(in oklab, var(--brand) 8%, transparent);
+}
+
+.dark .xv-hero-mark {
+  background:
+    radial-gradient(circle at 30% 25%, oklch(0.55 0.2 245 / 24%), transparent 60%),
+    linear-gradient(145deg, oklch(0.23 0.06 270 / 92%), oklch(0.18 0.04 250 / 92%));
+}
+
+@utility xv-tool-card {
+  box-shadow: 0 8px 28px color-mix(in oklab, var(--brand) 5%, transparent);
+}
+
+.dark .xv-tool-card {
+  background-image: linear-gradient(145deg, oklch(0.24 0.025 270 / 44%), oklch(0.19 0.016 255 / 60%));
+}
+
+.dark .xv-tool-card:hover {
+  box-shadow:
+    0 12px 34px oklch(0.02 0.02 260 / 40%),
+    0 0 0 1px oklch(0.62 0.18 270 / 16%);
+}
+
+.dark .xv-composer {
+  background:
+    linear-gradient(145deg, oklch(0.22 0.025 270 / 96%), oklch(0.18 0.016 255 / 98%));
+}
+
+@media (max-width: 767px) {
+  .xv-sidebar {
+    width: 100%;
+  }
+}
