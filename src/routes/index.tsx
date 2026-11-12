@@ -8,6 +8,7 @@ import { Sidebar } from "@/components/xova/Sidebar";
 import { SettingsDialog } from "@/components/xova/SettingsDialog";
 import { Topbar } from "@/components/xova/Topbar";
 import { Welcome } from "@/components/xova/Welcome";
+import { QuickTools } from "@/components/xova/QuickTools";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -82,7 +83,7 @@ function Banner({
 }
 
 function Workspace() {
-  const { t } = useI18n();
+  const { t, dir } = useI18n();
   const navigate = useNavigate();
   const { user, loading: authLoading, signOut } = useAuth();
   const { setAppearance } = useAppearance();
@@ -245,8 +246,8 @@ function Workspace() {
   );
 
   return (
-    <div className="flex h-screen overflow-hidden bg-background text-foreground">
-      <div className="hidden md:flex">{sidebar()}</div>
+    <div dir="ltr" className="xv-shell flex h-dvh overflow-hidden text-foreground">
+      <div className="xv-left-rail hidden md:flex">{sidebar()}</div>
 
       <Dialog open={drawer} onOpenChange={setDrawer}>
         <DialogContent className="left-0 top-0 h-screen w-[86vw] max-w-xs translate-x-0 translate-y-0 gap-0 rounded-none border-0 p-0 md:hidden">
@@ -257,7 +258,7 @@ function Workspace() {
         </DialogContent>
       </Dialog>
 
-      <main className="xv-ambient relative flex min-w-0 flex-1 flex-col">
+      <main dir={dir} className="xv-main-panel xv-ambient relative flex min-w-0 flex-1 flex-col">
         <Topbar
           title={title}
           mode={mode}
@@ -323,6 +324,8 @@ function Workspace() {
           onSeedConsumed={() => setDraft(null)}
         />
       </main>
+
+      {messages.length > 0 && <QuickTools onPick={(text) => setDraft(text)} />}
 
       <SettingsDialog
         open={settingsOpen}
