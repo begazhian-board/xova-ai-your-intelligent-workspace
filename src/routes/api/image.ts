@@ -4,59 +4,23 @@ import { createClient } from "@supabase/supabase-js";
 interface WireBody {
   prompt?: string;
   aspect?: "1:1" | "3:2" | "2:3";
+  quality?: "standard" | "premium";
 }
 
-interface HordeAsyncResponse {
-  id?: string;
-  message?: string;
-  wait_time?: number;
-  queue_position?: number;
-}
-
-interface HordeCheckResponse {
-  done?: boolean;
-  finished?: number;
-  faulted?: boolean;
-  wait_time?: number;
-  queue_position?: number;
-  waiting?: number;
-  processing?: number;
-}
-
-interface HordeStatusResponse {
-  done?: boolean;
-  faulted?: boolean;
-  generations?: Array<{ img?: string; seed?: number; model?: string }>;
-}
-
-interface LovableTranslationResult {
-  choices?: Array<{
-    message?: {
-      content?: string | Array<{ type?: string; text?: string }>;
-    };
-  }>;
-}
-
-const HORDE_API = "https://aihorde.net/api/v2";
-const HORDE_ANONYMOUS_KEY = "0000000000";
-const HORDE_CLIENT_AGENT = "XOVA-AI:1.0:begazhian-board";
-const IMAGE_SUBMIT_TIMEOUT_MS = 15_000;
-const IMAGE_DOWNLOAD_TIMEOUT_MS = 25_000;
-const TRANSLATION_TIMEOUT_MS = 12_000;
-const HOURLY_LIMIT = 10;
-const DAILY_LIMIT = 50;
-const SIGNED_URL_TTL = 60 * 60 * 24 * 365;
 const ASPECTS = new Set(["1:1", "3:2", "2:3"]);
+
+/** Generations allowed per user per rolling hour. */
+const RATE_LIMIT = 15;
+/** One year — the bucket is private, the signed token is the only way in. */
+const SIGNED_URL_TTL = 60 * 60 * 24 * 365;
 
 async function authenticate(request: Request) {
   const token = request.headers.get("authorization")?.replace(/^Bearer\s+/i, "");
   if (!token) return null;
-
   const url = process.env["SUPABASE_URL"] ?? process.env["VITE_SUPABASE_URL"];
   const key =
     process.env["SUPABASE_PUBLISHABLE_KEY"] ?? process.env["VITE_SUPABASE_PUBLISHABLE_KEY"];
   if (!url || !key) return null;
-
   const supabase = createClient(url, key, {
     auth: { persistSession: false, autoRefreshToken: false },
   });
@@ -65,275 +29,38 @@ async function authenticate(request: Request) {
   return data.user;
 }
 
-/** Translate Arabic prompts through Lovable AI Gateway using the project's AI credits. */
-async function translateArabicPrompt(prompt: string): Promise<string | null> {
-  if (!/[\\u0600-\\u06FF]/.test(prompt)) return prompt;
-
-  const apiKey = process.env["LOVABLE_API_KEY"];
-  if (!apiKey) throw new Error("err.imageLovableConfig");
-
+/** Free, keyless translation to English; returns the original text on any failure. */
+async function translateToEnglish(text: string) {
+  if (!/[^\x00-\x7F]/.test(text)) return text;
   try {
-    const response = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
-      method: "POST",
-      headers: {
-        Authorization: `Bearer ${apiKey}`,
-        "Lovable-API-Key": apiKey,
-        "X-Lovable-AIG-SDK": "xova-ai",
-        "Content-Type": "application/json",
-      },
-      signal: AbortSignal.timeout(TRANSLATION_TIMEOUT_MS),
-      body: JSON.stringify({
-        model: "google/gemini-3.7-flash",
-        messages: [
-          {
-            role: "system",
-            content:
-              "Translate Arabic image descriptions into concise, natural English. " +
-              "Preserve every object, color, action, position, and relationship. " +
-              "Do not add, omit, reinterpret, or embellish details. " +
-              "Return only the English translation.",
-          },
-          { role: "user", content: prompt },
-        ],
-        temperature: 0.1,
-        max_tokens: 300,
-        stream: false,
-      }),
-    });
-
-    if (!response.ok) {
-      const detail = await response.text();
-      console.error("XOVA Lovable prompt translation failed", response.status, detail.slice(0, 500));
-      if (response.status === 402) throw new Error("err.imageLovableCredits");
-      if (response.status === 429) throw new Error("err.imageLovableRate");
-      if (response.status === 401 || response.status === 403) throw new Error("err.imageLovableAuth");
-      throw new Error("err.imageTranslationUnavailable");
-    }
-
-    const result = (await response.json()) as LovableTranslationResult;
-    const content = result.choices?.[0]?.message?.content;
-    const translated = (typeof content === "string"
-      ? content
-      : content?.filter((part) => part.type === "text").map((part) => part.text ?? "").join(""))
-      ?.trim();
-
-    return translated && /[a-z]/i.test(translated) ? translated.slice(0, 2048) : null;
-  } catch (error) {
-    if (error instanceof Error && error.message.startsWith("err.")) throw error;
-    console.warn("XOVA Lovable prompt translation timed out or failed", error);
-    throw new Error("err.imageTranslationUnavailable");
+    const res = await fetch(
+      `https://translate.googleapis.com/translate_a/single?client=gtx&sl=auto&tl=en&dt=t&q=${encodeURIComponent(text)}`,
+    );
+    if (!res.ok) return text;
+    const json = (await res.json()) as Array<Array<[string]>>;
+    const out = (json[0] ?? []).map((seg) => seg[0]).join("").trim();
+    return out || text;
+  } catch {
+    return text;
   }
-}
-
-function providerError(status: number) {
-  if (status === 401 || status === 403) return "err.imageHordeAuth";
-  if (status === 404) return "err.imageQueueExpired";
-  if (status === 429) return "err.imageProviderRate";
-  if (status === 400) return "err.imageProviderRequest";
-  if (status >= 500) return "err.imageProviderBusy";
-  return "err.imageFailed";
 }
 
 function base64ToBytes(base64: string) {
-  const binary = atob(base64.replace(/\s/g, ""));
+  const binary = atob(base64);
   const bytes = new Uint8Array(binary.length);
-  for (let index = 0; index < binary.length; index += 1) {
-    bytes[index] = binary.charCodeAt(index);
-  }
+  for (let i = 0; i < binary.length; i += 1) bytes[i] = binary.charCodeAt(i);
   return bytes;
-}
-
-function hordeHeaders() {
-  return {
-    apikey: HORDE_ANONYMOUS_KEY,
-    "Client-Agent": HORDE_CLIENT_AGENT,
-    "Content-Type": "application/json",
-  };
 }
 
 export const Route = createFileRoute("/api/image")({
   server: {
     handlers: {
-      GET: async ({ request }) => {
-        const user = await authenticate(request);
-        if (!user) return Response.json({ error: "err.auth" }, { status: 401 });
-
-        const jobId = new URL(request.url).searchParams.get("jobId");
-        if (!jobId || !/^[a-zA-Z0-9-]{8,128}$/.test(jobId)) {
-          return Response.json({ error: "err.generic" }, { status: 400 });
-        }
-
-        try {
-          const checkResponse = await fetch(`${HORDE_API}/generate/check/${encodeURIComponent(jobId)}`, {
-            headers: hordeHeaders(),
-            signal: AbortSignal.timeout(12_000),
-          });
-          if (!checkResponse.ok) {
-            const detail = await checkResponse.text();
-            console.error("XOVA AI Horde check", checkResponse.status, detail.slice(0, 500));
-            return Response.json(
-              { error: providerError(checkResponse.status) },
-              { status: checkResponse.status === 429 ? 429 : 502 },
-            );
-          }
-
-          const check = (await checkResponse.json()) as HordeCheckResponse;
-          if (check.faulted) {
-            return Response.json({ error: "err.imageGenerationFailed" }, { status: 502 });
-          }
-
-          const isDone = check.done === true || (check.finished ?? 0) >= 1;
-          if (!isDone) {
-            return Response.json({
-              pending: true,
-              waitTime: check.wait_time ?? null,
-              queuePosition: check.queue_position ?? null,
-              waiting: check.waiting ?? null,
-              processing: check.processing ?? null,
-            });
-          }
-
-          const statusResponse = await fetch(`${HORDE_API}/generate/status/${encodeURIComponent(jobId)}`, {
-            headers: hordeHeaders(),
-            signal: AbortSignal.timeout(12_000),
-          });
-          if (!statusResponse.ok) {
-            const detail = await statusResponse.text();
-            console.error("XOVA AI Horde status", statusResponse.status, detail.slice(0, 500));
-            return Response.json(
-              { error: providerError(statusResponse.status) },
-              { status: statusResponse.status === 429 ? 429 : 502 },
-            );
-          }
-
-          const status = (await statusResponse.json()) as HordeStatusResponse;
-          if (status.faulted) {
-            return Response.json({ error: "err.imageGenerationFailed" }, { status: 502 });
-          }
-
-          const imagePayload = status.generations?.[0]?.img;
-          if (!imagePayload) {
-            return Response.json({ pending: true, waitTime: 2, queuePosition: null });
-          }
-
-          let bytes: Uint8Array;
-          let imageContentType = "image/webp";
-          if (/^https:\/\//i.test(imagePayload)) {
-            const imageResponse = await fetch(imagePayload, {
-              signal: AbortSignal.timeout(IMAGE_DOWNLOAD_TIMEOUT_MS),
-            });
-            if (!imageResponse.ok) {
-              console.error("XOVA AI Horde image download failed", imageResponse.status);
-              return Response.json({ error: "err.imageDownload" }, { status: 502 });
-            }
-            imageContentType = (imageResponse.headers.get("content-type") ?? "").toLowerCase();
-            if (!["image/png", "image/jpeg", "image/webp"].some((type) => imageContentType.includes(type))) {
-              console.error("XOVA AI Horde returned unsupported image content type", imageContentType);
-              return Response.json({ error: "err.imageNoOutput" }, { status: 502 });
-            }
-            bytes = new Uint8Array(await imageResponse.arrayBuffer());
-          } else {
-            // The API can also return the image as base64-encoded WebP data.
-            try {
-              const encoded = imagePayload.replace(/^data:image\/[a-zA-Z0-9.+-]+;base64,/, "");
-              bytes = base64ToBytes(encoded);
-              imageContentType = "image/webp";
-            } catch (error) {
-              console.error("XOVA AI Horde returned unreadable base64 image data", error);
-              return Response.json({ error: "err.imageNoOutput" }, { status: 502 });
-            }
-          }
-
-          if (!bytes.length) {
-            return Response.json({ error: "err.imageNoOutput" }, { status: 502 });
-          }
-
-          const isJpeg = imageContentType.includes("jpeg") || (bytes[0] === 0xff && bytes[1] === 0xd8);
-          const isWebp = imageContentType.includes("webp") || (
-            bytes.length >= 12 &&
-            String.fromCharCode(...bytes.slice(0, 4)) === "RIFF" &&
-            String.fromCharCode(...bytes.slice(8, 12)) === "WEBP"
-          );
-          const extension = isJpeg ? "jpg" : isWebp ? "webp" : "png";
-          const mimeType = isJpeg ? "image/jpeg" : isWebp ? "image/webp" : "image/png";
-
-          const accessToken = request.headers.get("authorization")?.replace(/^Bearer\s+/i, "");
-          const supabaseUrl = process.env["SUPABASE_URL"] ?? process.env["VITE_SUPABASE_URL"];
-          const publishableKey =
-            process.env["SUPABASE_PUBLISHABLE_KEY"] ?? process.env["VITE_SUPABASE_PUBLISHABLE_KEY"];
-          if (!accessToken || !supabaseUrl || !publishableKey) {
-            return Response.json({ error: "err.auth" }, { status: 401 });
-          }
-
-          const supabaseUser = createClient(supabaseUrl, publishableKey, {
-            global: { headers: { Authorization: `Bearer ${accessToken}` } },
-            auth: { persistSession: false, autoRefreshToken: false },
-          });
-
-          const path = `${user.id}/${crypto.randomUUID()}.${extension}`;
-          const { error: uploadError } = await supabaseUser.storage
-            .from("xova-images")
-            .upload(path, bytes, { contentType: mimeType, upsert: false });
-
-          if (uploadError) {
-            console.error("XOVA image upload", uploadError.message);
-            const missingBucket = /bucket not found|not found/i.test(uploadError.message);
-            return Response.json(
-              { error: missingBucket ? "err.imageStorageBucket" : "err.imageStorageUpload" },
-              { status: 502 },
-            );
-          }
-
-          const { data: signed, error: signError } = await supabaseUser.storage
-            .from("xova-images")
-            .createSignedUrl(path, SIGNED_URL_TTL);
-          if (signError || !signed?.signedUrl) {
-            console.error("XOVA image sign", signError?.message);
-            return Response.json({ error: "err.imageStorageSign" }, { status: 502 });
-          }
-
-          const originalPrompt = new URL(request.url).searchParams.get("prompt")?.slice(0, 2000) ?? "";
-          const aspectParam = new URL(request.url).searchParams.get("aspect") ?? "1:1";
-          const aspect = ASPECTS.has(aspectParam) ? aspectParam : "1:1";
-
-          const { data: row, error: insertError } = await supabaseUser
-            .from("generated_images")
-            .insert({
-              user_id: user.id,
-              prompt: originalPrompt,
-              aspect,
-              quality: "standard",
-              storage_path: path,
-              image_url: signed.signedUrl,
-            })
-            .select("id, created_at")
-            .single();
-
-          if (insertError) {
-            console.error("XOVA image record", insertError.message);
-            return Response.json({ error: "err.imageStorageRecord" }, { status: 502 });
-          }
-
-          return Response.json({
-            pending: false,
-            image: signed.signedUrl,
-            id: row.id,
-            createdAt: row.created_at,
-            aspect,
-            quality: "standard",
-          });
-        } catch (error) {
-          const name = error instanceof Error ? error.name : "";
-          if (name === "TimeoutError" || name === "AbortError") {
-            return Response.json({ error: "err.imageTimeout" }, { status: 504 });
-          }
-          console.error("XOVA AI Horde polling or image storage error", error);
-          return Response.json({ error: "err.imageFailed" }, { status: 502 });
-        }
-      },
       POST: async ({ request }) => {
         const user = await authenticate(request);
         if (!user) return Response.json({ error: "err.auth" }, { status: 401 });
+
+        const apiKey = process.env["LOVABLE_API_KEY"];
+        if (!apiKey) return Response.json({ error: "err.unavailable" }, { status: 500 });
 
         let body: WireBody;
         try {
@@ -343,130 +70,203 @@ export const Route = createFileRoute("/api/image")({
         }
 
         const prompt = body.prompt?.trim();
-        if (!prompt || prompt.length > 2000) {
-          return Response.json({ error: "err.generic" }, { status: 400 });
-        }
+        if (!prompt) return Response.json({ error: "err.generic" }, { status: 400 });
+        if (prompt.length > 2000) return Response.json({ error: "err.generic" }, { status: 400 });
 
         const aspect = body.aspect && ASPECTS.has(body.aspect) ? body.aspect : "1:1";
-        const accessToken = request.headers.get("authorization")?.replace(/^Bearer\s+/i, "");
-        const supabaseUrl = process.env["SUPABASE_URL"] ?? process.env["VITE_SUPABASE_URL"];
-        const publishableKey =
-          process.env["SUPABASE_PUBLISHABLE_KEY"] ?? process.env["VITE_SUPABASE_PUBLISHABLE_KEY"];
-        if (!accessToken || !supabaseUrl || !publishableKey) {
-          return Response.json({ error: "err.auth" }, { status: 401 });
-        }
+        const quality = body.quality === "premium" ? "premium" : "standard";
 
-        const supabaseUser = createClient(supabaseUrl, publishableKey, {
-          global: { headers: { Authorization: `Bearer ${accessToken}` } },
-          auth: { persistSession: false, autoRefreshToken: false },
-        });
+        const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
 
-        // Enforce a per-user hourly and daily ceiling before contacting the image provider.
-        const now = new Date();
-        const hourStart = new Date(now.getTime() - 60 * 60 * 1000).toISOString();
-        const dayStart = new Date(
-          Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), now.getUTCDate()),
-        ).toISOString();
-
-        const [hourCount, dayCount] = await Promise.all([
-          supabaseUser
-            .from("generated_images")
-            .select("id", { count: "exact", head: true })
-            .eq("user_id", user.id)
-            .gte("created_at", hourStart),
-          supabaseUser
-            .from("generated_images")
-            .select("id", { count: "exact", head: true })
-            .eq("user_id", user.id)
-            .gte("created_at", dayStart),
-        ]);
-
-        if (hourCount.error || dayCount.error) {
-          console.error("XOVA image usage check", hourCount.error?.message, dayCount.error?.message);
-          return Response.json({ error: "err.imageStorageAccess" }, { status: 502 });
-        }
-        if ((hourCount.count ?? 0) >= HOURLY_LIMIT) {
+        // Rate limit per user, rolling hour.
+        const since = new Date(Date.now() - 60 * 60 * 1000).toISOString();
+        const { count } = await supabaseAdmin
+          .from("generated_images")
+          .select("id", { count: "exact", head: true })
+          .eq("user_id", user.id)
+          .gte("created_at", since);
+        if ((count ?? 0) >= RATE_LIMIT) {
           return Response.json({ error: "err.imageRate" }, { status: 429 });
-        }
-        if ((dayCount.count ?? 0) >= DAILY_LIMIT) {
-          return Response.json({ error: "err.imageDailyLimit" }, { status: 429 });
         }
 
         try {
-          // AI Horde runs image jobs on volunteer GPUs, so submit once and poll separately.
-          let imagePrompt: string;
-          try {
-            const translated = await translateArabicPrompt(prompt);
-            if (!translated) throw new Error("err.imageTranslationUnavailable");
-            imagePrompt = translated;
-          } catch (error) {
-            const code =
-              error instanceof Error && error.message.startsWith("err.")
-                ? error.message
-                : "err.imageTranslationUnavailable";
-            const status = code === "err.imageLovableCredits" ? 402 : code === "err.imageLovableRate" ? 429 : 503;
-            return Response.json({ error: code }, { status });
+          let bytes: Uint8Array | null = null;
+          let lastStatus: number | undefined;
+          // Faithful English translation of the user's own words — nothing added.
+          const english = await translateToEnglish(prompt);
+
+          // 1) Primary: Lovable AI Gateway.
+          if (apiKey) {
+            try {
+              const res = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
+                method: "POST",
+                headers: {
+                  "Content-Type": "application/json",
+                  "Lovable-API-Key": apiKey,
+                  "X-Lovable-AIG-SDK": "fetch",
+                },
+                body: JSON.stringify({
+                  model:
+                    quality === "premium"
+                      ? "google/gemini-3-pro-image"
+                      : "google/gemini-3.1-flash-image",
+                  messages: [{ role: "user", content: english }],
+                  modalities: ["image", "text"],
+                  image_config: { aspect_ratio: aspect },
+                }),
+              });
+              if (!res.ok) {
+                lastStatus = res.status;
+                console.error("XOVA image gateway", res.status, (await res.text()).slice(0, 300));
+              } else {
+                const json = (await res.json()) as {
+                  choices?: Array<{ message?: { images?: Array<{ image_url?: { url?: string } }> } }>;
+                };
+                const dataUrl = json.choices?.[0]?.message?.images?.[0]?.image_url?.url;
+                if (dataUrl?.startsWith("data:")) {
+                  bytes = base64ToBytes(dataUrl.slice(dataUrl.indexOf(",") + 1));
+                } else if (dataUrl) {
+                  const downloaded = await fetch(dataUrl);
+                  if (downloaded.ok) bytes = new Uint8Array(await downloaded.arrayBuffer());
+                }
+              }
+            } catch (error) {
+              console.error("XOVA image gateway error", error);
+            }
           }
 
-          const width = aspect === "3:2" ? 768 : 512;
-          const height = aspect === "2:3" ? 768 : 512;
-          const response = await fetch(`${HORDE_API}/generate/async`, {
-            method: "POST",
-            headers: hordeHeaders(),
-            signal: AbortSignal.timeout(IMAGE_SUBMIT_TIMEOUT_MS),
-            body: JSON.stringify({
-              prompt: imagePrompt.slice(0, 2048),
-              params: {
-                width,
-                height,
-                steps: 28,
-                cfg_scale: 7,
-                sampler_name: "k_euler",
-                karras: true,
-                n: 1,
-              },
-              nsfw: false,
-              censor_nsfw: true,
-              trusted_workers: true,
-              validated_backends: true,
-              slow_workers: true,
-              extra_slow_workers: true,
-              r2: false,
-              shared: true,
-              replacement_filter: true,
-            }),
-          });
+          // 2) Hugging Face (only when HUGGINGFACE_API_KEY is set).
+          const hfKey = process.env["HUGGINGFACE_API_KEY"];
+          if (!bytes && hfKey) {
+            try {
+              const [width, height] =
+                aspect === "3:2" ? [1216, 832] : aspect === "2:3" ? [832, 1216] : [1024, 1024];
+              const res = await fetch(
+                "https://router.huggingface.co/hf-inference/models/black-forest-labs/FLUX.1-schnell",
+                {
+                  method: "POST",
+                  headers: {
+                    Authorization: `Bearer ${hfKey}`,
+                    "Content-Type": "application/json",
+                    Accept: "image/png",
+                  },
+                  body: JSON.stringify({ inputs: english, parameters: { width, height } }),
+                },
+              );
+              const type = res.headers.get("content-type") ?? "";
+              if (res.ok && type.startsWith("image/")) {
+                bytes = new Uint8Array(await res.arrayBuffer());
+              } else {
+                lastStatus = res.status;
+                console.error("XOVA image hf", res.status, (await res.text()).slice(0, 200));
+              }
+            } catch (error) {
+              console.error("XOVA image hf error", error);
+            }
+          }
 
-          if (!response.ok) {
-            const errorText = await response.text();
-            console.error("XOVA AI Horde submit", response.status, errorText.slice(0, 500));
+          // 3) Gemini key directly.
+          const geminiKey = process.env["GEMINI_API_KEY"];
+          if (!bytes && geminiKey) {
+            try {
+              const res = await fetch(
+                "https://generativelanguage.googleapis.com/v1beta/models/gemini-3.1-flash-image:generateContent",
+                {
+                  method: "POST",
+                  headers: { "Content-Type": "application/json", "x-goog-api-key": geminiKey },
+                  body: JSON.stringify({
+                    contents: [{ parts: [{ text: english }] }],
+                    generationConfig: {
+                      responseModalities: ["IMAGE", "TEXT"],
+                      imageConfig: { aspectRatio: aspect },
+                    },
+                  }),
+                },
+              );
+              if (res.ok) {
+                const json = (await res.json()) as {
+                  candidates?: Array<{ content?: { parts?: Array<{ inlineData?: { data?: string } }> } }>;
+                };
+                const data = json.candidates?.[0]?.content?.parts?.find((p) => p.inlineData?.data)
+                  ?.inlineData?.data;
+                if (data) bytes = base64ToBytes(data);
+              } else {
+                console.error("XOVA image gemini", res.status);
+              }
+            } catch (error) {
+              console.error("XOVA image gemini error", error);
+            }
+          }
+
+          // 4) Last resort: Pollinations with the exact translated prompt (no extra text).
+          if (!bytes) {
+            try {
+              const [width, height] =
+                aspect === "3:2" ? [1024, 680] : aspect === "2:3" ? [680, 1024] : [1024, 1024];
+              const seed = Math.floor(Math.random() * 1000000);
+              const res = await fetch(
+                `https://image.pollinations.ai/prompt/${encodeURIComponent(english)}?width=${width}&height=${height}&nologo=true&seed=${seed}`,
+              );
+              const type = res.headers.get("content-type") ?? "";
+              if (res.ok && type.startsWith("image/")) {
+                const buf = new Uint8Array(await res.arrayBuffer());
+                if (buf.length > 1000) bytes = buf;
+              }
+            } catch (error) {
+              console.error("XOVA image pollinations error", error);
+            }
+          }
+
+          if (!bytes) {
             return Response.json(
-              { error: providerError(response.status) },
-              { status: response.status === 429 ? 429 : 502 },
+              { error: lastStatus === 429 ? "err.rate" : "err.imageFailed" },
+              { status: 502 },
             );
           }
 
-          const submitted = (await response.json()) as HordeAsyncResponse;
-          if (!submitted.id) {
-            console.error("XOVA AI Horde returned no request ID", JSON.stringify(submitted).slice(0, 500));
-            return Response.json({ error: "err.imageNoOutput" }, { status: 502 });
+          const isJpeg = bytes[0] === 0xff && bytes[1] === 0xd8;
+          const path = `${user.id}/${crypto.randomUUID()}.${isJpeg ? "jpg" : "png"}`;
+          const { error: uploadError } = await supabaseAdmin.storage
+            .from("xova-images")
+            .upload(path, bytes, { contentType: isJpeg ? "image/jpeg" : "image/png", upsert: false });
+          if (uploadError) {
+            console.error("XOVA image upload", uploadError.message);
+            return Response.json({ error: "err.imageFailed" }, { status: 502 });
           }
 
-          return Response.json(
-            {
-              jobId: submitted.id,
-              pending: true,
-              waitTime: submitted.wait_time ?? null,
-              queuePosition: submitted.queue_position ?? null,
-            },
-            { status: 202 },
-          );
-        } catch (error) {
-          const name = error instanceof Error ? error.name : "";
-          if (name === "TimeoutError" || name === "AbortError") {
-            console.error("XOVA AI Horde submit request timed out");
-            return Response.json({ error: "err.imageSubmitTimeout" }, { status: 504 });
+          const { data: signed, error: signError } = await supabaseAdmin.storage
+            .from("xova-images")
+            .createSignedUrl(path, SIGNED_URL_TTL);
+          if (signError || !signed?.signedUrl) {
+            console.error("XOVA image sign", signError?.message);
+            return Response.json({ error: "err.imageFailed" }, { status: 502 });
           }
+
+          const { data: row, error: insertError } = await supabaseAdmin
+            .from("generated_images")
+            .insert({
+              user_id: user.id,
+              prompt,
+              aspect,
+              quality,
+              storage_path: path,
+              image_url: signed.signedUrl,
+            })
+            .select("id, created_at")
+            .single();
+          if (insertError) {
+            console.error("XOVA image record", insertError.message);
+            return Response.json({ error: "err.imageFailed" }, { status: 502 });
+          }
+
+          return Response.json({
+            image: signed.signedUrl,
+            id: row.id,
+            createdAt: row.created_at,
+            aspect,
+            quality,
+          });
+        } catch (error) {
           console.error("XOVA image error", error);
           return Response.json({ error: "err.imageFailed" }, { status: 502 });
         }
