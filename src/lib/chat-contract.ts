@@ -6,9 +6,11 @@ const SEARCH_INTENT =
 export function shouldSearchWeb(mode: ModeId, text: string) {
   return mode === "research" || mode === "reasoning" || SEARCH_INTENT.test(text);
 }
-export function chatProviderErrorCode(status?: number) {
+export function chatProviderErrorCode(status?: number, details = "") {
   if (status === 429) return "err.rate";
-  if (status === 401 || status === 403) return "err.geminiConfig";
+  if (status === 401 || status === 403 || /API_KEY_INVALID|API key not valid|invalid API key/i.test(details)) {
+    return "err.geminiConfig";
+  }
   if (status === 404) return "err.geminiModel";
   if (status === 400) return "err.geminiRequest";
   return "err.unavailable";
