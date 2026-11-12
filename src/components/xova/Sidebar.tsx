@@ -83,7 +83,8 @@ export function Sidebar({
     return (
       <nav
         aria-label={t("nav.conversation")}
-        className="hidden w-[60px] shrink-0 flex-col items-center gap-2 border-s border-border bg-rail py-3 md:flex"
+        dir={dir}
+        className="xv-sidebar hidden w-[64px] shrink-0 flex-col items-center gap-2 border-s border-border py-3 md:flex"
       >
         <button
           type="button"
