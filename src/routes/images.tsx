@@ -257,7 +257,7 @@ function ImageStudio() {
           <h1 className="xv-gradient-text text-3xl font-bold tracking-tight sm:text-4xl">
             {t("studio.title")}
           </h1>
-          <p className="max-w-2xl text-sm leading-7 text-muted-foreground">{t("studio.subtitle")}</p>
+          
         </header>
 
         <div className="grid gap-5 xl:grid-cols-[minmax(0,1.05fr)_minmax(340px,0.95fr)]">
