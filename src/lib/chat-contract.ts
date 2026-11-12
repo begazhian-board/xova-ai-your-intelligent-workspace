@@ -13,6 +13,10 @@ export function chatProviderErrorCode(status?: number, details = "") {
   }
   if (status === 404) return "err.geminiModel";
   if (status === 400) return "err.geminiRequest";
+  if (status === 500 || status === 503 || /UNAVAILABLE|high demand|no capacity/i.test(details)) {
+    return "err.geminiBusy";
+  }
+  if (status === 502 || status === 504) return "err.geminiNetwork";
   return "err.unavailable";
 }
 export function searchNoticeCode(requested: boolean, count: number, failed: boolean) {
