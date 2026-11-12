@@ -71,7 +71,7 @@ function providerStatus(error: unknown): number | undefined {
   if (found !== undefined) return found;
 
   const message = error instanceof Error ? error.message : String(error ?? "");
-  const match = message.match(/\\b(400|401|403|404|429|500|502|503|504)\\b/);
+  const match = message.match(new RegExp("(400|401|403|404|429|500|502|503|504)"));
   return match ? Number(match[1]) : undefined;
 }
 
