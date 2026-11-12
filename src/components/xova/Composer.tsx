@@ -6,7 +6,6 @@ import {
   Loader2,
   Mic,
   Paperclip,
-  Sparkles,
   Square,
   Table2,
   X,
@@ -323,7 +322,7 @@ export function Composer({
                   : "text-muted-foreground hover:bg-hover hover:text-foreground",
               )}
             >
-              <Sparkles className="h-3.5 w-3.5" />
+              <ImageIcon className="h-3.5 w-3.5" />
               <span className="hidden sm:inline">{t("composer.generate")}</span>
             </button>
 
