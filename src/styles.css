@@ -455,20 +455,20 @@
 }
 
 
-/* Light mode: give every interactive control a crisp, darker edge. */
-:root:not(.dark) button {
-  border: 1px solid color-mix(in oklab, var(--foreground) 21%, var(--border)) !important;
+/* Light mode: add a darker edge only to controls that have no border styling of their own. */
+:root:not(.dark) button:not([class*="border"]) {
+  border: 1px solid color-mix(in oklab, var(--foreground) 21%, var(--border));
   box-shadow:
     0 1px 2px oklch(0.2 0.02 250 / 8%),
     inset 0 1px 0 oklch(1 0 0 / 75%);
 }
 
-:root:not(.dark) button:hover:not(:disabled) {
-  border-color: color-mix(in oklab, var(--foreground) 31%, var(--border)) !important;
+:root:not(.dark) button:not([class*="border"]):hover:not(:disabled) {
+  border-color: color-mix(in oklab, var(--foreground) 31%, var(--border));
 }
 
-:root:not(.dark) button:disabled {
-  border-color: color-mix(in oklab, var(--foreground) 12%, var(--border)) !important;
+:root:not(.dark) button:not([class*="border"]):disabled {
+  border-color: color-mix(in oklab, var(--foreground) 12%, var(--border));
   box-shadow: none;
 }
 
