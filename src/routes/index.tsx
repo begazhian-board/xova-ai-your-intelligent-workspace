@@ -119,7 +119,7 @@ function Workspace() {
       customPersonality: profile?.custom_personality ?? null,
       responseStyle: profile?.response_style ?? "balanced",
       language: profile?.language ?? "en",
-      displayName: profile?.display_name ?? profile?.username ?? null,
+      displayName: profile?.display_name ?? null,
     }),
     [profile],
   );
@@ -274,7 +274,7 @@ function Workspace() {
             </div>
           ) : messages.length === 0 ? (
             <div className="flex min-h-full flex-col">
-              <Welcome displayName={displayName} onPick={(text) => setDraft(text)} />
+              <Welcome displayName={profile.display_name} onPick={(text) => setDraft(text)} />
             </div>
           ) : (
             <div className="mx-auto flex w-full max-w-3xl flex-col gap-6 px-4 py-6 sm:px-6">
