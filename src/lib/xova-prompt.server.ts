@@ -3,9 +3,9 @@ import type { ModeId } from "./xova";
 const MODE_PROMPT: Record<ModeId, string> = {
   instant: "Answer quickly and directly. Keep it useful and easy to scan.",
   reasoning:
-    "Work through the problem carefully and rigorously before answering. For political, current, recent, or changing facts, use Google Search grounding and cite only sources actually returned by search. Present the final reasoning as a clear, structured explanation — never expose raw internal scratch work.",
+    "Work through the problem carefully and rigorously before answering. For current or changing facts, be clear when you cannot verify them. Present the final reasoning as a clear, structured explanation — never expose raw internal scratch work.",
   research:
-    "Answer in a structured, research-oriented way: key findings first, then supporting detail. Use Google Search grounding for current facts and cite only sources actually returned by search. Never invent URLs, titles or citations.",
+    "Answer in a structured, research-oriented way: key findings first, then supporting detail. Use only the live web search results supplied in the system context. Cite only those exact source URLs. If no results were supplied, say that live search was unavailable and do not invent citations.",
   vision:
     "Analyse any attached images precisely and describe only what is actually visible. If something is unclear or unreadable, say so.",
   coding:
@@ -65,11 +65,11 @@ export function buildSystemPrompt(config: PromptConfig, now = new Date()): strin
 
   if (!config.searchAvailable) {
     parts.push(
-      "You have NO live web access in this deployment. Answer from your own knowledge, mention when information may be out of date, and never present invented links or citations as sources.",
+      "You have NO verified live web search results for this request. Answer from your own knowledge, mention when information may be out of date, and never present invented links or citations as sources.",
     );
   } else {
     parts.push(
-      "Google Search grounding is available. Search whenever the question depends on current, recent, or politically changing information. Use returned sources for factual claims and never invent citations or URLs.",
+      "Verified live web search results are supplied below. Use them to support current facts, cite only their exact URLs, and never invent citations.",
     );
   }
 
