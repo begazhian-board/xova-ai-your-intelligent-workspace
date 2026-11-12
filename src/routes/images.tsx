@@ -17,6 +17,7 @@ import { useAuth } from "@/hooks/useAuth";
 import { supabase } from "@/integrations/supabase/client";
 import { useI18n } from "@/lib/i18n";
 import { cn } from "@/lib/utils";
+import { downloadWatermarkedImage } from "@/lib/image-watermark";
 
 export const Route = createFileRoute("/images")({
   head: () => ({
@@ -147,42 +148,12 @@ function ImageStudio() {
 
   const download = useCallback(async (row: ImageRow) => {
     try {
-      const response = await fetch(row.image_url);
-      const blob = await response.blob();
-      const bitmap = await createImageBitmap(blob);
-      const canvas = document.createElement("canvas");
-      canvas.width = bitmap.width;
-      canvas.height = bitmap.height;
-      const ctx = canvas.getContext("2d");
-      if (!ctx) throw new Error("no-canvas");
-      ctx.drawImage(bitmap, 0, 0);
-      // Bake the XOVA AI watermark into the downloaded file.
-      const fontSize = Math.max(18, Math.round(bitmap.width * 0.028));
-      const pad = Math.round(fontSize * 0.9);
-      ctx.font = `600 ${fontSize}px system-ui, sans-serif`;
-      const text = "XOVA AI";
-      const metrics = ctx.measureText(text);
-      const x = bitmap.width - metrics.width - pad;
-      const y = bitmap.height - pad;
-      ctx.fillStyle = "rgba(0, 0, 0, 0.35)";
-      ctx.fillText(text, x + 1.5, y + 1.5);
-      ctx.fillStyle = "rgba(255, 255, 255, 0.85)";
-      ctx.fillText(text, x, y);
-      bitmap.close();
-      const watermarked = await new Promise<Blob | null>((resolve) =>
-        canvas.toBlob(resolve, "image/png"),
-      );
-      if (!watermarked) throw new Error("no-blob");
-      const url = URL.createObjectURL(watermarked);
-      const link = document.createElement("a");
-      link.href = url;
-      link.download = `xova-${row.id}.png`;
-      link.click();
-      URL.revokeObjectURL(url);
-    } catch {
-      window.open(row.image_url, "_blank", "noopener");
+      await downloadWatermarkedImage(row.image_url, `xova-${row.id}.png`);
+    } catch (error) {
+      console.error("XOVA watermarked image download failed", error);
+      toast.error(t("err.generic"));
     }
-  }, []);
+  }, [t]);
 
   const remove = useCallback(
     async (row: ImageRow) => {
