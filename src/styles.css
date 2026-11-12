@@ -623,3 +623,118 @@
 .dark .xv-studio-thumb.is-selected {
   border-color: oklch(0.68 0.19 268 / 75%);
 }
+
+
+/* Animated curved ribbons framing the XOVA workspace. */
+.xv-wave-bg {
+  position: absolute;
+  z-index: 0;
+  inset: 0;
+  overflow: hidden;
+  pointer-events: none;
+  opacity: 0.34;
+  contain: paint;
+}
+
+.xv-wave-svg {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  overflow: visible;
+}
+
+.xv-wave-ribbons {
+  transform-box: fill-box;
+  transform-origin: center;
+  animation: xv-wave-drift 28s ease-in-out infinite alternate;
+}
+
+.xv-wave-line,
+.xv-wave-halo,
+.xv-wave-glimmer {
+  fill: none;
+  stroke: url(#xv-wave-gradient);
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
+.xv-wave-line {
+  stroke-width: 1.35;
+  stroke-opacity: 0.42;
+}
+
+.xv-wave-line-soft {
+  stroke-width: 0.9;
+  stroke-opacity: 0.26;
+}
+
+.xv-wave-reverse {
+  stroke: url(#xv-wave-reverse);
+}
+
+.xv-wave-halo {
+  stroke-width: 16;
+  opacity: 0.11;
+  filter: url(#xv-wave-blur);
+}
+
+.xv-wave-glimmer {
+  stroke-width: 1.8;
+  stroke-dasharray: 38 520;
+  stroke-dashoffset: 0;
+  opacity: 0.68;
+  animation: xv-wave-shimmer 22s linear infinite;
+}
+
+.dark .xv-wave-bg {
+  opacity: 0.56;
+}
+
+.dark .xv-wave-line {
+  stroke-opacity: 0.54;
+}
+
+.dark .xv-wave-line-soft {
+  stroke-opacity: 0.34;
+}
+
+.dark .xv-wave-halo {
+  opacity: 0.16;
+}
+
+.dark .xv-wave-glimmer {
+  opacity: 0.9;
+}
+
+@keyframes xv-wave-shimmer {
+  to {
+    stroke-dashoffset: -558;
+  }
+}
+
+@keyframes xv-wave-drift {
+  from {
+    transform: translate3d(-5px, 3px, 0);
+  }
+  to {
+    transform: translate3d(7px, -4px, 0);
+  }
+}
+
+@media (max-width: 767px) {
+  .xv-wave-bg {
+    opacity: 0.22;
+  }
+
+  .dark .xv-wave-bg {
+    opacity: 0.4;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .xv-wave-ribbons,
+  .xv-wave-glimmer {
+    animation: none !important;
+  }
+}
