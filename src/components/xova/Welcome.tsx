@@ -9,8 +9,20 @@ const SUGGESTIONS = [
   { key: "write", Icon: PenLine },
 ] as const;
 
-export function Welcome({ onPick }: { onPick: (text: string) => void }) {
-  const { t } = useI18n();
+export function Welcome({
+  onPick,
+  displayName,
+}: {
+  onPick: (text: string) => void;
+  displayName?: string | null;
+}) {
+  const { t, lang } = useI18n();
+  const preferredName = displayName?.trim();
+  const greeting = preferredName
+    ? lang === "ar"
+      ? `أهلاً يا ${preferredName}، نبدأ بإيه النهارده؟`
+      : `Welcome, ${preferredName}. What shall we work on?`
+    : t("welcome.greeting");
 
   return (
     <div className="mx-auto flex w-full max-w-2xl flex-1 flex-col items-center justify-center px-4 py-10 text-center">
@@ -26,9 +38,9 @@ export function Welcome({ onPick }: { onPick: (text: string) => void }) {
           AI
         </span>
       </div>
-      <p className="mt-1 text-xxs font-medium text-faint">by Begad</p>
+      <p className="mt-1 text-xxs font-medium text-faint">{t("app.by")}</p>
       <h1 className="xv-gradient-text mt-2 text-3xl font-semibold tracking-[-0.03em] sm:text-4xl">
-        {t("welcome.greeting")}
+        {greeting}
       </h1>
       <p className="mt-3 max-w-md text-sm text-muted-foreground">{t("welcome.sub")}</p>
 
