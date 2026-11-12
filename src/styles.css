@@ -1189,3 +1189,40 @@
 .dark .xv-sidebar-panel .xv-sidebar-header .text-faint {
   color: oklch(0.7 0.04 265);
 }
+
+
+/* Keep the compact sidebar variant visually consistent with the selected theme. */
+:root:not(.dark) .xv-sidebar-collapsed {
+  height: calc(100% - 20px);
+  margin: 10px 8px;
+  border: 1px solid oklch(1 0 0 / 78%);
+  border-radius: 20px;
+  background: linear-gradient(160deg, oklch(1 0 0 / 75%), oklch(0.94 0.04 265 / 55%));
+  box-shadow: 0 14px 38px oklch(0.43 0.1 270 / 9%);
+  backdrop-filter: blur(24px) saturate(145%);
+}
+
+.dark .xv-sidebar-collapsed {
+  height: calc(100% - 20px);
+  margin: 10px 8px;
+  border: 1px solid oklch(0.62 0.17 270 / 25%);
+  border-radius: 20px;
+  background: linear-gradient(160deg, oklch(0.17 0.028 270 / 98%), oklch(0.115 0.018 255 / 99%));
+  box-shadow: 0 18px 50px oklch(0.02 0.02 260 / 36%);
+}
+
+:root:not(.dark) [role="dialog"] {
+  border: 1px solid oklch(0.82 0.06 270 / 56%);
+  background: linear-gradient(145deg, oklch(1 0 0 / 91%), oklch(0.94 0.04 265 / 82%));
+  box-shadow: 0 22px 58px oklch(0.4 0.09 270 / 14%);
+  backdrop-filter: blur(28px) saturate(155%);
+  -webkit-backdrop-filter: blur(28px) saturate(155%);
+}
+
+@media (max-width: 767px) {
+  .xv-sidebar-collapsed {
+    margin: 0;
+    height: 100%;
+    border-radius: 0;
+  }
+}
