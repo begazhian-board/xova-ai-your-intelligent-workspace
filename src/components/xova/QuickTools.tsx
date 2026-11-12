@@ -1,4 +1,4 @@
-import { Code2, FileSearch, Image as ImageIcon, Lightbulb, Sparkles, Zap } from "lucide-react";
+import { Code2, FileSearch, Image as ImageIcon, Lightbulb, Zap } from "lucide-react";
 import { Link } from "@tanstack/react-router";
 import { useI18n } from "@/lib/i18n";
 
@@ -68,7 +68,7 @@ export function QuickTools({ onPick }: QuickToolsProps) {
 
       <div className="mt-auto rounded-2xl border border-brand/15 bg-brand/5 p-3.5">
         <span className="mb-2 flex items-center gap-2 text-xs font-semibold text-brand">
-          <Sparkles className="h-4 w-4" />
+          <Zap className="h-4 w-4" />
           {lang === "ar" ? "مساحة واحدة لكل أفكارك" : "One space for every idea"}
         </span>
         <p className="text-xs leading-6 text-muted-foreground">
