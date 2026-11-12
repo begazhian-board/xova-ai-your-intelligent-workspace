@@ -13,6 +13,7 @@ import { Route as IndexRouteImport } from './routes/index'
 import { Route as AuthRouteImport } from './routes/auth'
 import { Route as ImagesRouteImport } from './routes/images'
 import { Route as ApiChatRouteImport } from './routes/api/chat'
+import { Route as ApiDiagnosticsRouteImport } from './routes/api/diagnostics'
 import { Route as ApiImageRouteImport } from './routes/api/image'
 
 const IndexRoute = IndexRouteImport.update({
@@ -40,6 +41,11 @@ const ApiImageRoute = ApiImageRouteImport.update({
   path: '/api/image',
   getParentRoute: () => rootRouteImport,
 } as any)
+const ApiDiagnosticsRoute = ApiDiagnosticsRouteImport.update({
+  id: '/api/diagnostics',
+  path: '/api/diagnostics',
+  getParentRoute: () => rootRouteImport,
+} as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
@@ -47,6 +53,7 @@ export interface FileRoutesByFullPath {
   '/images': typeof ImagesRoute
   '/api/chat': typeof ApiChatRoute
   '/api/image': typeof ApiImageRoute
+  '/api/diagnostics': typeof ApiDiagnosticsRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
@@ -54,6 +61,7 @@ export interface FileRoutesByTo {
   '/images': typeof ImagesRoute
   '/api/chat': typeof ApiChatRoute
   '/api/image': typeof ApiImageRoute
+  '/api/diagnostics': typeof ApiDiagnosticsRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
@@ -62,13 +70,14 @@ export interface FileRoutesById {
   '/images': typeof ImagesRoute
   '/api/chat': typeof ApiChatRoute
   '/api/image': typeof ApiImageRoute
+  '/api/diagnostics': typeof ApiDiagnosticsRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
-  fullPaths: '/' | '/auth' | '/images' | '/api/chat' | '/api/image'
+  fullPaths: '/' | '/auth' | '/images' | '/api/chat' | '/api/image' | '/api/diagnostics'
   fileRoutesByTo: FileRoutesByTo
-  to: '/' | '/auth' | '/images' | '/api/chat' | '/api/image'
-  id: '__root__' | '/' | '/auth' | '/images' | '/api/chat' | '/api/image'
+  to: '/' | '/auth' | '/images' | '/api/chat' | '/api/image' | '/api/diagnostics'
+  id: '__root__' | '/' | '/auth' | '/images' | '/api/chat' | '/api/image' | '/api/diagnostics'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
@@ -77,6 +86,7 @@ export interface RootRouteChildren {
   ImagesRoute: typeof ImagesRoute
   ApiChatRoute: typeof ApiChatRoute
   ApiImageRoute: typeof ApiImageRoute
+  ApiDiagnosticsRoute: typeof ApiDiagnosticsRoute
 }
 
 declare module '@tanstack/react-router' {
@@ -116,6 +126,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ApiImageRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/api/diagnostics': {
+      id: '/api/diagnostics'
+      path: '/api/diagnostics'
+      fullPath: '/api/diagnostics'
+      preLoaderRoute: typeof ApiDiagnosticsRouteImport
+      parentRoute: typeof rootRouteImport
+    }
   }
 }
 
@@ -125,6 +142,7 @@ const rootRouteChildren: RootRouteChildren = {
   ImagesRoute: ImagesRoute,
   ApiChatRoute: ApiChatRoute,
   ApiImageRoute: ApiImageRoute,
+  ApiDiagnosticsRoute: ApiDiagnosticsRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
