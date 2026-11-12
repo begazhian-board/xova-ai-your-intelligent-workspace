@@ -40,6 +40,7 @@ const en: Dict = {
   "composer.mode": "AI mode",
   "composer.hint": "Enter to send · Shift + Enter for a new line",
   "composer.hintCtrl": "Ctrl + Enter to send",
+  "composer.disclaimer": "XOVA may make mistakes or take longer to respond. Please verify important information.",
   "composer.generate": "Generate image",
   "composer.dropHere": "Drop files to attach",
 
@@ -285,6 +286,7 @@ const ar: Dict = {
   "composer.mode": "وضع الذكاء",
   "composer.hint": "Enter للإرسال · Shift + Enter لسطر جديد",
   "composer.hintCtrl": "Ctrl + Enter للإرسال",
+  "composer.disclaimer": "قد يخطئ XOVA أو يتأخر في الرد، يُرجى التأكد من المعلومات المهمة.",
   "composer.generate": "توليد صورة",
   "composer.dropHere": "أفلت الملفات للإرفاق",
 
