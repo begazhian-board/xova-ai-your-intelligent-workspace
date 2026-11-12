@@ -1,4 +1,4 @@
-import { Code2, FileSearch, Lightbulb, PenLine, Sparkles } from "lucide-react";
+import { Code2, FileSearch, Lightbulb, PenLine } from "lucide-react";
 import { XovaLogoText } from "./Logo";
 import { useI18n } from "@/lib/i18n";
 
@@ -31,8 +31,7 @@ export function Welcome({
         <span className="xv-gradient-text mb-2 text-sm font-semibold tracking-[0.18em] sm:text-base">AI</span>
       </div>
       <p className="mt-1 text-[11px] font-medium tracking-[0.12em] text-faint">{t("app.by")}</p>
-      <span className="mt-5 inline-flex items-center gap-1.5 rounded-full border border-brand/20 bg-brand/10 px-3 py-1.5 text-xs font-medium text-brand">
-        <Sparkles className="h-3.5 w-3.5" />
+      <span className="mt-5 inline-flex items-center rounded-full border border-brand/20 bg-brand/10 px-3 py-1.5 text-xs font-medium text-brand">
         {lang === "ar" ? "مساحة عمل ذكية" : "Your AI workspace"}
       </span>
 
@@ -57,9 +56,6 @@ export function Welcome({
                 <span className="mt-1 block text-xs leading-relaxed text-muted-foreground">
                   {t(`suggest.${key}.text`)}
                 </span>
-              </span>
-              <span className="grid h-7 w-7 shrink-0 place-items-center rounded-full bg-brand/10 text-brand opacity-70 transition-all group-hover:translate-x-[-2px] group-hover:opacity-100">
-                <Sparkles className="h-3.5 w-3.5" />
               </span>
             </button>
           </li>
