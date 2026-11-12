@@ -111,7 +111,9 @@ const en: Dict = {
   "settings.history.desc": "Your conversation is stored in your account so it is there next time.",
   "settings.clearHistory": "Delete conversation",
   "settings.profile": "Profile",
-  "settings.displayName": "Display name",
+  "settings.displayName": "Name XOVA should call you",
+  "settings.displayName.help": "Used in the welcome greeting and naturally in the first reply of each new chat.",
+  "settings.displayName.placeholder": "For example: Begad",
   "settings.username": "Username",
   "settings.email": "Email",
   "settings.avatar": "Avatar image URL",
@@ -217,7 +219,7 @@ const en: Dict = {
 
 const ar: Dict = {
   "app.name": "XOVA AI",
-  "app.by": "من إعداد بجاد",
+  "app.by": "من تطوير بجاد",
   "app.tagline": "اسأل أي شيء. بوضوح.",
 
   "nav.newChat": "محادثة جديدة",
@@ -323,7 +325,9 @@ const ar: Dict = {
   "settings.history.desc": "محادثتك محفوظة في حسابك لتجدها في المرة القادمة.",
   "settings.clearHistory": "حذف المحادثة",
   "settings.profile": "الملف الشخصي",
-  "settings.displayName": "الاسم المعروض",
+  "settings.displayName": "الاسم اللي XOVA يناديك بيه",
+  "settings.displayName.help": "الاسم ده هيظهر في الترحيب ومع أول رد في كل محادثة جديدة.",
+  "settings.displayName.placeholder": "مثال: المعلم بجاد",
   "settings.username": "اسم المستخدم",
   "settings.email": "البريد الإلكتروني",
   "settings.avatar": "رابط صورة الحساب",
