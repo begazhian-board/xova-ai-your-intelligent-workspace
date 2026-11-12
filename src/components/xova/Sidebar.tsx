@@ -66,7 +66,7 @@ export function Sidebar({
   avatarUrl,
   onCloseDrawer,
 }: SidebarProps) {
-  const { t } = useI18n();
+  const { t, dir } = useI18n();
   const [query, setQuery] = useState("");
 
   const results = useMemo(() => {
@@ -127,9 +127,10 @@ export function Sidebar({
   return (
     <nav
       aria-label={t("nav.conversation")}
-      className="flex h-full w-full shrink-0 flex-col border-e border-border bg-rail md:w-[264px]"
+      dir={dir}
+      className="xv-sidebar flex h-full w-full shrink-0 flex-col border-e border-border md:w-[248px]"
     >
-      <div className="flex items-center gap-2 px-3 py-3">
+      <div className="flex items-center gap-2 px-4 py-4">
         <XovaWordmark className="min-w-0 flex-1" />
         {onCloseDrawer ? (
           <button
@@ -153,11 +154,11 @@ export function Sidebar({
         )}
       </div>
 
-      <div className="flex flex-col gap-2 px-3">
+      <div className="flex flex-col gap-2.5 px-3.5">
         <button
           type="button"
           onClick={onNewChat}
-          className="xv-focus inline-flex items-center gap-2 rounded-xl border border-border bg-surface px-3 py-2 text-sm font-medium transition-colors hover:bg-hover"
+          className="xv-focus inline-flex items-center gap-2 rounded-xl border border-brand/25 bg-brand px-3.5 py-2.5 text-sm font-semibold text-brand-foreground shadow-panel transition-all hover:-translate-y-0.5 hover:opacity-95"
         >
           <Plus className="h-4 w-4 text-brand" />
           {t("nav.newChat")}
@@ -166,7 +167,7 @@ export function Sidebar({
         <Link
           to="/images"
           onClick={() => onCloseDrawer?.()}
-          className="xv-focus inline-flex items-center gap-2 rounded-xl px-3 py-2 text-sm font-medium text-muted-foreground transition-colors hover:bg-hover hover:text-foreground"
+          className="xv-focus inline-flex items-center gap-2 rounded-xl border border-border/70 bg-surface/60 px-3.5 py-2.5 text-sm font-medium text-muted-foreground transition-colors hover:border-brand/30 hover:bg-hover hover:text-foreground"
         >
           <ImageIcon className="h-4 w-4" />
           {t("nav.imageStudio")}
@@ -182,7 +183,7 @@ export function Sidebar({
             onChange={(event) => setQuery(event.target.value)}
             placeholder={t("search.placeholder")}
             aria-label={t("nav.search")}
-            className="xv-focus w-full rounded-xl border border-border bg-surface py-2 pe-8 ps-8 text-xs outline-none placeholder:text-muted-foreground"
+            className="xv-focus w-full rounded-full border border-border/80 bg-background/70 py-2.5 pe-9 ps-9 text-xs outline-none placeholder:text-muted-foreground"
           />
           {query && (
             <button
@@ -197,7 +198,7 @@ export function Sidebar({
         </div>
       </div>
 
-      <div className="mt-3 min-h-0 flex-1 overflow-y-auto px-3 pb-3">
+      <div className="mt-5 min-h-0 flex-1 overflow-y-auto px-3.5 pb-3">
         {query ? (
           <>
             <h2 className="mb-1.5 px-1 text-xxs font-semibold uppercase tracking-wide text-muted-foreground">
@@ -240,8 +241,8 @@ export function Sidebar({
               <li
                 key={c.id}
                 className={cn(
-                  "group/item flex items-center gap-1 rounded-lg px-2 py-1.5 transition-colors hover:bg-hover",
-                  c.id === activeId && "bg-active",
+                  "group/item flex items-center gap-1 rounded-xl border border-transparent px-2.5 py-2 transition-all hover:border-border/70 hover:bg-hover",
+                  c.id === activeId && "border-brand/25 bg-brand/10 shadow-sm",
                 )}
               >
                 <button
@@ -283,18 +284,18 @@ export function Sidebar({
         )}
       </div>
 
-      <div className="border-t border-border p-2">
+      <div className="border-t border-border/80 bg-background/30 p-3">
         <button
           type="button"
           onClick={onOpenSettings}
-          className="xv-focus mb-1 flex w-full items-center gap-2 rounded-lg px-2 py-2 text-xs font-medium text-muted-foreground transition-colors hover:bg-hover hover:text-foreground"
+          className="xv-focus mb-2 flex w-full items-center gap-2 rounded-xl px-3 py-2.5 text-xs font-medium text-muted-foreground transition-colors hover:bg-hover hover:text-foreground"
         >
           <Settings className="h-4 w-4" />
           {t("nav.settings")}
         </button>
 
         <DropdownMenu>
-          <DropdownMenuTrigger className="xv-focus flex w-full items-center gap-2 rounded-lg px-2 py-2 text-start transition-colors hover:bg-hover">
+          <DropdownMenuTrigger className="xv-focus flex w-full items-center gap-2 rounded-xl border border-border/70 bg-surface/60 px-3 py-2.5 text-start transition-colors hover:border-brand/25 hover:bg-hover">
             {avatarUrl ? (
               <img src={avatarUrl} alt="" className="h-7 w-7 shrink-0 rounded-full object-cover" />
             ) : (
