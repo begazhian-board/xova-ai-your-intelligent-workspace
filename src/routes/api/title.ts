@@ -13,7 +13,7 @@ interface TitleBody {
 }
 
 async function authenticate(request: Request) {
-  const token = request.headers.get("authorization")?.replace(/^Bearer\\s+/i, "");
+  const token = request.headers.get("authorization")?.replace(/^Bearer\s+/i, "");
   if (!token) return null;
   const url = process.env["SUPABASE_URL"] ?? process.env["VITE_SUPABASE_URL"];
   const key =
@@ -74,7 +74,7 @@ export const Route = createFileRoute("/api/title")({
             .trim()
             .replace(/^["'“”]+|["'“”]+$/g, "")
             .replace(/[.!؟?]+$/g, "")
-            .replace(/\\s+/g, " ")
+            .replace(/\s+/g, " ")
             .slice(0, 60);
           return Response.json({ title: title || null });
         } catch (error) {
