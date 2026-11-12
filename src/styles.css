@@ -456,20 +456,29 @@
 
 
 /* Light mode: add a darker edge only to controls that have no border styling of their own. */
-:root:not(.dark) button:not([class*="border"]) {
+:root:not(.dark) button:not([class*="border"]):not(.xv-composer button) {
   border: 1px solid color-mix(in oklab, var(--foreground) 21%, var(--border));
   box-shadow:
     0 1px 2px oklch(0.2 0.02 250 / 8%),
     inset 0 1px 0 oklch(1 0 0 / 75%);
 }
 
-:root:not(.dark) button:not([class*="border"]):hover:not(:disabled) {
+:root:not(.dark) button:not([class*="border"]):not(.xv-composer button):hover:not(:disabled) {
   border-color: color-mix(in oklab, var(--foreground) 31%, var(--border));
 }
 
-:root:not(.dark) button:not([class*="border"]):disabled {
+:root:not(.dark) button:not([class*="border"]):not(.xv-composer button):disabled {
   border-color: color-mix(in oklab, var(--foreground) 12%, var(--border));
   box-shadow: none;
+}
+
+/* The composer gets one clear outer edge; its toolbar buttons keep their own original shapes. */
+:root:not(.dark) .xv-composer {
+  border-color: color-mix(in oklab, var(--foreground) 25%, var(--border));
+}
+
+:root:not(.dark) .xv-composer:focus-within {
+  border-color: color-mix(in oklab, var(--brand) 55%, var(--foreground));
 }
 
 :root:not(.dark) button[role="switch"] {
