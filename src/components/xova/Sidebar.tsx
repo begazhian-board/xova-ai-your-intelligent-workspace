@@ -170,7 +170,7 @@ export function Sidebar({
           onClick={() => onCloseDrawer?.()}
           className="xv-sidebar-image-link xv-focus inline-flex items-center gap-2 rounded-xl border border-border/70 bg-surface/60 px-3.5 py-2.5 text-sm font-medium text-muted-foreground transition-colors hover:border-brand/30 hover:bg-hover hover:text-foreground"
         >
-          <ImageIcon className="h-4 w-4" />
+          <span className="xv-sidebar-icon"><ImageIcon className="h-4 w-4" /></span>
           {t("nav.imageStudio")}
         </Link>
 
@@ -291,7 +291,7 @@ export function Sidebar({
           onClick={onOpenSettings}
           className="xv-sidebar-settings xv-focus mb-2 flex w-full items-center gap-2 rounded-xl px-3 py-2.5 text-xs font-medium text-muted-foreground transition-colors hover:bg-hover hover:text-foreground"
         >
-          <Settings className="h-4 w-4" />
+          <span className="xv-sidebar-icon"><Settings className="h-4 w-4" /></span>
           {t("nav.settings")}
         </button>
 
