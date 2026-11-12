@@ -687,24 +687,32 @@
   animation: xv-wave-shimmer 22s linear infinite;
 }
 
+/* Dark theme: stronger neon contrast and a brighter moving highlight. */
+.dark .xv-main-panel {
+  background-color: transparent;
+}
+
 .dark .xv-wave-bg {
-  opacity: 0.56;
+  opacity: 0.8;
 }
 
 .dark .xv-wave-line {
-  stroke-opacity: 0.54;
+  stroke-opacity: 0.78;
+  stroke-width: 1.75;
 }
 
 .dark .xv-wave-line-soft {
-  stroke-opacity: 0.34;
+  stroke-opacity: 0.5;
+  stroke-width: 1.2;
 }
 
 .dark .xv-wave-halo {
-  opacity: 0.16;
+  opacity: 0.27;
 }
 
 .dark .xv-wave-glimmer {
-  opacity: 0.9;
+  opacity: 1;
+  stroke-width: 2.3;
 }
 
 @keyframes xv-wave-shimmer {
@@ -753,7 +761,7 @@
   }
 
   .dark .xv-wave-bg {
-    opacity: 0.4;
+    opacity: 0.56;
   }
 }
 
