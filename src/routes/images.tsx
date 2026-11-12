@@ -3,15 +3,14 @@ import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import {
   ArrowLeft,
   Check,
+  Crown,
   ClipboardCopy,
   Download,
   ImageIcon,
   Loader2,
   Maximize2,
   RefreshCw,
-  Sparkles,
   Trash2,
-  WandSparkles,
   Zap,
 } from "lucide-react";
 import { toast } from "sonner";
@@ -250,7 +249,6 @@ function ImageStudio() {
             {t("studio.back")}
           </button>
           <span className="inline-flex items-center gap-2 rounded-full border border-brand/25 bg-brand/10 px-3 py-1.5 text-[11px] font-semibold text-brand">
-            <Sparkles className="h-3.5 w-3.5" aria-hidden="true" />
             {t("app.name")}
           </span>
         </div>
@@ -267,7 +265,7 @@ function ImageStudio() {
             <div className="flex items-center justify-between gap-3">
               <div className="flex items-center gap-2">
                 <span className="grid h-9 w-9 place-items-center rounded-xl bg-brand/10 text-brand">
-                  <WandSparkles className="h-4.5 w-4.5" aria-hidden="true" />
+                  <ImageIcon className="h-4.5 w-4.5" aria-hidden="true" />
                 </span>
                 <div>
                   <h2 className="text-sm font-semibold">{t("studio.createTitle")}</h2>
@@ -305,7 +303,6 @@ function ImageStudio() {
                     onClick={() => addPreset(preset.prompt[lang])}
                     className="xv-focus xv-studio-chip inline-flex items-center gap-1.5 rounded-full border px-3 py-2 text-[11px] font-medium transition-all hover:-translate-y-0.5 hover:border-brand/45 hover:text-brand"
                   >
-                    <Sparkles className="h-3 w-3" aria-hidden="true" />
                     {preset.label[lang]}
                   </button>
                 ))}
@@ -359,7 +356,7 @@ function ImageStudio() {
                     >
                       <span className="flex items-center gap-1.5 text-xs font-semibold">
                         {value === "premium" ? (
-                          <Sparkles className="h-3.5 w-3.5" />
+                          <Crown className="h-3.5 w-3.5" />
                         ) : (
                           <Zap className="h-3.5 w-3.5" />
                         )}
@@ -383,7 +380,7 @@ function ImageStudio() {
               {busy ? (
                 <Loader2 className="h-4 w-4 animate-spin" aria-hidden="true" />
               ) : (
-                <Sparkles className="h-4 w-4" aria-hidden="true" />
+                <ImageIcon className="h-4 w-4" aria-hidden="true" />
               )}
               {busy ? t("studio.generating") : t("studio.generate")}
             </button>
