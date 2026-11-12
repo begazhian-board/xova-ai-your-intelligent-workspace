@@ -50,14 +50,14 @@ export function Welcome({
       <p className="mt-3 max-w-lg text-sm leading-7 text-muted-foreground">{t("welcome.sub")}</p>
 
       <ul className="mt-8 grid w-full gap-3 sm:grid-cols-2">
-        {SUGGESTIONS.map(({ key, Icon }, index) => (
+        {SUGGESTIONS.map(({ key, Icon }) => (
           <li key={key}>
             <button
               type="button"
               onClick={() => onPick(t(`suggest.${key}.text`))}
               className="xv-focus xv-lift xv-tool-card group flex min-h-[98px] w-full items-center gap-3.5 rounded-2xl border border-border/80 bg-surface/75 px-4 py-4 text-start backdrop-blur-xl"
             >
-              <span className={`grid h-11 w-11 shrink-0 place-items-center rounded-xl border border-brand/15 bg-brand/10 text-brand transition-transform group-hover:scale-105`}>
+              <span className="grid h-11 w-11 shrink-0 place-items-center rounded-xl border border-brand/15 bg-brand/10 text-brand transition-transform group-hover:scale-105">
                 <Icon className="h-5 w-5" aria-hidden="true" />
               </span>
               <span className="min-w-0 flex-1">
