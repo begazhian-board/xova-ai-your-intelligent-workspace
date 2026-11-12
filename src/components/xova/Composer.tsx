@@ -59,7 +59,7 @@ export function Composer({
   seedText,
   onSeedConsumed,
 }: ComposerProps) {
-  const { t } = useI18n();
+  const { t, dir } = useI18n();
   const [value, setValue] = useState("");
   const [attachments, setAttachments] = useState<Attachment[]>([]);
   const [dragging, setDragging] = useState(false);
@@ -379,6 +379,9 @@ export function Composer({
             : enterToSend
               ? t("composer.hint")
               : t("composer.hintCtrl")}
+        </p>
+        <p dir={dir} className="mt-1 px-1 text-end text-[10px] leading-relaxed text-faint">
+          {t("composer.disclaimer")}
         </p>
       </div>
     </div>
