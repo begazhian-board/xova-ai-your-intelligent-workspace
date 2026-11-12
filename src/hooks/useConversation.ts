@@ -363,7 +363,28 @@ export function useConversation(userId: string | undefined, config: AiConfig) {
           return current.filter((m) => m.id !== assistantId);
         });
         if (!aborted) {
-          const code = caught instanceof Error ? caught.message : "err.generic";
+          let code = caught instanceof Error ? caught.message : "err.generic";
+          if (["err.unavailable", "err.geminiNetwork", "err.geminiBusy", "err.geminiRequest"].includes(code)) {
+            try {
+              const { data: diagnosticSession } = await supabase.auth.getSession();
+              const diagnosticToken = diagnosticSession.session?.access_token;
+              if (diagnosticToken) {
+                const diagnosticResponse = await fetch("/api/diagnostics", {
+                  method: "POST",
+                  headers: { Authorization: `Bearer ${diagnosticToken}` },
+                });
+                if (diagnosticResponse.ok) {
+                  const result = (await diagnosticResponse.json()) as {
+                    ok?: boolean;
+                    error?: string;
+                  };
+                  code = result.ok ? "err.geminiPayload" : result.error ?? code;
+                }
+              }
+            } catch (diagnosticError) {
+              console.error("XOVA automatic Gemini diagnostic failed", diagnosticError);
+            }
+          }
           setError(code.startsWith("err.") ? code : "err.network");
         }
       } finally {
