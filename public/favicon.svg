@@ -1,12 +1,19 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 92 64">
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" role="img" aria-label="XOVA">
   <defs>
-    <linearGradient id="xova-mark" x1="0" y1="64" x2="92" y2="0" gradientUnits="userSpaceOnUse">
-      <stop offset="0" stop-color="#1EA0FF"/>
-      <stop offset="1" stop-color="#7B3FF2"/>
+    <linearGradient id="xova-wordmark-gradient" x1="0%" y1="0%" x2="100%" y2="0%">
+      <stop offset="0%" stop-color="#168FFF"/>
+      <stop offset="52%" stop-color="#5267FF"/>
+      <stop offset="100%" stop-color="#8A45E8"/>
     </linearGradient>
   </defs>
-  <g fill="url(#xova-mark)">
-    <path d="M2 2h22l3 2 63 58H68l-3-2L2 2Z"/>
-    <path d="M90 2H68l-3 2L2 62h22l3-2L90 2Z" opacity=".88"/>
-  </g>
+  <text
+    x="32"
+    y="49"
+    text-anchor="middle"
+    fill="url(#xova-wordmark-gradient)"
+    font-family="Inter, ui-sans-serif, Arial, sans-serif"
+    font-size="52"
+    font-weight="600"
+    letter-spacing="-4"
+  >X</text>
 </svg>

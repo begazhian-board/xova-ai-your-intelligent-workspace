@@ -1,5 +1,5 @@
 import { Code2, FileSearch, Lightbulb, PenLine, Sparkles } from "lucide-react";
-import { XovaMark } from "./Logo";
+import { XovaLogoText } from "./Logo";
 import { useI18n } from "@/lib/i18n";
 
 const SUGGESTIONS = [
@@ -26,19 +26,11 @@ export function Welcome({
 
   return (
     <div className="mx-auto flex w-full max-w-3xl flex-1 flex-col items-center justify-center px-4 py-10 text-center sm:px-6">
-      <div className="xv-hero-mark xv-rise relative grid h-24 w-24 place-items-center rounded-[2rem] border border-brand/25 bg-brand/10 shadow-float">
-        <span className="absolute inset-2 rounded-[1.5rem] border border-brand/15" />
-        <XovaMark className="relative h-11 w-16 drop-shadow-[0_0_18px_rgba(88,100,255,0.55)]" />
-        <span className="absolute -end-1 -top-1 grid h-7 w-7 place-items-center rounded-full border border-brand/20 bg-surface text-brand shadow-panel">
-          <Sparkles className="h-3.5 w-3.5" />
-        </span>
+      <div className="xv-rise flex items-center justify-center gap-2" dir="ltr">
+        <XovaLogoText className="h-14 w-[218px] drop-shadow-[0_0_24px_rgba(88,100,255,0.22)] sm:h-16 sm:w-[250px]" />
+        <span className="xv-gradient-text mb-2 text-sm font-semibold tracking-[0.18em] sm:text-base">AI</span>
       </div>
-
-      <div className="mt-5 flex items-baseline gap-0.5" dir="ltr">
-        <span className="text-4xl font-semibold tracking-[-0.07em] text-foreground sm:text-5xl">XOVA</span>
-        <span className="xv-gradient-text self-end pb-1 text-sm font-bold tracking-tight sm:text-base">AI</span>
-      </div>
-      <p className="mt-1 text-[11px] font-medium tracking-wide text-faint">{t("app.by")}</p>
+      <p className="mt-1 text-[11px] font-medium tracking-[0.12em] text-faint">{t("app.by")}</p>
       <span className="mt-5 inline-flex items-center gap-1.5 rounded-full border border-brand/20 bg-brand/10 px-3 py-1.5 text-xs font-medium text-brand">
         <Sparkles className="h-3.5 w-3.5" />
         {lang === "ar" ? "مساحة عمل ذكية" : "Your AI workspace"}
