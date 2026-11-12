@@ -61,6 +61,7 @@ export interface FileRoutesByTo {
   '/images': typeof ImagesRoute
   '/api/chat': typeof ApiChatRoute
   '/api/image': typeof ApiImageRoute
+  '/api/diagnostics': typeof ApiDiagnosticsRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
@@ -69,13 +70,14 @@ export interface FileRoutesById {
   '/images': typeof ImagesRoute
   '/api/chat': typeof ApiChatRoute
   '/api/image': typeof ApiImageRoute
+  '/api/diagnostics': typeof ApiDiagnosticsRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
   fullPaths: '/' | '/auth' | '/images' | '/api/chat' | '/api/image' | '/api/diagnostics'
   fileRoutesByTo: FileRoutesByTo
-  to: '/' | '/auth' | '/images' | '/api/chat' | '/api/image'
-  id: '__root__' | '/' | '/auth' | '/images' | '/api/chat' | '/api/image'
+  to: '/' | '/auth' | '/images' | '/api/chat' | '/api/image' | '/api/diagnostics'
+  id: '__root__' | '/' | '/auth' | '/images' | '/api/chat' | '/api/image' | '/api/diagnostics'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
