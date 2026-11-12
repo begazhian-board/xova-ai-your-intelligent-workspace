@@ -1,8 +1,7 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { createClient } from "@supabase/supabase-js";
-import { streamText, type ModelMessage } from "ai";
 import { buildSystemPrompt } from "@/lib/xova-prompt.server";
-import { createGeminiProvider, GEMINI_MODEL } from "@/lib/gemini.server";
+import { GEMINI_MODEL } from "@/lib/gemini.server";
 import { chatProviderErrorCode, searchNoticeCode } from "@/lib/chat-contract";
 import type { ModeId } from "@/lib/xova";
 
@@ -45,39 +44,6 @@ const SOURCES_PREFIX = "\u241E SOURCES ";
 /** Sentinel that ends the text stream with final sources + error code. */
 const TRAILER_PREFIX = "\u241F";
 
-function providerStatus(error: unknown): number | undefined {
-  const value = error as {
-    statusCode?: unknown;
-    status?: unknown;
-    response?: { status?: unknown };
-    lastError?: { statusCode?: unknown; status?: unknown; response?: { status?: unknown } };
-    cause?: { statusCode?: unknown; status?: unknown; response?: { status?: unknown } };
-  };
-  const candidates = [
-    value?.statusCode,
-    value?.status,
-    value?.response?.status,
-    value?.lastError?.statusCode,
-    value?.lastError?.status,
-    value?.lastError?.response?.status,
-    value?.cause?.statusCode,
-    value?.cause?.status,
-    value?.cause?.response?.status,
-  ];
-  const found = candidates.find((candidate): candidate is number =>
-    typeof candidate === "number" && Number.isInteger(candidate),
-  );
-  if (found !== undefined) return found;
-
-  const message = error instanceof Error ? error.message : String(error ?? "");
-  const match = message.match(new RegExp("(400|401|403|404|429|500|502|503|504)"));
-  return match ? Number(match[1]) : undefined;
-}
-
-function shouldTryFallbackModel(status: number | undefined) {
-  return status === undefined || status === 404 || (status !== undefined && status >= 500);
-}
-
 async function authenticate(request: Request) {
   const token = request.headers.get("authorization")?.replace(/^Bearer\s+/i, "");
   if (!token) return null;
@@ -93,34 +59,137 @@ async function authenticate(request: Request) {
   return data.user;
 }
 
-function toModelMessages(messages: WireMessage[]): ModelMessage[] {
+interface GeminiApiErrorShape {
+  code?: number;
+  status?: string;
+  message?: string;
+}
+
+class GeminiApiError extends Error {
+  readonly statusCode: number;
+  readonly detail: string;
+
+  constructor(statusCode: number, detail: string) {
+    super(detail || "Gemini API request failed");
+    this.name = "GeminiApiError";
+    this.statusCode = statusCode;
+    this.detail = detail;
+  }
+}
+
+function toGeminiContents(messages: WireMessage[]) {
   return messages.map((message) => {
+    const parts: Array<Record<string, unknown>> = [];
     if (message.role === "assistant") {
-      return { role: "assistant", content: message.content } satisfies ModelMessage;
+      if (message.content.trim()) parts.push({ text: message.content });
+      return { role: "model", parts };
     }
 
     const images = (message.attachments ?? []).filter(
-      (a) => a.kind === "image" && typeof a.dataUrl === "string",
+      (attachment) => attachment.kind === "image" && typeof attachment.dataUrl === "string",
     );
-    const texts = (message.attachments ?? []).filter((a) => typeof a.text === "string" && a.text);
+    const texts = (message.attachments ?? []).filter(
+      (attachment) => typeof attachment.text === "string" && attachment.text,
+    );
 
     let text = message.content;
     for (const file of texts) {
-      text += `\n\n--- Attached file: ${file.name} (${file.mime || "text"}) ---\n${file.text!.slice(0, 120_000)}\n--- end of ${file.name} ---`;
+      text += "\n\n--- Attached file: " + file.name + " (" + (file.mime || "text") + ") ---\n" +
+        file.text!.slice(0, 120_000) + "\n--- end of " + file.name + " ---";
+    }
+    if (text.trim() || images.length === 0) {
+      parts.push({ text: text || "Describe this image." });
     }
 
-    if (images.length === 0) {
-      return { role: "user", content: text } satisfies ModelMessage;
+    for (const image of images) {
+      const match = /^data:([^;,]+);base64,([\s\S]+)$/i.exec(image.dataUrl!);
+      if (!match) continue;
+      parts.push({ inlineData: { mimeType: match[1], data: match[2] } });
     }
 
-    return {
-      role: "user",
-      content: [
-        { type: "text", text: text || "Describe this image." },
-        ...images.map((image) => ({ type: "image" as const, image: image.dataUrl! })),
-      ],
-    } satisfies ModelMessage;
-  });
+    return { role: "user", parts };
+  }).filter((message) => message.parts.length > 0);
+}
+
+async function streamGemini(
+  apiKey: string,
+  system: string,
+  messages: WireMessage[],
+  signal: AbortSignal,
+  onText: (text: string) => void,
+) {
+  const response = await fetch(
+    "https://generativelanguage.googleapis.com/v1beta/models/" +
+      GEMINI_MODEL +
+      ":streamGenerateContent?alt=sse",
+    {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        "x-goog-api-key": apiKey,
+      },
+      body: JSON.stringify({
+        systemInstruction: { parts: [{ text: system }] },
+        contents: toGeminiContents(messages),
+        generationConfig: { maxOutputTokens: 8192 },
+      }),
+      signal,
+    },
+  );
+
+  if (!response.ok) {
+    const detail = (await response.text().catch(() => "")).slice(0, 1200);
+    console.error("XOVA Gemini REST response error", response.status, detail);
+    throw new GeminiApiError(response.status, detail);
+  }
+  if (!response.body) throw new GeminiApiError(502, "Gemini returned an empty response stream");
+
+  const reader = response.body.getReader();
+  const decoder = new TextDecoder();
+  let buffer = "";
+
+  const consumeLine = (line: string) => {
+    const trimmed = line.trim();
+    if (!trimmed.startsWith("data:")) return;
+    const payload = trimmed.slice(5).trim();
+    if (!payload || payload === "[DONE]") return;
+
+    let chunk: {
+      error?: GeminiApiErrorShape;
+      candidates?: Array<{ content?: { parts?: Array<{ text?: string }> } }>;
+    };
+    try {
+      chunk = JSON.parse(payload) as typeof chunk;
+    } catch {
+      throw new GeminiApiError(502, "Gemini returned an unreadable stream chunk");
+    }
+
+    if (chunk.error) {
+      throw new GeminiApiError(
+        typeof chunk.error.code === "number" ? chunk.error.code : 502,
+        chunk.error.message ?? chunk.error.status ?? "Gemini stream error",
+      );
+    }
+
+    for (const part of chunk.candidates?.[0]?.content?.parts ?? []) {
+      if (typeof part.text === "string" && part.text) onText(part.text);
+    }
+  };
+
+  try {
+    while (true) {
+      const item = await reader.read();
+      if (item.done) break;
+      buffer += decoder.decode(item.value, { stream: true });
+      const lines = buffer.split("\n");
+      buffer = lines.pop() ?? "";
+      for (const line of lines) consumeLine(line);
+    }
+    buffer += decoder.decode();
+    if (buffer.trim()) consumeLine(buffer);
+  } finally {
+    reader.releaseLock();
+  }
 }
 
 function getLatestSearchQuery(messages: WireMessage[]) {
@@ -215,7 +284,6 @@ export const Route = createFileRoute("/api/chat")({
         }
 
         const mode: ModeId = body.mode ?? "instant";
-        const modelMessages = toModelMessages(messages);
         const local = new AbortController();
         const onAbort = () => local.abort();
         request.signal.addEventListener("abort", onAbort);
@@ -281,40 +349,25 @@ export const Route = createFileRoute("/api/chat")({
               let errorCode: string | null = null;
               let wroteText = false;
 
-              const pump = async (fullStream: AsyncIterable<unknown>) => {
-                for await (const rawPart of fullStream) {
-                  const part = rawPart as { type: string; text?: string; error?: unknown };
-                  if (part.type === "text-delta") {
-                    if (typeof part.text === "string" && part.text) {
-                      wroteText = true;
-                      controller.enqueue(encoder.encode(part.text));
-                    }
-                  } else if (part.type === "error") {
-                    throw part.error;
-                  }
-                }
-              };
-
               try {
                 try {
-                  const google = createGeminiProvider(geminiKey);
-                  await pump(
-                    streamText({
-                      model: google(GEMINI_MODEL),
-                      system,
-                      messages: modelMessages,
-                      abortSignal: local.signal,
-                      maxRetries: 0,
-                    }).fullStream,
-                  );
-                  if (!wroteText) throw new Error("Gemini returned no visible answer");
+                  await streamGemini(geminiKey, system, messages, local.signal, (delta) => {
+                    wroteText = true;
+                    controller.enqueue(encoder.encode(delta));
+                  });
+                  if (!wroteText) throw new GeminiApiError(502, "Gemini returned no visible answer");
                 } catch (error) {
                   if (request.signal.aborted) {
                     controller.close();
                     return;
                   }
-                  console.error("XOVA Gemini stream failed", providerStatus(error) ?? "unknown", error);
-                  errorCode = chatProviderErrorCode(providerStatus(error));
+                  if (error instanceof GeminiApiError) {
+                    console.error("XOVA Gemini REST stream failed", error.statusCode, error.detail);
+                    errorCode = chatProviderErrorCode(error.statusCode, error.detail);
+                  } else {
+                    console.error("XOVA Gemini network/stream failure", error);
+                    errorCode = "err.geminiNetwork";
+                  }
                 }
 
                 const noticeCode = searchNoticeCode(mode === "research", collected.length, searchUnavailable);
@@ -351,11 +404,15 @@ export const Route = createFileRoute("/api/chat")({
           if (request.signal.aborted) {
             return new Response(null, { status: 499 });
           }
-          console.error("XOVA chat failure", providerStatus(error) ?? "", error);
-          return Response.json(
-            { error: chatProviderErrorCode(providerStatus(error)) },
-            { status: 502 },
-          );
+          if (error instanceof GeminiApiError) {
+            console.error("XOVA Gemini REST failure", error.statusCode, error.detail);
+            return Response.json(
+              { error: chatProviderErrorCode(error.statusCode, error.detail) },
+              { status: 502 },
+            );
+          }
+          console.error("XOVA chat failure", error);
+          return Response.json({ error: "err.geminiNetwork" }, { status: 502 });
         }
       },
     },
