@@ -46,13 +46,37 @@ const SOURCES_PREFIX = "\u241E SOURCES ";
 /** Sentinel that ends the text stream with final sources + error code. */
 const TRAILER_PREFIX = "\u241F";
 
-function providerStatus(error: unknown) {
+function providerStatus(error: unknown): number | undefined {
   const value = error as {
-    statusCode?: number;
-    status?: number;
-    lastError?: { statusCode?: number; status?: number };
+    statusCode?: unknown;
+    status?: unknown;
+    response?: { status?: unknown };
+    lastError?: { statusCode?: unknown; status?: unknown; response?: { status?: unknown } };
+    cause?: { statusCode?: unknown; status?: unknown; response?: { status?: unknown } };
   };
-  return value?.statusCode ?? value?.status ?? value?.lastError?.statusCode ?? value?.lastError?.status;
+  const candidates = [
+    value?.statusCode,
+    value?.status,
+    value?.response?.status,
+    value?.lastError?.statusCode,
+    value?.lastError?.status,
+    value?.lastError?.response?.status,
+    value?.cause?.statusCode,
+    value?.cause?.status,
+    value?.cause?.response?.status,
+  ];
+  const found = candidates.find((candidate): candidate is number =>
+    typeof candidate === "number" && Number.isInteger(candidate),
+  );
+  if (found !== undefined) return found;
+
+  const message = error instanceof Error ? error.message : String(error ?? "");
+  const match = message.match(/\\b(400|401|403|404|429|500|502|503|504)\\b/);
+  return match ? Number(match[1]) : undefined;
+}
+
+function shouldTryFallbackModel(status: number | undefined) {
+  return status === undefined || status === 404 || (status !== undefined && status >= 500);
 }
 
 async function authenticate(request: Request) {
@@ -316,25 +340,44 @@ export const Route = createFileRoute("/api/chat")({
               };
 
               try {
-                try {
-                  const google = createGeminiProvider(geminiKey);
-                  await pump(
-                    streamText({
-                      model: google(GEMINI_MODEL),
-                      system,
-                      messages: modelMessages,
-                      abortSignal: local.signal,
-                      maxRetries: 0,
-                    }).fullStream,
-                  );
-                  if (!wroteText) throw new Error("Gemini returned no visible answer");
-                } catch (error) {
-                  if (request.signal.aborted) {
-                    controller.close();
-                    return;
+                const google = createGeminiProvider(geminiKey);
+                const chatModels = [GEMINI_MODEL, "gemini-3.7-flash", "gemini-3.5-flash"] as const;
+                let lastProviderError: unknown = null;
+
+                for (let modelIndex = 0; modelIndex < chatModels.length; modelIndex += 1) {
+                  const modelName = chatModels[modelIndex]!;
+                  try {
+                    await pump(
+                      streamText({
+                        model: google(modelName),
+                        system,
+                        messages: modelMessages,
+                        abortSignal: local.signal,
+                        maxRetries: 1,
+                      }).fullStream,
+                    );
+                    if (!wroteText) throw new Error("Gemini returned no visible answer");
+                    lastProviderError = null;
+                    break;
+                  } catch (error) {
+                    if (request.signal.aborted) {
+                      controller.close();
+                      return;
+                    }
+                    lastProviderError = error;
+                    const status = providerStatus(error);
+                    if (!wroteText && modelIndex < chatModels.length - 1 && shouldTryFallbackModel(status)) {
+                      console.warn("XOVA Gemini model failed; trying fallback", modelName, status ?? "unknown");
+                      continue;
+                    }
+                    break;
                   }
-                  console.error("XOVA Gemini stream error", providerStatus(error) ?? "", error);
-                  errorCode = chatProviderErrorCode("gemini", providerStatus(error));
+                }
+
+                if (lastProviderError || !wroteText) {
+                  const status = providerStatus(lastProviderError);
+                  console.error("XOVA Gemini stream failed", status ?? "unknown", lastProviderError);
+                  errorCode = chatProviderErrorCode(status);
                 }
 
                 let generatedTitle: string | null = null;
@@ -343,7 +386,7 @@ export const Route = createFileRoute("/api/chat")({
                   generatedTitle = await generateConversationTitle(messages, geminiKey);
                 }
 
-                const noticeCode = searchNoticeCode(mode, collected.length, searchUnavailable);
+                const noticeCode = searchNoticeCode(mode === "research", collected.length, searchUnavailable);
                 controller.enqueue(
                   encoder.encode(
                     `${TRAILER_PREFIX}${JSON.stringify({
@@ -380,7 +423,7 @@ export const Route = createFileRoute("/api/chat")({
           }
           console.error("XOVA chat failure", providerStatus(error) ?? "", error);
           return Response.json(
-            { error: chatProviderErrorCode("gemini", providerStatus(error)) },
+            { error: chatProviderErrorCode(providerStatus(error)) },
             { status: 502 },
           );
         }
