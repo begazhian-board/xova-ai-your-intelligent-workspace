@@ -181,6 +181,7 @@ const en: Dict = {
   "err.generic": "Something went wrong. Please try again.",
   "err.network": "Connection lost. Check your internet and retry.",
   "err.unavailable": "XOVA is temporarily unavailable. Please try again shortly.",
+  "err.geminiConfig": "Gemini could not be reached. Check that the Gemini API key in Cloudflare is valid.",
   "err.rate": "Too many requests right now. Wait a moment and retry.",
   "err.auth": "Your session expired. Please sign in again.",
   "err.upload": "That file couldn't be attached.",
@@ -196,9 +197,9 @@ const en: Dict = {
   "err.searchOffline":
     "Live web search isn't connected, so XOVA answered from its own knowledge without citations.",
   "err.searchFallbackUnavailable":
-    "Google Search could not be reached, so this reply has no verified web sources.",
+    "Live web search could not be reached, so this reply has no verified web sources.",
   "err.searchNoSources":
-    "The answer is available, but Google Search returned no verifiable source links for this request.",
+    "The answer is available, but the search service returned no verifiable sources for this request.",
   "err.gatewayCredits":
     "Gemini is unavailable and the backup AI service has no credits available. Restore Gemini access or add workspace AI credits.",
   "err.gatewayConfig": "Gemini and the backup AI service could not be reached. Check the server configuration.",
@@ -392,6 +393,7 @@ const ar: Dict = {
   "err.generic": "حدث خطأ ما. حاول مرة أخرى.",
   "err.network": "انقطع الاتصال. تحقق من الإنترنت وأعد المحاولة.",
   "err.unavailable": "XOVA غير متاح مؤقتًا. حاول بعد قليل.",
+  "err.geminiConfig": "تعذّر الوصول إلى Gemini. تأكد من صحة مفتاح Gemini API في إعدادات Cloudflare.",
   "err.rate": "طلبات كثيرة الآن. انتظر لحظة وأعد المحاولة.",
   "err.auth": "انتهت الجلسة. سجّل الدخول من جديد.",
   "err.upload": "تعذّر إرفاق هذا الملف.",
@@ -405,8 +407,8 @@ const ar: Dict = {
   "err.imageRate": "وصلت إلى حد الصور لهذه الساعة. حاول لاحقًا.",
   "err.imageBlocked": "مقدرناش نعمل الصورة دي دلوقتي. جرّب تاني أو غيّر الوصف شوية.",
   "err.searchOffline": "البحث المباشر على الويب غير موصول، لذلك أجاب XOVA من معرفته دون مصادر.",
-  "err.searchFallbackUnavailable": "تعذّر الوصول إلى بحث Google، لذلك لا تتضمن هذه الإجابة مصادر ويب موثقة.",
-  "err.searchNoSources": "الإجابة متاحة، لكن بحث Google لم يُرجع روابط مصادر يمكن التحقق منها لهذا الطلب.",
+  "err.searchFallbackUnavailable": "تعذّر الوصول إلى خدمة البحث المباشر، لذلك لا تتضمن هذه الإجابة مصادر ويب موثقة.",
+  "err.searchNoSources": "الإجابة متاحة، لكن خدمة البحث لم تُرجع مصادر يمكن التحقق منها لهذا الطلب.",
   "err.gatewayCredits": "Gemini غير متاح وخدمة الذكاء الاصطناعي الاحتياطية لا تملك رصيدًا متاحًا. أعد تفعيل Gemini أو أضف رصيد مساحة العمل.",
   "err.gatewayConfig": "تعذّر الوصول إلى Gemini والخدمة الاحتياطية. تحقق من إعدادات الخادم.",
   "err.gatewayBlocked": "Gemini والخدمة الاحتياطية محجوبان حاليًا عن مساحة العمل هذه.",
