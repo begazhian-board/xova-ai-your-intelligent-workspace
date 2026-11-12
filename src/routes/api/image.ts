@@ -1,7 +1,5 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { createClient } from "@supabase/supabase-js";
-import { generateText } from "ai";
-import { createLovableAiGatewayProvider } from "@/lib/ai-gateway.server";
 
 interface WireBody {
   prompt?: string;
@@ -9,11 +7,11 @@ interface WireBody {
   quality?: "standard" | "premium";
 }
 
-const IMAGE_MODEL = "openai/gpt-image-2.5-sunburst";
-const TRANSLATION_MODEL = "google/gemini-3.8-flash";
-const SIZES = { "1:1": "1024x1024", "3:2": "1536x1024", "2:3": "1024x1536" } as const;
 const ASPECTS = new Set(["1:1", "3:2", "2:3"]);
+
+/** Generations allowed per user per rolling hour. */
 const RATE_LIMIT = 15;
+/** One year — the bucket is private, the signed token is the only way in. */
 const SIGNED_URL_TTL = 60 * 60 * 24 * 365;
 
 async function authenticate(request: Request) {
@@ -31,29 +29,18 @@ async function authenticate(request: Request) {
   return data.user;
 }
 
-const TRANSLATE_INSTRUCTION =
-  "Translate this image prompt into clear, natural English for an image-generation model. " +
-  "Preserve the user's exact subject, objects, actions, composition, style, colors, lighting, " +
-  "camera angle, and all constraints. Do not add new objects or creative details. " +
-  "Return only the translated prompt.";
-
-async function translateToEnglish(text: string, apiKey: string): Promise<string> {
+/** Free, keyless translation to English; returns the original text on any failure. */
+async function translateToEnglish(text: string) {
   if (!/[^\x00-\x7F]/.test(text)) return text;
-
   try {
-    const gateway = createLovableAiGatewayProvider(apiKey);
-    const result = await generateText({
-      model: gateway(TRANSLATION_MODEL),
-      system: TRANSLATE_INSTRUCTION,
-      prompt: text,
-      maxOutputTokens: 1200,
-      temperature: 0.1,
-      maxRetries: 0,
-    });
-    return result.text.trim() || text;
-  } catch (error) {
-    // Translation is an enhancement, never a reason to block image generation.
-    console.error("XOVA image prompt translation failed; using the original prompt", error);
+    const res = await fetch(
+      `https://translate.googleapis.com/translate_a/single?client=gtx&sl=auto&tl=en&dt=t&q=${encodeURIComponent(text)}`,
+    );
+    if (!res.ok) return text;
+    const json = (await res.json()) as Array<Array<[string]>>;
+    const out = (json[0] ?? []).map((seg) => seg[0]).join("").trim();
+    return out || text;
+  } catch {
     return text;
   }
 }
@@ -65,19 +52,15 @@ function base64ToBytes(base64: string) {
   return bytes;
 }
 
-function gatewayErrorCode(status: number | undefined) {
-  if (status === 402) return "err.imageCredits";
-  if (status === 401 || status === 403) return "err.imageConfig";
-  if (status === 429) return "err.rate";
-  return "err.imageFailed";
-}
-
 export const Route = createFileRoute("/api/image")({
   server: {
     handlers: {
       POST: async ({ request }) => {
         const user = await authenticate(request);
         if (!user) return Response.json({ error: "err.auth" }, { status: 401 });
+
+        const apiKey = process.env["LOVABLE_API_KEY"];
+        if (!apiKey) return Response.json({ error: "err.unavailable" }, { status: 500 });
 
         let body: WireBody;
         try {
@@ -90,111 +73,173 @@ export const Route = createFileRoute("/api/image")({
         if (!prompt) return Response.json({ error: "err.generic" }, { status: 400 });
         if (prompt.length > 2000) return Response.json({ error: "err.generic" }, { status: 400 });
 
-        const apiKey = process.env["LOVABLE_API_KEY"];
-        if (!apiKey) {
-          console.error("XOVA image generation is missing LOVABLE_API_KEY");
-          return Response.json({ error: "err.imageConfig" }, { status: 503 });
-        }
-
-        const supabaseUrl = process.env["SUPABASE_URL"];
-        const supabaseServiceKey = process.env["SUPABASE_SERVICE_ROLE_KEY"];
-        if (!supabaseUrl || !supabaseServiceKey) {
-          console.error("XOVA image generation is missing Supabase server credentials");
-          return Response.json({ error: "err.imageStorage" }, { status: 503 });
-        }
-
-        const aspect: keyof typeof SIZES =
-          body.aspect && ASPECTS.has(body.aspect) ? body.aspect : "1:1";
+        const aspect = body.aspect && ASPECTS.has(body.aspect) ? body.aspect : "1:1";
         const quality = body.quality === "premium" ? "premium" : "standard";
 
+        const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+
+        // Rate limit per user, rolling hour.
+        const since = new Date(Date.now() - 60 * 60 * 1000).toISOString();
+        const { count } = await supabaseAdmin
+          .from("generated_images")
+          .select("id", { count: "exact", head: true })
+          .eq("user_id", user.id)
+          .gte("created_at", since);
+        if ((count ?? 0) >= RATE_LIMIT) {
+          return Response.json({ error: "err.imageRate" }, { status: 429 });
+        }
+
         try {
-          const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+          let bytes: Uint8Array | null = null;
+          let lastStatus: number | undefined;
+          // Faithful English translation of the user's own words — nothing added.
+          const english = await translateToEnglish(prompt);
 
-          const since = new Date(Date.now() - 60 * 60 * 1000).toISOString();
-          const { count, error: countError } = await supabaseAdmin
-            .from("generated_images")
-            .select("id", { count: "exact", head: true })
-            .eq("user_id", user.id)
-            .gte("created_at", since);
-
-          if (countError) {
-            console.error("XOVA image rate-limit query failed", countError.message);
-            return Response.json({ error: "err.imageStorage" }, { status: 503 });
+          // 1) Primary: Lovable AI Gateway.
+          if (apiKey) {
+            try {
+              const res = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
+                method: "POST",
+                headers: {
+                  "Content-Type": "application/json",
+                  "Lovable-API-Key": apiKey,
+                  "X-Lovable-AIG-SDK": "fetch",
+                },
+                body: JSON.stringify({
+                  model:
+                    quality === "premium"
+                      ? "google/gemini-3-pro-image"
+                      : "google/gemini-3.1-flash-image",
+                  messages: [{ role: "user", content: english }],
+                  modalities: ["image", "text"],
+                  image_config: { aspect_ratio: aspect },
+                }),
+              });
+              if (!res.ok) {
+                lastStatus = res.status;
+                console.error("XOVA image gateway", res.status, (await res.text()).slice(0, 300));
+              } else {
+                const json = (await res.json()) as {
+                  choices?: Array<{ message?: { images?: Array<{ image_url?: { url?: string } }> } }>;
+                };
+                const dataUrl = json.choices?.[0]?.message?.images?.[0]?.image_url?.url;
+                if (dataUrl?.startsWith("data:")) {
+                  bytes = base64ToBytes(dataUrl.slice(dataUrl.indexOf(",") + 1));
+                } else if (dataUrl) {
+                  const downloaded = await fetch(dataUrl);
+                  if (downloaded.ok) bytes = new Uint8Array(await downloaded.arrayBuffer());
+                }
+              }
+            } catch (error) {
+              console.error("XOVA image gateway error", error);
+            }
           }
-          if ((count ?? 0) >= RATE_LIMIT) {
-            return Response.json({ error: "err.imageRate" }, { status: 429 });
+
+          // 2) Hugging Face (only when HUGGINGFACE_API_KEY is set).
+          const hfKey = process.env["HUGGINGFACE_API_KEY"];
+          if (!bytes && hfKey) {
+            try {
+              const [width, height] =
+                aspect === "3:2" ? [1216, 832] : aspect === "2:3" ? [832, 1216] : [1024, 1024];
+              const res = await fetch(
+                "https://router.huggingface.co/hf-inference/models/black-forest-labs/FLUX.1-schnell",
+                {
+                  method: "POST",
+                  headers: {
+                    Authorization: `Bearer ${hfKey}`,
+                    "Content-Type": "application/json",
+                    Accept: "image/png",
+                  },
+                  body: JSON.stringify({ inputs: english, parameters: { width, height } }),
+                },
+              );
+              const type = res.headers.get("content-type") ?? "";
+              if (res.ok && type.startsWith("image/")) {
+                bytes = new Uint8Array(await res.arrayBuffer());
+              } else {
+                lastStatus = res.status;
+                console.error("XOVA image hf", res.status, (await res.text()).slice(0, 200));
+              }
+            } catch (error) {
+              console.error("XOVA image hf error", error);
+            }
           }
 
-          // Translate Arabic prompts when possible; if translation is unavailable, the
-          // original prompt still goes to the multilingual image model.
-          const imagePrompt = await translateToEnglish(prompt, apiKey);
+          // 3) Gemini key directly.
+          const geminiKey = process.env["GEMINI_API_KEY"];
+          if (!bytes && geminiKey) {
+            try {
+              const res = await fetch(
+                "https://generativelanguage.googleapis.com/v1beta/models/gemini-3.1-flash-image:generateContent",
+                {
+                  method: "POST",
+                  headers: { "Content-Type": "application/json", "x-goog-api-key": geminiKey },
+                  body: JSON.stringify({
+                    contents: [{ parts: [{ text: english }] }],
+                    generationConfig: {
+                      responseModalities: ["IMAGE", "TEXT"],
+                      imageConfig: { aspectRatio: aspect },
+                    },
+                  }),
+                },
+              );
+              if (res.ok) {
+                const json = (await res.json()) as {
+                  candidates?: Array<{ content?: { parts?: Array<{ inlineData?: { data?: string } }> } }>;
+                };
+                const data = json.candidates?.[0]?.content?.parts?.find((p) => p.inlineData?.data)
+                  ?.inlineData?.data;
+                if (data) bytes = base64ToBytes(data);
+              } else {
+                console.error("XOVA image gemini", res.status);
+              }
+            } catch (error) {
+              console.error("XOVA image gemini error", error);
+            }
+          }
 
-          const response = await fetch("https://ai.gateway.lovable.dev/v1/images/generations", {
-            method: "POST",
-            headers: {
-              "Content-Type": "application/json",
-              "Lovable-API-Key": apiKey,
-              "X-Lovable-AIG-SDK": "fetch",
-            },
-            body: JSON.stringify({
-              model: IMAGE_MODEL,
-              prompt: imagePrompt,
-              size: SIZES[aspect],
-              quality: quality === "premium" ? "high" : "medium",
-              n: 1,
-            }),
-          });
+          // 4) Last resort: Pollinations with the exact translated prompt (no extra text).
+          if (!bytes) {
+            try {
+              const [width, height] =
+                aspect === "3:2" ? [1024, 680] : aspect === "2:3" ? [680, 1024] : [1024, 1024];
+              const seed = Math.floor(Math.random() * 1000000);
+              const res = await fetch(
+                `https://image.pollinations.ai/prompt/${encodeURIComponent(english)}?width=${width}&height=${height}&nologo=true&seed=${seed}`,
+              );
+              const type = res.headers.get("content-type") ?? "";
+              if (res.ok && type.startsWith("image/")) {
+                const buf = new Uint8Array(await res.arrayBuffer());
+                if (buf.length > 1000) bytes = buf;
+              }
+            } catch (error) {
+              console.error("XOVA image pollinations error", error);
+            }
+          }
 
-          if (!response.ok) {
-            const details = (await response.text()).slice(0, 500);
-            console.error("XOVA Lovable image gateway error", response.status, details);
+          if (!bytes) {
             return Response.json(
-              { error: gatewayErrorCode(response.status) },
-              { status: response.status === 429 ? 429 : 502 },
+              { error: lastStatus === 429 ? "err.rate" : "err.imageFailed" },
+              { status: 502 },
             );
           }
 
-          const payload = (await response.json()) as {
-            data?: Array<{ b64_json?: string; url?: string }>;
-          };
-          const item = payload.data?.[0];
-          let bytes: Uint8Array | null = null;
-
-          if (item?.b64_json) {
-            bytes = base64ToBytes(item.b64_json);
-          } else if (item?.url) {
-            const download = await fetch(item.url);
-            if (download.ok) bytes = new Uint8Array(await download.arrayBuffer());
-            else console.error("XOVA generated image download failed", download.status);
-          }
-
-          if (!bytes?.length) {
-            console.error("XOVA image gateway returned no image data");
-            return Response.json({ error: "err.imageFailed" }, { status: 502 });
-          }
-
           const isJpeg = bytes[0] === 0xff && bytes[1] === 0xd8;
-          const path =
-            user.id + "/" + crypto.randomUUID() + (isJpeg ? ".jpg" : ".png");
+          const path = `${user.id}/${crypto.randomUUID()}.${isJpeg ? "jpg" : "png"}`;
           const { error: uploadError } = await supabaseAdmin.storage
             .from("xova-images")
-            .upload(path, bytes, {
-              contentType: isJpeg ? "image/jpeg" : "image/png",
-              upsert: false,
-            });
-
+            .upload(path, bytes, { contentType: isJpeg ? "image/jpeg" : "image/png", upsert: false });
           if (uploadError) {
-            console.error("XOVA image upload failed", uploadError.message);
-            return Response.json({ error: "err.imageStorage" }, { status: 502 });
+            console.error("XOVA image upload", uploadError.message);
+            return Response.json({ error: "err.imageFailed" }, { status: 502 });
           }
 
           const { data: signed, error: signError } = await supabaseAdmin.storage
             .from("xova-images")
             .createSignedUrl(path, SIGNED_URL_TTL);
-
           if (signError || !signed?.signedUrl) {
-            console.error("XOVA image URL signing failed", signError?.message);
-            return Response.json({ error: "err.imageStorage" }, { status: 502 });
+            console.error("XOVA image sign", signError?.message);
+            return Response.json({ error: "err.imageFailed" }, { status: 502 });
           }
 
           const { data: row, error: insertError } = await supabaseAdmin
@@ -209,10 +254,9 @@ export const Route = createFileRoute("/api/image")({
             })
             .select("id, created_at")
             .single();
-
           if (insertError) {
-            console.error("XOVA image record insert failed", insertError.message);
-            return Response.json({ error: "err.imageStorage" }, { status: 502 });
+            console.error("XOVA image record", insertError.message);
+            return Response.json({ error: "err.imageFailed" }, { status: 502 });
           }
 
           return Response.json({
@@ -223,7 +267,7 @@ export const Route = createFileRoute("/api/image")({
             quality,
           });
         } catch (error) {
-          console.error("XOVA image route failed", error);
+          console.error("XOVA image error", error);
           return Response.json({ error: "err.imageFailed" }, { status: 502 });
         }
       },
