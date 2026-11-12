@@ -224,7 +224,6 @@ export function useConversation(userId: string | undefined, config: AiConfig) {
             responseStyle: configRef.current.responseStyle,
             language: configRef.current.language,
             preferredName: configRef.current.displayName ?? null,
-            generateTitle,
             messages: history.map((message) => ({
               role: message.role,
               content: message.content,
@@ -287,7 +286,6 @@ export function useConversation(userId: string | undefined, config: AiConfig) {
         }
 
         let streamError: string | null = null;
-        let generatedTitle: string | null = null;
         const trailerAt = text.indexOf(TRAILER_PREFIX);
         if (trailerAt !== -1) {
           try {
@@ -295,13 +293,10 @@ export function useConversation(userId: string | undefined, config: AiConfig) {
               sources?: SourceRef[];
               error?: string | null;
               notice?: string | null;
-              title?: string | null;
             };
             if (Array.isArray(trailer.sources)) sources = trailer.sources;
             streamError = trailer.error ?? null;
             streamNotice = trailer.notice ?? null;
-            generatedTitle =
-              typeof trailer.title === "string" ? trailer.title.trim().slice(0, 60) : null;
           } catch {
             /* ignore malformed trailer */
           }
@@ -320,18 +315,40 @@ export function useConversation(userId: string | undefined, config: AiConfig) {
           current.map((message) => (message.id === assistantId ? finalMessage : message)),
         );
         await persist(finalMessage);
-        if (generatedTitle && activeIdRef.current) {
+        if (generateTitle && activeIdRef.current) {
           const conversationId = activeIdRef.current;
-          setConversations((list) =>
-            list.map((conversation) =>
-              conversation.id === conversationId ? { ...conversation, title: generatedTitle } : conversation,
-            ),
-          );
-          const { error: titleError } = await supabase
-            .from("conversations")
-            .update({ title: generatedTitle })
-            .eq("id", conversationId);
-          if (titleError) console.error("conversation title save", titleError.message);
+          const titleMessages = history
+            .filter((message) => message.role === "user" || message.role === "assistant")
+            .map((message) => ({ role: message.role, content: message.content }));
+          // Keep semantic title generation off the visible chat response path.
+          void fetch("/api/title", {
+            method: "POST",
+            headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
+            body: JSON.stringify({ messages: titleMessages }),
+          })
+            .then(async (titleResponse) => {
+              if (!titleResponse.ok) return null;
+              const payload = (await titleResponse.json()) as { title?: string | null };
+              return typeof payload.title === "string" ? payload.title.trim().slice(0, 60) : null;
+            })
+            .then(async (title) => {
+              if (!title) return;
+              const { error: titleError } = await supabase
+                .from("conversations")
+                .update({ title })
+                .eq("id", conversationId)
+                .eq("user_id", userId);
+              if (titleError) {
+                console.error("conversation title save", titleError.message);
+                return;
+              }
+              setConversations((list) =>
+                list.map((conversation) =>
+                  conversation.id === conversationId ? { ...conversation, title } : conversation,
+                ),
+              );
+            })
+            .catch((error) => console.error("conversation title generation", error));
         }
         if (streamError) setError(streamError);
       } catch (caught) {
@@ -354,7 +371,7 @@ export function useConversation(userId: string | undefined, config: AiConfig) {
         setStatus("idle");
       }
     },
-    [persist],
+    [persist, userId],
   );
 
   const send = useCallback(
