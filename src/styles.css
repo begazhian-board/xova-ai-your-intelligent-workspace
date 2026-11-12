@@ -1226,3 +1226,29 @@
     border-radius: 0;
   }
 }
+
+
+/* Light mode: a small contrast lift for controls on the glass surfaces. */
+:root:not(.dark) .xv-shell button:not([class*="bg-brand"]):not(.xv-composer button):not(.xv-sidebar-new-chat),
+:root:not(.dark) .xv-studio-shell button:not([class*="bg-brand"]):not(.xv-studio-generate) {
+  border-color: color-mix(in oklab, var(--foreground) 19%, var(--border));
+  background-color: color-mix(in oklab, var(--foreground) 4%, var(--surface));
+}
+
+:root:not(.dark) .xv-shell button:not([class*="bg-brand"]):not(.xv-composer button):not(.xv-sidebar-new-chat):hover:not(:disabled),
+:root:not(.dark) .xv-studio-shell button:not([class*="bg-brand"]):not(.xv-studio-generate):hover:not(:disabled) {
+  border-color: color-mix(in oklab, var(--foreground) 25%, var(--border));
+  background-color: color-mix(in oklab, var(--foreground) 6%, var(--surface));
+}
+
+/* Give the larger glass prompt cards a touch more definition without making them dark. */
+:root:not(.dark) .xv-shell .xv-tool-card {
+  border-color: oklch(0.76 0.045 270 / 46%);
+  background: linear-gradient(145deg, oklch(0.985 0.012 265 / 82%), oklch(0.915 0.04 270 / 66%));
+}
+
+/* Keep the composer toolbar untouched: its buttons already have their own compact styling. */
+:root:not(.dark) .xv-composer button {
+  border-color: transparent;
+  background-color: transparent;
+}
