@@ -157,7 +157,7 @@ function AuthPage() {
 
         <button
           type="button"
-          onClick={() => setMode(mode === "signin" ? "signup" : "signin")
+          onClick={() => setMode(mode === "signin" ? "signup" : "signin")}
           className="xv-focus mt-5 w-full rounded-lg py-1 text-xs text-muted-foreground hover:text-foreground"
         >
           {mode === "signin" ? t("auth.toSignUp") : t("auth.toSignIn")}
