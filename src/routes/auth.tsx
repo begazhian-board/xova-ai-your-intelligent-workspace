@@ -36,7 +36,6 @@ function AuthPage() {
   const [password, setPassword] = useState("");
   const [name, setName] = useState("");
   const [busy, setBusy] = useState(false);
-  const [canResendConfirmation, setCanResendConfirmation] = useState(false);
   const [resending, setResending] = useState(false);
 
   useEffect(() => {
@@ -58,7 +57,6 @@ function AuthPage() {
         });
         if (error) throw error;
         toast.success(t("auth.checkEmail"));
-        setCanResendConfirmation(true);
         setMode("signin");
       } else {
         const { error } = await supabase.auth.signInWithPassword({ email, password });
@@ -116,10 +114,7 @@ function AuthPage() {
               required
               autoComplete="email"
               value={email}
-              onChange={(e) => {
-                setEmail(e.target.value);
-                setCanResendConfirmation(false);
-              }}
+              onChange={(e) => setEmail(e.target.value)}
               className={inputClass}
             />
           </label>
@@ -144,7 +139,7 @@ function AuthPage() {
           </button>
         </form>
 
-        {mode === "signin" && canResendConfirmation && (
+        {mode === "signin" && email.trim() && (
           <button
             type="button"
             onClick={() => void resendConfirmation()}
