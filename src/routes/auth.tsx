@@ -36,6 +36,8 @@ function AuthPage() {
   const [password, setPassword] = useState("");
   const [name, setName] = useState("");
   const [busy, setBusy] = useState(false);
+  const [canResendConfirmation, setCanResendConfirmation] = useState(false);
+  const [resending, setResending] = useState(false);
 
   useEffect(() => {
     if (!loading && session) void navigate({ to: "/" });
@@ -56,6 +58,7 @@ function AuthPage() {
         });
         if (error) throw error;
         toast.success(t("auth.checkEmail"));
+        setCanResendConfirmation(true);
         setMode("signin");
       } else {
         const { error } = await supabase.auth.signInWithPassword({ email, password });
@@ -66,6 +69,26 @@ function AuthPage() {
       toast.error(caught instanceof Error ? caught.message : t("err.generic"));
     } finally {
       setBusy(false);
+    }
+  };
+
+
+  const resendConfirmation = async () => {
+    const targetEmail = email.trim();
+    if (!targetEmail || resending) return;
+    setResending(true);
+    try {
+      const { error } = await supabase.auth.resend({
+        type: "signup",
+        email: targetEmail,
+        options: { emailRedirectTo: `${window.location.origin}/` },
+      });
+      if (error) throw error;
+      toast.success(t("auth.resendSent"));
+    } catch (caught) {
+      toast.error(caught instanceof Error ? caught.message : t("err.generic"));
+    } finally {
+      setResending(false);
     }
   };
 
@@ -93,7 +116,10 @@ function AuthPage() {
               required
               autoComplete="email"
               value={email}
-              onChange={(e) => setEmail(e.target.value)}
+              onChange={(e) => {
+                setEmail(e.target.value);
+                setCanResendConfirmation(false);
+              }}
               className={inputClass}
             />
           </label>
@@ -118,9 +144,20 @@ function AuthPage() {
           </button>
         </form>
 
+        {mode === "signin" && canResendConfirmation && (
+          <button
+            type="button"
+            onClick={() => void resendConfirmation()}
+            disabled={resending || !email.trim()}
+            className="xv-focus mt-3 w-full rounded-xl border border-brand/20 bg-brand/5 px-3 py-2.5 text-xs font-medium text-brand transition-colors hover:bg-brand/10 disabled:opacity-50"
+          >
+            {resending ? t("state.processing") : t("auth.resendConfirmation")}
+          </button>
+        )}
+
         <button
           type="button"
-          onClick={() => setMode(mode === "signin" ? "signup" : "signin")}
+          onClick={() => setMode(mode === "signin" ? "signup" : "signin")
           className="xv-focus mt-5 w-full rounded-lg py-1 text-xs text-muted-foreground hover:text-foreground"
         >
           {mode === "signin" ? t("auth.toSignUp") : t("auth.toSignIn")}
