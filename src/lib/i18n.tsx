@@ -193,6 +193,8 @@ const en: Dict = {
   "auth.toSignIn": "Already have an account? Sign in",
   "auth.google": "Continue with Google",
   "auth.checkEmail": "Check your inbox to confirm your email, then sign in.",
+  "auth.resendConfirmation": "Resend confirmation email",
+  "auth.resendSent": "A new confirmation email was requested.",
   "auth.or": "or",
 
   "err.generic": "Something went wrong. Please try again.",
@@ -439,6 +441,8 @@ const ar: Dict = {
   "auth.toSignIn": "لديك حساب؟ سجّل الدخول",
   "auth.google": "المتابعة بحساب Google",
   "auth.checkEmail": "تحقق من بريدك لتأكيد الحساب ثم سجّل الدخول.",
+  "auth.resendConfirmation": "إعادة إرسال رسالة التأكيد",
+  "auth.resendSent": "تم طلب إعادة إرسال رسالة التأكيد.");
   "auth.or": "أو",
 
   "err.generic": "حدث خطأ ما. حاول مرة أخرى.",
