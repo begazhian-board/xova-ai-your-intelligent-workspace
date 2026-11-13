@@ -442,7 +442,7 @@ const ar: Dict = {
   "auth.google": "المتابعة بحساب Google",
   "auth.checkEmail": "تحقق من بريدك لتأكيد الحساب ثم سجّل الدخول.",
   "auth.resendConfirmation": "إعادة إرسال رسالة التأكيد",
-  "auth.resendSent": "تم طلب إعادة إرسال رسالة التأكيد.");
+  "auth.resendSent": "تم طلب إعادة إرسال رسالة التأكيد.",
   "auth.or": "أو",
 
   "err.generic": "حدث خطأ ما. حاول مرة أخرى.",
