@@ -29,8 +29,8 @@ export function Welcome({
   const preferredName = displayName?.trim();
   const greeting = preferredName
     ? lang === "ar"
-      ? \`أهلاً يا \${preferredName}، نبدأ بإيه النهارده؟\`
-      : \`Welcome, \${preferredName}. What shall we work on?\`
+      ? "أهلاً يا " + preferredName + "، نبدأ بإيه النهارده؟"
+      : "Welcome, " + preferredName + ". What shall we work on?"
     : t("welcome.greeting");
 
   const recentConversations = conversations.slice(0, 4);
