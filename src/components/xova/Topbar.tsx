@@ -10,9 +10,10 @@ interface TopbarProps {
   onModeChange: (mode: ModeId) => void;
   onOpenDrawer: () => void;
   onNewChat: () => void;
+  deviceLayout: "mobile" | "tablet" | "desktop";
 }
 
-export function Topbar({ title, mode, onModeChange, onOpenDrawer, onNewChat }: TopbarProps) {
+export function Topbar({ title, mode, onModeChange, onOpenDrawer, onNewChat, deviceLayout }: TopbarProps) {
   const { t, dir } = useI18n();
 
   return (
@@ -21,7 +22,7 @@ export function Topbar({ title, mode, onModeChange, onOpenDrawer, onNewChat }: T
         type="button"
         onClick={onOpenDrawer}
         aria-label={t("nav.menu")}
-        className="xv-focus grid h-9 w-9 shrink-0 place-items-center rounded-xl border border-border/70 bg-surface/70 text-muted-foreground hover:bg-hover hover:text-foreground md:hidden"
+        className={`xv-focus grid h-9 w-9 shrink-0 place-items-center rounded-xl border border-border/70 bg-surface/70 text-muted-foreground hover:bg-hover hover:text-foreground ${deviceLayout === "mobile" ? "" : "md:hidden"}`}
       >
         <Menu className="h-4.5 w-4.5" />
       </button>
