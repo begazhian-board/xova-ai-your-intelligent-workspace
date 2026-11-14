@@ -83,6 +83,14 @@ function Banner({
   );
 }
 
+type DeviceLayout = "mobile" | "tablet" | "desktop";
+
+function getDeviceLayout(width: number): DeviceLayout {
+  if (width < 768) return "mobile";
+  if (width < 1280) return "tablet";
+  return "desktop";
+}
+
 function Workspace() {
   const { t, dir } = useI18n();
   const navigate = useNavigate();
@@ -91,6 +99,7 @@ function Workspace() {
   const { profile, loading: profileLoading, update } = useProfile(user?.id);
 
   const [collapsed, setCollapsed] = useState(false);
+  const [deviceLayout, setDeviceLayout] = useState<DeviceLayout>("desktop");
   const [drawer, setDrawer] = useState(false);
   const [settingsOpen, setSettingsOpen] = useState(false);
   const [renameOpen, setRenameOpen] = useState(false);
@@ -103,6 +112,22 @@ function Workspace() {
 
   const scrollRef = useRef<HTMLDivElement>(null);
   const pinnedRef = useRef(true);
+  const previousLayoutRef = useRef<DeviceLayout | null>(null);
+
+  useEffect(() => {
+    const syncDeviceLayout = () => {
+      const nextLayout = getDeviceLayout(window.innerWidth);
+      setDeviceLayout(nextLayout);
+      if (previousLayoutRef.current !== nextLayout) {
+        setCollapsed(nextLayout === "tablet");
+        previousLayoutRef.current = nextLayout;
+      }
+    };
+
+    syncDeviceLayout();
+    window.addEventListener("resize", syncDeviceLayout);
+    return () => window.removeEventListener("resize", syncDeviceLayout);
+  }, []);
 
   useEffect(() => {
     if (!authLoading && !user) void navigate({ to: "/auth", replace: true });
@@ -247,7 +272,7 @@ function Workspace() {
   );
 
   return (
-    <div dir="ltr" className="xv-shell relative isolate flex h-dvh overflow-hidden text-foreground">
+    <div dir="ltr" data-device-layout={deviceLayout} className="xv-shell relative isolate flex h-dvh overflow-hidden text-foreground">
       <AmbientWaves />
       <div className="xv-left-rail relative z-10 hidden md:flex">{sidebar()}</div>
 
