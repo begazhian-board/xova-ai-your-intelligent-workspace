@@ -31,6 +31,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { useI18n } from "@/lib/i18n";
 import { cn } from "@/lib/utils";
 import { downloadWatermarkedImage } from "@/lib/image-watermark";
+import { blobToDataUrl, renderImageWithText } from "@/lib/image-text-overlay";
 
 export const Route = createFileRoute("/images")({
   head: () => ({
@@ -55,10 +56,12 @@ export const Route = createFileRoute("/images")({
 
 type Aspect = "1:1" | "3:2" | "2:3";
 type Quality = "standard" | "premium";
+const OVERLAY_MARKER = "\\n\\n[XOVA_TEXT_OVERLAY]\\n";
 
 interface ImageRow {
   id: string;
   prompt: string;
+  overlayText?: string;
   aspect: string;
   quality: string;
   storage_path: string;
@@ -108,6 +111,7 @@ function ImageStudio() {
   const { user, loading: authLoading } = useAuth();
 
   const [prompt, setPrompt] = useState("");
+  const [overlayText, setOverlayText] = useState("");
   const [aspect, setAspect] = useState<Aspect>("1:1");
   const [quality, setQuality] = useState<Quality>("standard");
   const [busy, setBusy] = useState(false);
@@ -133,7 +137,15 @@ function ImageStudio() {
       .then(({ data, error: dbError }) => {
         if (!active) return;
         if (dbError) setError("err.generic");
-        const rows = (data as ImageRow[] | null) ?? [];
+        const rows = ((data as ImageRow[] | null) ?? []).map((row) => {
+          const markerIndex = row.prompt.indexOf(OVERLAY_MARKER);
+          if (markerIndex < 0) return row;
+          return {
+            ...row,
+            prompt: row.prompt.slice(0, markerIndex),
+            overlayText: row.prompt.slice(markerIndex + OVERLAY_MARKER.length),
+          };
+        });
         setImages(rows);
         setSelectedImage((current) => current ?? rows[0] ?? null);
         setLoading(false);
@@ -144,9 +156,11 @@ function ImageStudio() {
   }, [user]);
 
   const generate = useCallback(
-    async (text: string, useAspect: Aspect, useQuality: Quality) => {
+    async (text: string, useAspect: Aspect, useQuality: Quality, exactOverlayText = "") => {
       const clean = text.trim();
+      const cleanOverlay = exactOverlayText.trim().slice(0, 500);
       if (!clean || busy) return;
+      const effectiveQuality: Quality = cleanOverlay ? "standard" : useQuality;
       setBusy(true);
       setError(null);
       try {
@@ -156,24 +170,57 @@ function ImageStudio() {
         const response = await fetch("/api/image", {
           method: "POST",
           headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
-          body: JSON.stringify({ prompt: clean, aspect: useAspect, quality: useQuality }),
+          body: JSON.stringify({
+            prompt: clean,
+            aspect: useAspect,
+            quality: effectiveQuality,
+            overlayText: cleanOverlay || undefined,
+          }),
         });
         const json = (await response.json()) as {
           image?: string;
           id?: string;
           createdAt?: string;
           error?: string;
+          overlayText?: string;
         };
         if (!response.ok || !json.image || !json.id) {
           throw new Error(json.error ?? "err.imageFailed");
         }
+
+        let finalImageUrl = json.image;
+        if (cleanOverlay) {
+          try {
+            const compositeBlob = await renderImageWithText(json.image, cleanOverlay);
+            const compositeDataUrl = await blobToDataUrl(compositeBlob);
+            const saveResponse = await fetch("/api/image", {
+              method: "POST",
+              headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
+              body: JSON.stringify({
+                operation: "save-overlay",
+                imageId: json.id,
+                compositeDataUrl,
+              }),
+            });
+            const saved = (await saveResponse.json()) as { image?: string; error?: string };
+            if (!saveResponse.ok || !saved.image) {
+              throw new Error(saved.error ?? "err.imageOverlaySave");
+            }
+            finalImageUrl = saved.image;
+          } catch (overlayError) {
+            console.error("XOVA exact text overlay failed", overlayError);
+            setError("err.imageOverlaySave");
+          }
+        }
+
         const generated: ImageRow = {
           id: json.id,
           prompt: clean,
+          overlayText: cleanOverlay || undefined,
           aspect: useAspect,
-          quality: useQuality,
+          quality: effectiveQuality,
           storage_path: "",
-          image_url: json.image,
+          image_url: finalImageUrl,
           created_at: json.createdAt ?? new Date().toISOString(),
         };
         setImages((current) => [generated, ...current]);
@@ -293,6 +340,24 @@ function ImageStudio() {
               <p className="text-[11px] leading-relaxed text-muted-foreground">{t("studio.promptTip")}</p>
             </div>
 
+            <div className="flex flex-col gap-2">
+              <label htmlFor="xova-image-overlay-text" className="text-xs font-semibold">
+                {t("studio.overlayText")}
+              </label>
+              <textarea
+                id="xova-image-overlay-text"
+                value={overlayText}
+                onChange={(event) => setOverlayText(event.target.value)}
+                rows={3}
+                maxLength={500}
+                placeholder={t("studio.overlayTextPlaceholder")}
+                className="xv-focus xv-studio-input min-h-20 w-full resize-y rounded-2xl border bg-surface px-4 py-3 text-sm leading-7 outline-none transition-colors placeholder:text-muted-foreground/75 focus:border-brand/55"
+              />
+              <p className="text-[11px] leading-relaxed text-muted-foreground">
+                {t("studio.overlayTextTip")}
+              </p>
+            </div>
+
             <div className="flex flex-col gap-2.5">
               <h3 className="text-xs font-semibold">{t("studio.quickStyles")}</h3>
               <div className="flex flex-wrap gap-2">
@@ -374,7 +439,7 @@ function ImageStudio() {
             <button
               type="button"
               disabled={busy || prompt.trim().length === 0}
-              onClick={() => void generate(prompt, aspect, quality)}
+              onClick={() => void generate(prompt, aspect, quality, overlayText)}
               className="xv-focus xv-studio-generate inline-flex min-h-12 w-full items-center justify-center gap-2 rounded-2xl border px-5 py-3 text-sm font-bold text-white shadow-md transition-all hover:-translate-y-0.5 hover:shadow-lg active:scale-[0.99] disabled:cursor-not-allowed disabled:opacity-45 disabled:shadow-none"
             >
               {busy ? (
@@ -451,6 +516,7 @@ function ImageStudio() {
                           selectedImage.prompt,
                           (ASPECT_CLASS[selectedImage.aspect] ? selectedImage.aspect : "1:1") as Aspect,
                           selectedImage.quality === "premium" ? "premium" : "standard",
+                          selectedImage.overlayText ?? "",
                         )}
                         className="xv-focus xv-studio-icon-button grid h-9 w-9 place-items-center rounded-xl border disabled:opacity-45"
                         aria-label={t("msg.regenerate")}
