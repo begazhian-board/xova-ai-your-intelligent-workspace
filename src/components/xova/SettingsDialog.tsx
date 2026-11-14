@@ -17,6 +17,8 @@ import {
   type ThemeChoice,
 } from "@/lib/xova";
 
+export type DeviceLayoutPreference = "auto" | "mobile" | "tablet" | "desktop";
+
 type SectionId = "general" | "ai" | "chat" | "appearance" | "account" | "privacy" | "contact" | "about";
 
 const SECTIONS: SectionId[] = [
@@ -47,6 +49,8 @@ interface SettingsDialogProps {
   onOpenChange: (open: boolean) => void;
   profile: Profile;
   email: string;
+  deviceLayoutPreference: DeviceLayoutPreference;
+  onDeviceLayoutChange: (preference: DeviceLayoutPreference) => void;
   onUpdate: (patch: Partial<Profile>) => Promise<{ error?: string }>;
   onDeleteConversation: () => void;
 }
@@ -110,6 +114,8 @@ export function SettingsDialog({
   onOpenChange,
   profile,
   email,
+  deviceLayoutPreference,
+  onDeviceLayoutChange,
   onUpdate,
   onDeleteConversation,
 }: SettingsDialogProps) {
@@ -260,14 +266,35 @@ export function SettingsDialog({
             )}
 
             {section === "appearance" && (
-              <Field label={t("settings.theme")}>
-                <Choices<ThemeChoice>
-                  value={profile.theme}
-                  options={["dark", "light", "system"]}
-                  labelFor={(option) => t(`settings.theme.${option}`)}
-                  onChange={(theme) => void save({ theme })}
-                />
-              </Field>
+              <div className="flex flex-col gap-5">
+                <Field label={t("settings.theme")}>
+                  <Choices<ThemeChoice>
+                    value={profile.theme}
+                    options={["dark", "light", "system"]}
+                    labelFor={(option) => t(`settings.theme.${option}`)}
+                    onChange={(theme) => void save({ theme })}
+                  />
+                </Field>
+                <Field
+                  label={lang === "ar" ? "وضع العرض" : "Display layout"}
+                  description={
+                    lang === "ar"
+                      ? "اختار شكل الواجهة بنفسك، أو سيبها تلقائي حسب حجم الشاشة."
+                      : "Choose the interface layout, or let XOVA adapt to your screen."
+                  }
+                >
+                  <Choices<DeviceLayoutPreference>
+                    value={deviceLayoutPreference}
+                    options={["auto", "mobile", "tablet", "desktop"]}
+                    labelFor={(option) =>
+                      lang === "ar"
+                        ? ({ auto: "تلقائي", mobile: "موبايل", tablet: "تابلت", desktop: "كمبيوتر" } as const)[option]
+                        : ({ auto: "Auto", mobile: "Mobile", tablet: "Tablet", desktop: "Desktop" } as const)[option]
+                    }
+                    onChange={onDeviceLayoutChange}
+                  />
+                </Field>
+              </div>
             )}
 
             {section === "account" && (
