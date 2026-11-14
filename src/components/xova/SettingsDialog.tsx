@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import { BrainCircuit, Info, Mail, MessageCircle, MessagesSquare, Palette, Settings2, ShieldCheck, UserRound, type LucideIcon } from "lucide-react";
 import { toast } from "sonner";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Switch } from "@/components/ui/switch";
@@ -16,7 +17,7 @@ import {
   type ThemeChoice,
 } from "@/lib/xova";
 
-type SectionId = "general" | "ai" | "chat" | "appearance" | "account" | "privacy" | "about";
+type SectionId = "general" | "ai" | "chat" | "appearance" | "account" | "privacy" | "contact" | "about";
 
 const SECTIONS: SectionId[] = [
   "general",
@@ -25,8 +26,21 @@ const SECTIONS: SectionId[] = [
   "appearance",
   "account",
   "privacy",
+  "contact",
   "about",
 ];
+
+
+const SECTION_ICONS: Record<SectionId, LucideIcon> = {
+  general: Settings2,
+  ai: BrainCircuit,
+  chat: MessagesSquare,
+  appearance: Palette,
+  account: UserRound,
+  privacy: ShieldCheck,
+  contact: MessageCircle,
+  about: Info,
+};
 
 interface SettingsDialogProps {
   open: boolean;
@@ -99,7 +113,7 @@ export function SettingsDialog({
   onUpdate,
   onDeleteConversation,
 }: SettingsDialogProps) {
-  const { t } = useI18n();
+  const { t, lang } = useI18n();
   const [section, setSection] = useState<SectionId>("general");
   const [displayName, setDisplayName] = useState(profile.display_name ?? "");
   const [username, setUsername] = useState(profile.username ?? "");
@@ -121,32 +135,44 @@ export function SettingsDialog({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-h-[88vh] w-[calc(100vw-1.5rem)] max-w-3xl overflow-hidden p-0 sm:w-auto">
-        <DialogHeader className="border-b border-border px-4 py-3 text-start">
-          <DialogTitle className="text-base">{t("settings.title")}</DialogTitle>
+      <DialogContent className="xv-settings-dialog max-h-[90vh] w-[calc(100vw-1rem)] max-w-4xl overflow-hidden rounded-3xl border border-border/70 p-0 shadow-float sm:w-auto">
+        <DialogHeader className="xv-settings-header border-b border-border/70 px-5 py-4 text-start sm:px-6">
+          <DialogTitle className="flex items-center gap-3 text-base font-bold">
+            <span className="xv-settings-title-icon grid h-10 w-10 place-items-center rounded-xl">
+              <Settings2 className="h-5 w-5" />
+            </span>
+            {t("settings.title")}
+          </DialogTitle>
+          <p className="mt-1 ps-[52px] text-xs leading-relaxed text-muted-foreground">
+            {lang === "ar" ? "خصص تجربة XOVA بالطريقة اللي تناسبك." : "Personalize your XOVA workspace."}
+          </p>
         </DialogHeader>
 
-        <div className="flex max-h-[75vh] flex-col md:flex-row">
-          <div className="flex gap-1 overflow-x-auto border-b border-border p-2 md:w-44 md:shrink-0 md:flex-col md:border-b-0 md:border-e">
+        <div className="xv-settings-layout flex max-h-[78vh] min-h-0 flex-col md:flex-row">
+          <div className="xv-settings-nav flex gap-1 overflow-x-auto border-b border-border/70 p-2.5 md:w-52 md:shrink-0 md:flex-col md:gap-1.5 md:border-b-0 md:border-e md:p-3">
             {SECTIONS.map((item) => (
               <button
                 key={item}
                 type="button"
                 onClick={() => setSection(item)}
-                aria-current={section === item}
+                aria-current={section === item ? "page" : undefined}
                 className={cn(
-                  "xv-focus whitespace-nowrap rounded-lg px-3 py-2 text-xs font-medium transition-colors md:text-start",
+                  "xv-settings-nav-item xv-focus flex shrink-0 items-center gap-2.5 rounded-xl px-3 py-2.5 text-xs font-medium transition-all md:w-full md:text-start",
                   section === item
-                    ? "bg-active text-foreground"
+                    ? "is-active bg-active text-foreground"
                     : "text-muted-foreground hover:bg-hover hover:text-foreground",
                 )}
               >
-                {t(`settings.${item}`)}
+                {(() => {
+                  const Icon = SECTION_ICONS[item];
+                  return <Icon className="h-4 w-4 shrink-0" aria-hidden="true" />;
+                })()}
+                <span>{item === "contact" ? (lang === "ar" ? "تواصل معي" : "Contact me") : t(`settings.${item}`)}</span>
               </button>
             ))}
           </div>
 
-          <div className="min-w-0 flex-1 overflow-y-auto p-4">
+          <div className="xv-settings-content min-w-0 flex-1 overflow-y-auto p-4 sm:p-6">
             {section === "general" && (
               <div className="flex flex-col gap-5">
                 <Field label={t("settings.language")}>
@@ -295,6 +321,60 @@ export function SettingsDialog({
               <p className="text-sm leading-relaxed text-muted-foreground">
                 {t("settings.privacy.desc")}
               </p>
+            )}
+
+
+            {section === "contact" && (
+              <div className="xv-settings-contact flex flex-col gap-5">
+                <div>
+                  <h3 className="text-base font-bold">
+                    {lang === "ar" ? "تواصل معي" : "Contact me"}
+                  </h3>
+                  <p className="mt-1 max-w-xl text-xs leading-6 text-muted-foreground">
+                    {lang === "ar"
+                      ? "قنوات التواصل الرسمية الخاصة بمشروع XOVA."
+                      : "Official contact channels for the XOVA project."}
+                  </p>
+                </div>
+
+                <div className="grid gap-3 sm:grid-cols-2">
+                  <article className="xv-settings-contact-card flex min-w-0 items-center gap-3 rounded-2xl border p-4">
+                    <span className="xv-settings-contact-icon is-whatsapp grid h-12 w-12 shrink-0 place-items-center rounded-xl">
+                      <MessageCircle className="h-6 w-6" />
+                    </span>
+                    <span className="min-w-0 flex-1">
+                      <span className="block text-sm font-bold">WhatsApp</span>
+                      <span className="mt-1 block text-xs leading-relaxed text-muted-foreground">
+                        {lang === "ar" ? "قناة واتساب للمشروع" : "Project WhatsApp channel"}
+                      </span>
+                    </span>
+                    <span className="xv-settings-contact-status rounded-full px-2 py-1 text-[10px] font-semibold">
+                      {lang === "ar" ? "غير مفعّل" : "Not set"}
+                    </span>
+                  </article>
+
+                  <article className="xv-settings-contact-card flex min-w-0 items-center gap-3 rounded-2xl border p-4">
+                    <span className="xv-settings-contact-icon is-email grid h-12 w-12 shrink-0 place-items-center rounded-xl">
+                      <Mail className="h-6 w-6" />
+                    </span>
+                    <span className="min-w-0 flex-1">
+                      <span className="block text-sm font-bold">Gmail</span>
+                      <span className="mt-1 block text-xs leading-relaxed text-muted-foreground">
+                        {lang === "ar" ? "بريد إلكتروني للمشروع" : "Project email address"}
+                      </span>
+                    </span>
+                    <span className="xv-settings-contact-status rounded-full px-2 py-1 text-[10px] font-semibold">
+                      {lang === "ar" ? "غير مفعّل" : "Not set"}
+                    </span>
+                  </article>
+                </div>
+
+                <div className="xv-settings-contact-note rounded-2xl border px-4 py-3 text-xs leading-6 text-muted-foreground">
+                  {lang === "ar"
+                    ? "للحفاظ على الخصوصية، استخدم رقم واتساب وبريدًا مخصصين للتواصل العام مع المشروع، وبموافقة ولي أمرك. مش هننشر بياناتك الشخصية على الموقع."
+                    : "For privacy, use dedicated public project contact details with a parent or guardian's approval. Personal contact details should not be published here."}
+                </div>
+              </div>
             )}
 
             {section === "about" && (
