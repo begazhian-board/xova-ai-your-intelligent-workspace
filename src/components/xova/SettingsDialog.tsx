@@ -61,7 +61,7 @@ function Field({
   description?: string;
 }) {
   return (
-    <label className="flex flex-col gap-1.5">
+    <label className="xv-settings-field flex flex-col gap-2">
       <span className="text-xs font-medium text-muted-foreground">{label}</span>
       {children}
       {description && <span className="text-xxs leading-relaxed text-faint">{description}</span>}
