@@ -11,6 +11,15 @@ const ASPECTS = new Set(["1:1", "3:2", "2:3"]);
 
 /** Generations allowed per user per rolling hour. */
 const RATE_LIMIT = 15;
+/** Keep XOVA image generation below Cloudflare's 10,000-Neuron free daily allowance. */
+const DAILY_NEURON_BUDGET = 9_000;
+/** Conservative estimates include a margin above the published model rates. */
+const STANDARD_NEURONS: Record<"1:1" | "3:2" | "2:3", number> = {
+  "1:1": 110,
+  "3:2": 170,
+  "2:3": 170,
+};
+const PREMIUM_NEURONS = 1_450;
 /** One year — the bucket is private, the signed token is the only way in. */
 const SIGNED_URL_TTL = 60 * 60 * 24 * 365;
 
@@ -81,6 +90,42 @@ export const Route = createFileRoute("/api/image")({
 
         const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
 
+        // Track all XOVA image generations for the current UTC day across users.
+        // Fail closed if usage cannot be checked so a misconfiguration cannot create surprise charges.
+        const utcDayStart = new Date();
+        utcDayStart.setUTCHours(0, 0, 0, 0);
+        const usageBuckets = [
+          { quality: "standard", aspect: "1:1", neurons: STANDARD_NEURONS["1:1"] },
+          { quality: "standard", aspect: "3:2", neurons: STANDARD_NEURONS["3:2"] },
+          { quality: "standard", aspect: "2:3", neurons: STANDARD_NEURONS["2:3"] },
+          { quality: "premium", aspect: "1:1", neurons: PREMIUM_NEURONS },
+          { quality: "premium", aspect: "3:2", neurons: PREMIUM_NEURONS },
+          { quality: "premium", aspect: "2:3", neurons: PREMIUM_NEURONS },
+        ] as const;
+        const usageResults = await Promise.all(
+          usageBuckets.map((bucket) =>
+            supabaseAdmin
+              .from("generated_images")
+              .select("id", { count: "exact", head: true })
+              .eq("quality", bucket.quality)
+              .eq("aspect", bucket.aspect)
+              .gte("created_at", utcDayStart.toISOString()),
+          ),
+        );
+        if (usageResults.some((result) => result.error)) {
+          console.error("XOVA image daily usage check failed");
+          return Response.json({ error: "err.unavailable" }, { status: 503 });
+        }
+        const usedNeurons = usageBuckets.reduce(
+          (total, bucket, index) => total + (usageResults[index].count ?? 0) * bucket.neurons,
+          0,
+        );
+        const requestedNeurons =
+          quality === "premium" ? PREMIUM_NEURONS : STANDARD_NEURONS[aspect];
+        if (usedNeurons + requestedNeurons > DAILY_NEURON_BUDGET) {
+          return Response.json({ error: "err.imageDailyLimit" }, { status: 429 });
+        }
+
         // Rate limit per user, rolling hour.
         const since = new Date(Date.now() - 60 * 60 * 1000).toISOString();
         const { count } = await supabaseAdmin
@@ -98,7 +143,7 @@ export const Route = createFileRoute("/api/image")({
           // Faithful English translation of the user's own words — nothing added.
           const english = await translateToEnglish(prompt);
 
-          // Cloudflare Workers AI: FLUX.2 [klein] 4B.
+          // Use the economical 4B model by default; premium selects the higher-detail 9B model.
           // Keep the account token server-side; never expose it to the browser.
           const [width, height] =
             aspect === "3:2" ? [1344, 896] : aspect === "2:3" ? [896, 1344] : [1024, 1024];
@@ -106,11 +151,15 @@ export const Route = createFileRoute("/api/image")({
           form.set("prompt", english);
           form.set("width", String(width));
           form.set("height", String(height));
-          form.set("guidance", quality === "premium" ? "5" : "4");
+          const modelId =
+            quality === "premium"
+              ? "@cf/black-forest-labs/flux-2-klein-9b"
+              : "@cf/black-forest-labs/flux-2-klein-4b";
+          if (quality === "standard") form.set("guidance", "4");
 
           try {
             const res = await fetch(
-              `https://api.cloudflare.com/client/v4/accounts/${encodeURIComponent(cloudflareAccountId)}/ai/run/@cf/black-forest-labs/flux-2-klein-4b`,
+              `https://api.cloudflare.com/client/v4/accounts/${encodeURIComponent(cloudflareAccountId)}/ai/run/${modelId}`,
               {
                 method: "POST",
                 headers: { Authorization: `Bearer ${cloudflareApiToken}` },
