@@ -101,7 +101,7 @@ export function Message({ message, onRegenerate, onEdit }: MessageProps) {
 
   if (message.role === "user") {
     return (
-      <article className="flex flex-col items-end gap-2">
+      <article className="xv-user-message flex flex-col items-end gap-2">
         {message.attachments.length > 0 && (
           <ul className="flex max-w-[85%] flex-wrap justify-end gap-2">
             {message.attachments.map((attachment) => (
@@ -134,7 +134,7 @@ export function Message({ message, onRegenerate, onEdit }: MessageProps) {
   }
 
   return (
-    <article className="group/msg flex gap-3">
+    <article className="xv-assistant-message group/msg flex gap-3">
       <span
         className="mt-0.5 grid h-7 w-7 shrink-0 place-items-center rounded-lg bg-brand-soft text-brand"
         aria-hidden="true"
