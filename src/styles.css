@@ -2040,3 +2040,88 @@
     padding: 12px;
   }
 }
+
+
+/* =========================================================
+   XOVA device layouts
+   Mobile: compact drawer navigation
+   Tablet: slim icon rail with a roomier workspace
+   Desktop: full sidebar and optional quick-tools rail
+   ========================================================= */
+@media (min-width: 768px) and (max-width: 1279px) {
+  .xv-left-rail {
+    width: 64px;
+    flex: 0 0 64px;
+  }
+
+  .xv-sidebar-collapsed {
+    width: 64px;
+    min-height: 0;
+    border-inline-start: 1px solid color-mix(in oklab, var(--brand) 14%, var(--border));
+  }
+
+  .xv-topbar {
+    margin-inline: 12px;
+  }
+
+  .xv-home-dashboard {
+    max-width: 68rem;
+    gap: 1.35rem;
+    padding-inline: clamp(1rem, 2.5vw, 2rem);
+  }
+
+  .xv-home-hero {
+    min-height: 218px;
+  }
+
+  .xv-home-art {
+    width: min(28%, 260px);
+    min-height: 180px;
+  }
+
+  .xv-home-art-mark {
+    width: clamp(130px, 15vw, 190px);
+  }
+
+  .xv-composer-wrap {
+    padding-inline: clamp(1rem, 2.5vw, 2rem);
+  }
+
+  .xv-tools-rail {
+    display: none;
+  }
+}
+
+@media (min-width: 1280px) {
+  .xv-left-rail {
+    flex: 0 0 auto;
+  }
+
+  .xv-home-dashboard {
+    padding-inline: 2rem;
+  }
+}
+
+@media (max-width: 767px) {
+  .xv-shell[data-device-layout="mobile"] .xv-main-panel {
+    min-width: 0;
+    width: 100%;
+  }
+
+  .xv-shell[data-device-layout="mobile"] .xv-composer-wrap {
+    padding-bottom: max(12px, env(safe-area-inset-bottom));
+  }
+
+  .xv-shell[data-device-layout="mobile"] .xv-topbar {
+    gap: 8px;
+  }
+
+  .xv-shell[data-device-layout="mobile"] .xv-home-dashboard {
+    width: 100%;
+    padding-inline: 12px;
+  }
+
+  .xv-shell[data-device-layout="mobile"] .xv-home-hero {
+    padding: 20px 17px;
+  }
+}
