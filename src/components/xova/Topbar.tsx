@@ -1,4 +1,4 @@
-import { Menu, Plus } from "lucide-react";
+import { Menu, Plus, Settings } from "lucide-react";
 import { XovaWordmark } from "./Logo";
 import { ModeSelector } from "./ModeSelector";
 import { useI18n } from "@/lib/i18n";
@@ -11,9 +11,10 @@ interface TopbarProps {
   onOpenDrawer: () => void;
   onNewChat: () => void;
   deviceLayout: "mobile" | "tablet" | "desktop";
+  onOpenSettings: () => void;
 }
 
-export function Topbar({ title, mode, onModeChange, onOpenDrawer, onNewChat, deviceLayout }: TopbarProps) {
+export function Topbar({ title, mode, onModeChange, onOpenDrawer, onNewChat, deviceLayout, onOpenSettings }: TopbarProps) {
   const { t, dir } = useI18n();
 
   return (
@@ -41,6 +42,16 @@ export function Topbar({ title, mode, onModeChange, onOpenDrawer, onNewChat, dev
       <span className="hidden sm:block">
         <ModeSelector mode={mode} onChange={onModeChange} />
       </span>
+
+      <button
+        type="button"
+        onClick={onOpenSettings}
+        aria-label={t("nav.settings")}
+        title={t("nav.settings")}
+        className="xv-focus grid h-9 w-9 shrink-0 place-items-center rounded-xl border border-border/70 bg-surface/70 text-muted-foreground transition-colors hover:bg-hover hover:text-foreground"
+      >
+        <Settings className="h-4 w-4" />
+      </button>
 
       <button
         type="button"
