@@ -1655,3 +1655,232 @@
     transition: none !important;
   }
 }
+
+
+/* XOVA home dashboard — based on the selected second visual direction. */
+.xv-home-dashboard {
+  isolation: isolate;
+}
+
+.xv-home-hero {
+  isolation: isolate;
+  overflow: hidden;
+  border: 1px solid color-mix(in oklab, var(--brand) 28%, var(--border));
+  background:
+    radial-gradient(ellipse 26rem 18rem at 8% 45%, color-mix(in oklab, #168fff 19%, transparent), transparent 72%),
+    radial-gradient(ellipse 28rem 20rem at 92% 15%, color-mix(in oklab, #8a45e8 17%, transparent), transparent 74%),
+    linear-gradient(120deg, color-mix(in oklab, var(--surface) 96%, #273b9a), var(--surface));
+  box-shadow: 0 18px 54px color-mix(in oklab, var(--brand) 9%, transparent);
+}
+
+.dark .xv-home-hero {
+  background:
+    radial-gradient(ellipse 28rem 19rem at 8% 50%, oklch(0.55 0.2 245 / 24%), transparent 72%),
+    radial-gradient(ellipse 30rem 22rem at 92% 12%, oklch(0.5 0.22 295 / 23%), transparent 74%),
+    linear-gradient(115deg, oklch(0.17 0.035 270), oklch(0.15 0.025 250) 55%, oklch(0.18 0.04 285));
+}
+
+.xv-home-hero::after {
+  position: absolute;
+  inset: auto -5% -64% -5%;
+  z-index: 0;
+  height: 85%;
+  content: "";
+  border-radius: 50%;
+  background: linear-gradient(90deg, transparent, color-mix(in oklab, var(--brand) 17%, transparent), color-mix(in oklab, #168fff 12%, transparent), transparent);
+  filter: blur(26px);
+  pointer-events: none;
+}
+
+.xv-home-primary-action {
+  color: white;
+  border: 1px solid color-mix(in oklab, var(--brand) 80%, white);
+  background: linear-gradient(105deg, oklch(0.56 0.23 285), oklch(0.56 0.2 245));
+  box-shadow: 0 8px 24px color-mix(in oklab, var(--brand) 24%, transparent);
+  transition: transform 180ms ease, filter 180ms ease, box-shadow 180ms ease;
+}
+
+.xv-home-primary-action:hover {
+  transform: translateY(-1px);
+  filter: brightness(1.08);
+  box-shadow: 0 12px 30px color-mix(in oklab, var(--brand) 30%, transparent);
+}
+
+.xv-home-secondary-action {
+  color: var(--foreground);
+  border-color: color-mix(in oklab, var(--brand) 25%, var(--border));
+  background: color-mix(in oklab, var(--surface) 68%, transparent);
+}
+
+.xv-home-secondary-action:hover {
+  border-color: color-mix(in oklab, var(--brand) 52%, var(--border));
+  background: color-mix(in oklab, var(--brand-soft) 42%, var(--surface));
+}
+
+.xv-home-art {
+  position: relative;
+  width: min(34%, 350px);
+  min-height: 210px;
+  place-items: center;
+  perspective: 700px;
+}
+
+.xv-home-art-mark {
+  position: relative;
+  z-index: 2;
+  width: clamp(145px, 18vw, 230px);
+  height: auto;
+  transform: rotate(-9deg);
+  filter: drop-shadow(0 20px 34px oklch(0.52 0.22 275 / 42%));
+  animation: xv-home-float 6s ease-in-out infinite;
+}
+
+.xv-home-art-glow {
+  position: absolute;
+  width: 72%;
+  aspect-ratio: 1;
+  border-radius: 50%;
+  background: radial-gradient(circle, color-mix(in oklab, var(--brand) 25%, transparent), transparent 68%);
+  filter: blur(12px);
+}
+
+.xv-home-orbit {
+  position: absolute;
+  width: 88%;
+  aspect-ratio: 1;
+  border: 1px solid color-mix(in oklab, var(--brand) 30%, transparent);
+  border-radius: 50%;
+  transform: rotateX(62deg) rotate(-18deg);
+}
+
+.xv-home-orbit-one {
+  width: 96%;
+}
+
+.xv-home-orbit-two {
+  width: 72%;
+  transform: rotateX(68deg) rotate(35deg);
+  border-color: color-mix(in oklab, #168fff 32%, transparent);
+}
+
+.xv-home-float-icon {
+  position: absolute;
+  z-index: 3;
+  display: grid;
+  width: 42px;
+  height: 42px;
+  place-items: center;
+  border: 1px solid color-mix(in oklab, var(--brand) 35%, var(--border));
+  border-radius: 13px;
+  color: var(--brand);
+  background: color-mix(in oklab, var(--surface) 78%, transparent);
+  box-shadow: 0 8px 24px color-mix(in oklab, var(--brand) 16%, transparent);
+  backdrop-filter: blur(12px);
+}
+
+.xv-home-float-one { inset-block-start: 12%; inset-inline-start: 7%; }
+.xv-home-float-two { inset-block-start: 8%; inset-inline-end: 10%; }
+.xv-home-float-three { inset-block-end: 8%; inset-inline-end: 14%; }
+
+.xv-home-tool-card {
+  border-color: color-mix(in oklab, var(--brand) 19%, var(--border));
+  background: color-mix(in oklab, var(--surface) 88%, transparent);
+  box-shadow: 0 8px 25px color-mix(in oklab, var(--brand) 5%, transparent);
+}
+
+.xv-home-tool-card:hover {
+  transform: translateY(-3px);
+  border-color: color-mix(in oklab, var(--brand) 53%, var(--border));
+  background: color-mix(in oklab, var(--brand-soft) 24%, var(--surface));
+  box-shadow: 0 14px 34px color-mix(in oklab, var(--brand) 11%, transparent);
+}
+
+.xv-home-tool-icon {
+  display: grid;
+  width: 46px;
+  height: 46px;
+  flex: 0 0 auto;
+  place-items: center;
+  border: 1px solid color-mix(in oklab, var(--brand) 22%, transparent);
+  border-radius: 14px;
+  color: var(--brand);
+  background: linear-gradient(145deg, color-mix(in oklab, var(--brand) 17%, transparent), color-mix(in oklab, #168fff 9%, transparent));
+}
+
+.xv-home-panel {
+  border-color: color-mix(in oklab, var(--foreground) 11%, var(--border));
+  background: color-mix(in oklab, var(--surface) 91%, transparent);
+  box-shadow: var(--shadow-panel);
+}
+
+.xv-home-recent-row {
+  border-color: color-mix(in oklab, var(--foreground) 9%, var(--border));
+  background: color-mix(in oklab, var(--background) 62%, var(--surface));
+}
+
+.xv-home-recent-row:hover {
+  border-color: color-mix(in oklab, var(--brand) 45%, var(--border));
+  background: color-mix(in oklab, var(--brand-soft) 28%, var(--surface));
+}
+
+.xv-home-studio-panel {
+  border-color: color-mix(in oklab, var(--brand) 25%, var(--border));
+  background:
+    radial-gradient(ellipse 22rem 18rem at 95% 10%, color-mix(in oklab, var(--brand) 18%, transparent), transparent 70%),
+    linear-gradient(135deg, color-mix(in oklab, var(--surface) 96%, #3b268a), var(--surface));
+}
+
+.dark .xv-home-studio-panel {
+  background:
+    radial-gradient(ellipse 23rem 17rem at 90% 12%, oklch(0.55 0.2 285 / 23%), transparent 72%),
+    linear-gradient(140deg, oklch(0.2 0.035 280), oklch(0.15 0.02 255));
+}
+
+.xv-home-studio-glow {
+  position: absolute;
+  inset-inline-end: -3rem;
+  inset-block-end: -6rem;
+  width: 15rem;
+  height: 15rem;
+  border: 1px solid color-mix(in oklab, var(--brand) 25%, transparent);
+  border-radius: 50%;
+  background: radial-gradient(circle, color-mix(in oklab, var(--brand) 15%, transparent), transparent 68%);
+  pointer-events: none;
+}
+
+.xv-home-studio-mark {
+  border: 1px solid color-mix(in oklab, var(--brand) 28%, var(--border));
+  color: var(--brand);
+  background: color-mix(in oklab, var(--brand-soft) 60%, transparent);
+  box-shadow: 0 10px 30px color-mix(in oklab, var(--brand) 13%, transparent);
+}
+
+@keyframes xv-home-float {
+  0%, 100% { transform: translateY(0) rotate(-9deg); }
+  50% { transform: translateY(-8px) rotate(-6deg); }
+}
+
+@media (max-width: 639px) {
+  .xv-home-hero {
+    border-radius: 1.35rem;
+  }
+
+  .xv-home-dashboard {
+    gap: 1.25rem;
+  }
+
+  .xv-home-tool-card {
+    min-height: 98px;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .xv-home-art-mark {
+    animation: none;
+  }
+
+  .xv-home-primary-action,
+  .xv-home-tool-card {
+    transition: none;
+  }
+}
