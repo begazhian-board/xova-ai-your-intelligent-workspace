@@ -155,7 +155,7 @@ export const Route = createFileRoute("/api/image")({
             quality === "premium"
               ? "@cf/black-forest-labs/flux-2-klein-9b"
               : "@cf/black-forest-labs/flux-2-klein-4b";
-          if (quality === "standard") form.set("guidance", "4");
+          form.set("guidance", quality === "premium" ? "5" : "4");
 
           try {
             const res = await fetch(
