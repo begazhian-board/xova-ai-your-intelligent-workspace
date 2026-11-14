@@ -84,11 +84,24 @@ function Banner({
 }
 
 type DeviceLayout = "mobile" | "tablet" | "desktop";
+type DeviceLayoutPreference = "auto" | DeviceLayout;
+const DEVICE_LAYOUT_STORAGE_KEY = "xova-device-layout";
 
-function getDeviceLayout(width: number): DeviceLayout {
+function getDeviceLayout(width: number, preference: DeviceLayoutPreference): DeviceLayout {
+  if (preference !== "auto") return preference;
   if (width < 768) return "mobile";
   if (width < 1280) return "tablet";
   return "desktop";
+}
+
+function readDeviceLayoutPreference(): DeviceLayoutPreference {
+  try {
+    const saved = window.localStorage.getItem(DEVICE_LAYOUT_STORAGE_KEY);
+    if (saved === "mobile" || saved === "tablet" || saved === "desktop") return saved;
+  } catch {
+    // Keep automatic layout when browser storage is unavailable.
+  }
+  return "auto";
 }
 
 function Workspace() {
@@ -100,6 +113,7 @@ function Workspace() {
 
   const [collapsed, setCollapsed] = useState(false);
   const [deviceLayout, setDeviceLayout] = useState<DeviceLayout>("desktop");
+  const [deviceLayoutPreference, setDeviceLayoutPreference] = useState<DeviceLayoutPreference>("auto");
   const [drawer, setDrawer] = useState(false);
   const [settingsOpen, setSettingsOpen] = useState(false);
   const [renameOpen, setRenameOpen] = useState(false);
@@ -113,13 +127,18 @@ function Workspace() {
   const scrollRef = useRef<HTMLDivElement>(null);
   const pinnedRef = useRef(true);
   const previousLayoutRef = useRef<DeviceLayout | null>(null);
+  const deviceLayoutPreferenceRef = useRef<DeviceLayoutPreference>("auto");
 
   useEffect(() => {
+    deviceLayoutPreferenceRef.current = readDeviceLayoutPreference();
+    setDeviceLayoutPreference(deviceLayoutPreferenceRef.current);
+
     const syncDeviceLayout = () => {
-      const nextLayout = getDeviceLayout(window.innerWidth);
+      const nextLayout = getDeviceLayout(window.innerWidth, deviceLayoutPreferenceRef.current);
       setDeviceLayout(nextLayout);
       if (previousLayoutRef.current !== nextLayout) {
         setCollapsed(nextLayout === "tablet");
+        if (nextLayout !== "mobile") setDrawer(false);
         previousLayoutRef.current = nextLayout;
       }
     };
@@ -128,6 +147,21 @@ function Workspace() {
     window.addEventListener("resize", syncDeviceLayout);
     return () => window.removeEventListener("resize", syncDeviceLayout);
   }, []);
+
+  const handleDeviceLayoutChange = (preference: DeviceLayoutPreference) => {
+    deviceLayoutPreferenceRef.current = preference;
+    setDeviceLayoutPreference(preference);
+    try {
+      window.localStorage.setItem(DEVICE_LAYOUT_STORAGE_KEY, preference);
+    } catch {
+      // The current selection still applies for this session.
+    }
+    const nextLayout = getDeviceLayout(window.innerWidth, preference);
+    setDeviceLayout(nextLayout);
+    setCollapsed(nextLayout === "tablet");
+    previousLayoutRef.current = nextLayout;
+    setDrawer(false);
+  };
 
   useEffect(() => {
     if (!authLoading && !user) void navigate({ to: "/auth", replace: true });
@@ -274,10 +308,10 @@ function Workspace() {
   return (
     <div dir="ltr" data-device-layout={deviceLayout} className="xv-shell relative isolate flex h-dvh overflow-hidden text-foreground">
       <AmbientWaves />
-      <div className="xv-left-rail relative z-10 hidden md:flex">{sidebar()}</div>
+      <div className={`xv-left-rail relative z-10 ${deviceLayout === "mobile" ? "hidden" : "hidden md:flex"}`}>{sidebar()}</div>
 
       <Dialog open={drawer} onOpenChange={setDrawer}>
-        <DialogContent className="left-0 top-0 h-screen w-[86vw] max-w-xs translate-x-0 translate-y-0 gap-0 rounded-none border-0 p-0 md:hidden">
+        <DialogContent className={`left-0 top-0 h-screen w-[86vw] max-w-xs translate-x-0 translate-y-0 gap-0 rounded-none border-0 p-0 ${deviceLayout === "mobile" ? "" : "md:hidden"}`}>
           <DialogHeader className="sr-only">
             <DialogTitle>{t("nav.conversation")}</DialogTitle>
           </DialogHeader>
@@ -290,6 +324,7 @@ function Workspace() {
           title={title}
           mode={mode}
           onModeChange={setMode}
+          deviceLayout={deviceLayout}
           onOpenDrawer={() => setDrawer(true)}
           onNewChat={handleNewChat}
         />
@@ -364,6 +399,8 @@ function Workspace() {
         onOpenChange={setSettingsOpen}
         profile={profile}
         email={email}
+        deviceLayoutPreference={deviceLayoutPreference}
+        onDeviceLayoutChange={handleDeviceLayoutChange}
         onUpdate={async (patch) => {
           const result = await update(patch);
           if (!result.error && (patch.theme || patch.language)) {
