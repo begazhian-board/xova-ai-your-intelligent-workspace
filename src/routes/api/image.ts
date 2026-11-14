@@ -116,7 +116,7 @@ export const Route = createFileRoute("/api/image")({
             return Response.json({ error: "err.imageOverlaySave" }, { status: 404 });
           }
 
-          const finalStoragePath = imageRow.storage_path.replace(/\\.[^.]+$/, ".png");
+          const finalStoragePath = imageRow.storage_path.replace(/\.[^.]+$/, ".png");
           const { error: uploadError } = await supabaseAdmin.storage
             .from("xova-images")
             .upload(finalStoragePath, compositeBytes, {
