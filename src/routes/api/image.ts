@@ -83,7 +83,7 @@ export const Route = createFileRoute("/api/image")({
         if (body.operation === "save-overlay") {
           const imageId = body.imageId?.trim();
           const dataUrl = body.compositeDataUrl ?? "";
-          const match = dataUrl.match(/^data:image\\/png;base64,([A-Za-z0-9+/=]+)$/);
+          const match = dataUrl.match(/^data:image\/png;base64,([A-Za-z0-9+/=]+)$/);
           if (!imageId || !match || dataUrl.length > 12_000_000) {
             return Response.json({ error: "err.imageOverlaySave" }, { status: 400 });
           }
@@ -116,9 +116,10 @@ export const Route = createFileRoute("/api/image")({
             return Response.json({ error: "err.imageOverlaySave" }, { status: 404 });
           }
 
+          const finalStoragePath = imageRow.storage_path.replace(/\\.[^.]+$/, ".png");
           const { error: uploadError } = await supabaseAdmin.storage
             .from("xova-images")
-            .upload(imageRow.storage_path, compositeBytes, {
+            .upload(finalStoragePath, compositeBytes, {
               contentType: "image/png",
               upsert: true,
               cacheControl: "0",
@@ -130,16 +131,20 @@ export const Route = createFileRoute("/api/image")({
 
           const { data: signed, error: signError } = await supabaseAdmin.storage
             .from("xova-images")
-            .createSignedUrl(imageRow.storage_path, SIGNED_URL_TTL);
+            .createSignedUrl(finalStoragePath, SIGNED_URL_TTL);
           if (signError || !signed?.signedUrl) {
             return Response.json({ error: "err.imageOverlaySave" }, { status: 502 });
           }
 
           await supabaseAdmin
             .from("generated_images")
-            .update({ image_url: signed.signedUrl })
+            .update({ storage_path: finalStoragePath, image_url: signed.signedUrl })
             .eq("id", imageId)
             .eq("user_id", user.id);
+
+          if (finalStoragePath !== imageRow.storage_path) {
+            await supabaseAdmin.storage.from("xova-images").remove([imageRow.storage_path]);
+          }
 
           return Response.json({ image: signed.signedUrl });
         }
