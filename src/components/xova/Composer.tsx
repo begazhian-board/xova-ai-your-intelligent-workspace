@@ -210,7 +210,7 @@ export function Composer({
   };
 
   return (
-    <div className="px-4 pb-4 sm:px-6 sm:pb-5 xl:px-8">
+    <div className="xv-composer-wrap px-4 pb-4 sm:px-6 sm:pb-5 xl:px-8">
       <div className="mx-auto w-full max-w-3xl">
         <div
           onDragOver={(event) => {

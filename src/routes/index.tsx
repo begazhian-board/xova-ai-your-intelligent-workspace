@@ -277,7 +277,12 @@ function Workspace() {
             </div>
           ) : messages.length === 0 ? (
             <div className="flex min-h-full flex-col">
-              <Welcome displayName={profile.display_name} onPick={(text) => setDraft(text)} />
+              <Welcome
+                displayName={profile.display_name}
+                conversations={conversations}
+                onSelectConversation={select}
+                onPick={(text) => setDraft(text)}
+              />
             </div>
           ) : (
             <div className="mx-auto flex w-full max-w-3xl flex-col gap-6 px-4 py-6 sm:px-6">
