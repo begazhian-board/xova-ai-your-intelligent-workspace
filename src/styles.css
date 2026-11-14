@@ -1884,3 +1884,159 @@
     transition: none;
   }
 }
+
+
+/* Settings dialog refresh: clear sections, stronger navigation and contact cards. */
+.xv-settings-dialog {
+  background:
+    radial-gradient(ellipse 34rem 18rem at 100% 0%, color-mix(in oklab, var(--brand) 8%, transparent), transparent 70%),
+    var(--surface);
+}
+
+.xv-settings-header {
+  background: color-mix(in oklab, var(--surface) 92%, transparent);
+}
+
+.xv-settings-title-icon {
+  border: 1px solid color-mix(in oklab, var(--brand) 28%, var(--border));
+  color: var(--brand);
+  background: linear-gradient(145deg, color-mix(in oklab, var(--brand-soft) 90%, var(--surface)), color-mix(in oklab, var(--brand) 13%, var(--surface)));
+  box-shadow: 0 7px 20px color-mix(in oklab, var(--brand) 9%, transparent);
+}
+
+.xv-settings-layout {
+  background: color-mix(in oklab, var(--background) 58%, transparent);
+}
+
+.xv-settings-nav {
+  background: color-mix(in oklab, var(--rail) 72%, transparent);
+}
+
+.xv-settings-nav-item {
+  min-height: 42px;
+  border: 1px solid transparent;
+}
+
+.xv-settings-nav-item.is-active {
+  border-color: color-mix(in oklab, var(--brand) 26%, var(--border));
+  background: color-mix(in oklab, var(--brand-soft) 78%, var(--surface));
+  color: var(--brand);
+  box-shadow: 0 6px 18px color-mix(in oklab, var(--brand) 7%, transparent);
+}
+
+.xv-settings-content {
+  overscroll-behavior: contain;
+}
+
+.xv-settings-field {
+  padding: 14px;
+  border: 1px solid color-mix(in oklab, var(--foreground) 9%, var(--border));
+  border-radius: 16px;
+  background: color-mix(in oklab, var(--surface) 82%, transparent);
+}
+
+.xv-settings-field > span:first-child {
+  color: var(--foreground);
+  font-weight: 650;
+}
+
+.xv-settings-field input,
+.xv-settings-field textarea {
+  min-height: 42px;
+  border-radius: 11px;
+  background: color-mix(in oklab, var(--background) 70%, var(--surface));
+}
+
+.xv-settings-field textarea {
+  min-height: auto;
+}
+
+.xv-settings-content button[aria-pressed] {
+  min-height: 36px;
+  border-radius: 11px;
+  padding-inline: 13px;
+}
+
+.xv-settings-contact-card {
+  min-height: 104px;
+  border-color: color-mix(in oklab, var(--brand) 18%, var(--border));
+  background: color-mix(in oklab, var(--surface) 92%, transparent);
+  box-shadow: var(--shadow-panel);
+}
+
+.xv-settings-contact-icon {
+  border: 1px solid color-mix(in oklab, var(--foreground) 8%, var(--border));
+}
+
+.xv-settings-contact-icon.is-whatsapp {
+  color: #16a765;
+  background: color-mix(in oklab, #16a765 12%, var(--surface));
+  border-color: color-mix(in oklab, #16a765 24%, var(--border));
+}
+
+.xv-settings-contact-icon.is-email {
+  color: #d64b42;
+  background: color-mix(in oklab, #d64b42 10%, var(--surface));
+  border-color: color-mix(in oklab, #d64b42 23%, var(--border));
+}
+
+.xv-settings-contact-status {
+  color: var(--muted-foreground);
+  background: var(--subtle);
+  border: 1px solid var(--border);
+}
+
+.xv-settings-contact-note {
+  border-color: color-mix(in oklab, var(--brand) 20%, var(--border));
+  background: color-mix(in oklab, var(--brand-soft) 34%, var(--surface));
+}
+
+.dark .xv-settings-dialog {
+  background:
+    radial-gradient(ellipse 34rem 18rem at 100% 0%, oklch(0.5 0.2 280 / 12%), transparent 70%),
+    oklch(0.19 0.018 258);
+}
+
+.dark .xv-settings-nav {
+  background: linear-gradient(180deg, oklch(0.175 0.02 270 / 94%), oklch(0.155 0.015 255 / 96%));
+}
+
+.dark .xv-settings-field,
+.dark .xv-settings-contact-card {
+  border-color: oklch(1 0 0 / 9%);
+  background: linear-gradient(145deg, oklch(0.225 0.022 270 / 94%), oklch(0.19 0.016 255 / 96%));
+}
+
+.dark .xv-settings-contact-note {
+  border-color: oklch(0.68 0.16 275 / 24%);
+  background: oklch(0.27 0.04 275 / 28%);
+}
+
+@media (max-width: 767px) {
+  .xv-settings-layout {
+    max-height: 78vh;
+  }
+
+  .xv-settings-nav {
+    gap: 6px;
+    padding: 10px;
+  }
+
+  .xv-settings-nav-item {
+    min-height: 38px;
+    padding-inline: 11px;
+  }
+
+  .xv-settings-content {
+    padding: 14px;
+  }
+
+  .xv-settings-field {
+    padding: 12px;
+  }
+
+  .xv-settings-contact-card {
+    min-height: 90px;
+    padding: 12px;
+  }
+}
