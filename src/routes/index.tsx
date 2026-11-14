@@ -325,6 +325,7 @@ function Workspace() {
           mode={mode}
           onModeChange={setMode}
           deviceLayout={deviceLayout}
+          onOpenSettings={() => setSettingsOpen(true)}
           onOpenDrawer={() => setDrawer(true)}
           onNewChat={handleNewChat}
         />
