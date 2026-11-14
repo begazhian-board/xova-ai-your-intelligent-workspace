@@ -59,8 +59,11 @@ export const Route = createFileRoute("/api/image")({
         const user = await authenticate(request);
         if (!user) return Response.json({ error: "err.auth" }, { status: 401 });
 
-        const apiKey = process.env["LOVABLE_API_KEY"];
-        if (!apiKey) return Response.json({ error: "err.unavailable" }, { status: 500 });
+        const cloudflareAccountId = process.env["CLOUDFLARE_ACCOUNT_ID"]?.trim();
+        const cloudflareApiToken = process.env["CLOUDFLARE_API_TOKEN"]?.trim();
+        if (!cloudflareAccountId || !cloudflareApiToken) {
+          return Response.json({ error: "err.unavailable" }, { status: 500 });
+        }
 
         let body: WireBody;
         try {
@@ -95,126 +98,56 @@ export const Route = createFileRoute("/api/image")({
           // Faithful English translation of the user's own words — nothing added.
           const english = await translateToEnglish(prompt);
 
-          // 1) Primary: Lovable AI Gateway.
-          if (apiKey) {
-            try {
-              const res = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
-                method: "POST",
-                headers: {
-                  "Content-Type": "application/json",
-                  "Lovable-API-Key": apiKey,
-                  "X-Lovable-AIG-SDK": "fetch",
-                },
-                body: JSON.stringify({
-                  model:
-                    quality === "premium"
-                      ? "google/gemini-3-pro-image"
-                      : "google/gemini-3.1-flash-image",
-                  messages: [{ role: "user", content: english }],
-                  modalities: ["image", "text"],
-                  image_config: { aspect_ratio: aspect },
-                }),
-              });
-              if (!res.ok) {
-                lastStatus = res.status;
-                console.error("XOVA image gateway", res.status, (await res.text()).slice(0, 300));
-              } else {
-                const json = (await res.json()) as {
-                  choices?: Array<{ message?: { images?: Array<{ image_url?: { url?: string } }> } }>;
-                };
-                const dataUrl = json.choices?.[0]?.message?.images?.[0]?.image_url?.url;
-                if (dataUrl?.startsWith("data:")) {
-                  bytes = base64ToBytes(dataUrl.slice(dataUrl.indexOf(",") + 1));
-                } else if (dataUrl) {
-                  const downloaded = await fetch(dataUrl);
-                  if (downloaded.ok) bytes = new Uint8Array(await downloaded.arrayBuffer());
-                }
-              }
-            } catch (error) {
-              console.error("XOVA image gateway error", error);
-            }
-          }
+          // Cloudflare Workers AI: FLUX.2 [klein] 4B.
+          // Keep the account token server-side; never expose it to the browser.
+          const [width, height] =
+            aspect === "3:2" ? [1344, 896] : aspect === "2:3" ? [896, 1344] : [1024, 1024];
+          const form = new FormData();
+          form.set("prompt", english);
+          form.set("width", String(width));
+          form.set("height", String(height));
+          form.set("guidance", quality === "premium" ? "5" : "4");
 
-          // 2) Hugging Face (only when HUGGINGFACE_API_KEY is set).
-          const hfKey = process.env["HUGGINGFACE_API_KEY"];
-          if (!bytes && hfKey) {
-            try {
-              const [width, height] =
-                aspect === "3:2" ? [1216, 832] : aspect === "2:3" ? [832, 1216] : [1024, 1024];
-              const res = await fetch(
-                "https://router.huggingface.co/hf-inference/models/black-forest-labs/FLUX.1-schnell",
-                {
-                  method: "POST",
-                  headers: {
-                    Authorization: `Bearer ${hfKey}`,
-                    "Content-Type": "application/json",
-                    Accept: "image/png",
-                  },
-                  body: JSON.stringify({ inputs: english, parameters: { width, height } }),
-                },
+          try {
+            const res = await fetch(
+              `https://api.cloudflare.com/client/v4/accounts/${encodeURIComponent(cloudflareAccountId)}/ai/run/@cf/black-forest-labs/flux-2-klein-4b`,
+              {
+                method: "POST",
+                headers: { Authorization: `Bearer ${cloudflareApiToken}` },
+                body: form,
+              },
+            );
+
+            if (!res.ok) {
+              lastStatus = res.status;
+              console.error(
+                "XOVA Cloudflare image error",
+                res.status,
+                (await res.text()).slice(0, 500),
               );
-              const type = res.headers.get("content-type") ?? "";
-              if (res.ok && type.startsWith("image/")) {
+            } else {
+              const contentType = res.headers.get("content-type") ?? "";
+              if (contentType.startsWith("image/")) {
                 bytes = new Uint8Array(await res.arrayBuffer());
               } else {
-                lastStatus = res.status;
-                console.error("XOVA image hf", res.status, (await res.text()).slice(0, 200));
-              }
-            } catch (error) {
-              console.error("XOVA image hf error", error);
-            }
-          }
-
-          // 3) Gemini key directly.
-          const geminiKey = process.env["GEMINI_API_KEY"];
-          if (!bytes && geminiKey) {
-            try {
-              const res = await fetch(
-                "https://generativelanguage.googleapis.com/v1beta/models/gemini-3.1-flash-image:generateContent",
-                {
-                  method: "POST",
-                  headers: { "Content-Type": "application/json", "x-goog-api-key": geminiKey },
-                  body: JSON.stringify({
-                    contents: [{ parts: [{ text: english }] }],
-                    generationConfig: {
-                      responseModalities: ["IMAGE", "TEXT"],
-                      imageConfig: { aspectRatio: aspect },
-                    },
-                  }),
-                },
-              );
-              if (res.ok) {
-                const json = (await res.json()) as {
-                  candidates?: Array<{ content?: { parts?: Array<{ inlineData?: { data?: string } }> } }>;
+                const payload = (await res.json()) as {
+                  result?: { image?: string };
+                  success?: boolean;
+                  errors?: Array<{ message?: string }>;
                 };
-                const data = json.candidates?.[0]?.content?.parts?.find((p) => p.inlineData?.data)
-                  ?.inlineData?.data;
-                if (data) bytes = base64ToBytes(data);
-              } else {
-                console.error("XOVA image gemini", res.status);
+                const base64 = payload.result?.image;
+                if (payload.success !== false && typeof base64 === "string" && base64.length > 0) {
+                  bytes = base64ToBytes(base64.replace(/^data:[^;]+;base64,/, ""));
+                } else {
+                  console.error(
+                    "XOVA Cloudflare image response missing image data",
+                    JSON.stringify(payload.errors ?? []).slice(0, 500),
+                  );
+                }
               }
-            } catch (error) {
-              console.error("XOVA image gemini error", error);
             }
-          }
-
-          // 4) Last resort: Pollinations with the exact translated prompt (no extra text).
-          if (!bytes) {
-            try {
-              const [width, height] =
-                aspect === "3:2" ? [1024, 680] : aspect === "2:3" ? [680, 1024] : [1024, 1024];
-              const seed = Math.floor(Math.random() * 1000000);
-              const res = await fetch(
-                `https://image.pollinations.ai/prompt/${encodeURIComponent(english)}?width=${width}&height=${height}&nologo=true&seed=${seed}`,
-              );
-              const type = res.headers.get("content-type") ?? "";
-              if (res.ok && type.startsWith("image/")) {
-                const buf = new Uint8Array(await res.arrayBuffer());
-                if (buf.length > 1000) bytes = buf;
-              }
-            } catch (error) {
-              console.error("XOVA image pollinations error", error);
-            }
+          } catch (error) {
+            console.error("XOVA Cloudflare image request failed", error);
           }
 
           if (!bytes) {
