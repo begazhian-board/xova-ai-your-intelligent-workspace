@@ -2125,3 +2125,96 @@
     padding: 20px 17px;
   }
 }
+
+
+/* Manual display-layout overrides from Settings. */
+.xv-shell[data-device-layout="mobile"] .xv-left-rail {
+  display: none !important;
+}
+
+.xv-shell[data-device-layout="mobile"] .xv-tools-rail {
+  display: none !important;
+}
+
+.xv-shell[data-device-layout="mobile"] .xv-topbar {
+  min-height: 56px;
+  margin: 8px 9px 0;
+  padding-inline: 10px;
+  border-radius: 15px;
+}
+
+.xv-shell[data-device-layout="mobile"] .xv-home-dashboard {
+  width: 100%;
+  max-width: 56rem;
+  gap: 1.25rem;
+  padding-inline: 12px;
+}
+
+.xv-shell[data-device-layout="mobile"] .xv-home-hero {
+  min-height: 0;
+  padding: 20px 17px;
+  border-radius: 1.35rem;
+}
+
+.xv-shell[data-device-layout="mobile"] .xv-home-art {
+  display: none !important;
+}
+
+.xv-shell[data-device-layout="mobile"] .xv-composer-wrap {
+  padding-inline: 10px;
+  padding-top: 8px;
+  padding-bottom: max(12px, env(safe-area-inset-bottom));
+}
+
+.xv-shell[data-device-layout="mobile"] .xv-composer {
+  border-radius: 19px;
+}
+
+.xv-shell[data-device-layout="tablet"] .xv-left-rail {
+  display: flex !important;
+  width: 64px;
+  flex: 0 0 64px;
+}
+
+.xv-shell[data-device-layout="tablet"] .xv-sidebar-collapsed {
+  display: flex !important;
+  width: 64px;
+}
+
+.xv-shell[data-device-layout="tablet"] .xv-tools-rail {
+  display: none !important;
+}
+
+.xv-shell[data-device-layout="tablet"] .xv-topbar {
+  margin-inline: 12px;
+}
+
+.xv-shell[data-device-layout="tablet"] .xv-home-dashboard {
+  max-width: 68rem;
+  gap: 1.35rem;
+  padding-inline: clamp(1rem, 2.5vw, 2rem);
+}
+
+.xv-shell[data-device-layout="tablet"] .xv-home-art {
+  width: min(28%, 260px);
+  min-height: 180px;
+}
+
+.xv-shell[data-device-layout="tablet"] .xv-home-art-mark {
+  width: clamp(130px, 15vw, 190px);
+}
+
+.xv-shell[data-device-layout="tablet"] .xv-composer-wrap {
+  padding-inline: clamp(1rem, 2.5vw, 2rem);
+}
+
+.xv-shell[data-device-layout="desktop"] .xv-left-rail {
+  width: 248px;
+  flex: 0 0 248px;
+}
+
+@media (max-width: 767px) {
+  .xv-shell[data-device-layout="tablet"] .xv-left-rail {
+    display: none !important;
+  }
+}
