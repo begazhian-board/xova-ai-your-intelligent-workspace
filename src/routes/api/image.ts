@@ -2,9 +2,13 @@ import { createFileRoute } from "@tanstack/react-router";
 import { createClient } from "@supabase/supabase-js";
 
 interface WireBody {
+  operation?: "generate" | "save-overlay";
   prompt?: string;
   aspect?: "1:1" | "3:2" | "2:3";
   quality?: "standard" | "premium";
+  overlayText?: string;
+  imageId?: string;
+  compositeDataUrl?: string;
 }
 
 const ASPECTS = new Set(["1:1", "3:2", "2:3"]);
@@ -68,12 +72,6 @@ export const Route = createFileRoute("/api/image")({
         const user = await authenticate(request);
         if (!user) return Response.json({ error: "err.auth" }, { status: 401 });
 
-        const cloudflareAccountId = process.env["CLOUDFLARE_ACCOUNT_ID"]?.trim();
-        const cloudflareApiToken = process.env["CLOUDFLARE_API_TOKEN"]?.trim();
-        if (!cloudflareAccountId || !cloudflareApiToken) {
-          return Response.json({ error: "err.unavailable" }, { status: 500 });
-        }
-
         let body: WireBody;
         try {
           body = (await request.json()) as WireBody;
@@ -81,12 +79,85 @@ export const Route = createFileRoute("/api/image")({
           return Response.json({ error: "err.generic" }, { status: 400 });
         }
 
+        // Saving browser-rendered text is a storage-only operation: no AI request or Neurons.
+        if (body.operation === "save-overlay") {
+          const imageId = body.imageId?.trim();
+          const dataUrl = body.compositeDataUrl ?? "";
+          const match = dataUrl.match(/^data:image\\/png;base64,([A-Za-z0-9+/=]+)$/);
+          if (!imageId || !match || dataUrl.length > 12_000_000) {
+            return Response.json({ error: "err.imageOverlaySave" }, { status: 400 });
+          }
+
+          let compositeBytes: Uint8Array;
+          try {
+            compositeBytes = base64ToBytes(match[1]);
+          } catch {
+            return Response.json({ error: "err.imageOverlaySave" }, { status: 400 });
+          }
+          if (
+            compositeBytes.length < 16 ||
+            compositeBytes.length > 8 * 1024 * 1024 ||
+            compositeBytes[0] !== 0x89 ||
+            compositeBytes[1] !== 0x50 ||
+            compositeBytes[2] !== 0x4e ||
+            compositeBytes[3] !== 0x47
+          ) {
+            return Response.json({ error: "err.imageOverlaySave" }, { status: 400 });
+          }
+
+          const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+          const { data: imageRow, error: rowError } = await supabaseAdmin
+            .from("generated_images")
+            .select("storage_path")
+            .eq("id", imageId)
+            .eq("user_id", user.id)
+            .single();
+          if (rowError || !imageRow?.storage_path) {
+            return Response.json({ error: "err.imageOverlaySave" }, { status: 404 });
+          }
+
+          const { error: uploadError } = await supabaseAdmin.storage
+            .from("xova-images")
+            .upload(imageRow.storage_path, compositeBytes, {
+              contentType: "image/png",
+              upsert: true,
+              cacheControl: "0",
+            });
+          if (uploadError) {
+            console.error("XOVA text overlay save failed", uploadError.message);
+            return Response.json({ error: "err.imageOverlaySave" }, { status: 502 });
+          }
+
+          const { data: signed, error: signError } = await supabaseAdmin.storage
+            .from("xova-images")
+            .createSignedUrl(imageRow.storage_path, SIGNED_URL_TTL);
+          if (signError || !signed?.signedUrl) {
+            return Response.json({ error: "err.imageOverlaySave" }, { status: 502 });
+          }
+
+          await supabaseAdmin
+            .from("generated_images")
+            .update({ image_url: signed.signedUrl })
+            .eq("id", imageId)
+            .eq("user_id", user.id);
+
+          return Response.json({ image: signed.signedUrl });
+        }
+
         const prompt = body.prompt?.trim();
         if (!prompt) return Response.json({ error: "err.generic" }, { status: 400 });
         if (prompt.length > 2000) return Response.json({ error: "err.generic" }, { status: 400 });
 
+        const overlayText = body.overlayText?.trim().slice(0, 500) ?? "";
         const aspect = body.aspect && ASPECTS.has(body.aspect) ? body.aspect : "1:1";
-        const quality = body.quality === "premium" ? "premium" : "standard";
+        // Accurate text is composited locally; use the economical 4B model for text-bearing images.
+        const quality = overlayText ? "standard" : body.quality === "premium" ? "premium" : "standard";
+
+        const cloudflareAccountId = process.env["CLOUDFLARE_ACCOUNT_ID"]?.trim();
+        const cloudflareApiToken = process.env["CLOUDFLARE_API_TOKEN"]?.trim();
+        if (!cloudflareAccountId || !cloudflareApiToken) {
+          return Response.json({ error: "err.unavailable" }, { status: 500 });
+        }
 
         const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
 
@@ -141,7 +212,10 @@ export const Route = createFileRoute("/api/image")({
           let bytes: Uint8Array | null = null;
           let lastStatus: number | undefined;
           // Faithful English translation of the user's own words — nothing added.
-          const english = await translateToEnglish(prompt);
+          const translatedPrompt = await translateToEnglish(prompt);
+          const english = overlayText
+            ? `${translatedPrompt}. Create only the visual background and scene. Do not render any text, letters, words, numbers, logos, signatures, labels, or pseudo-text. Leave a clean, uncluttered lower-center area for a separate text overlay.`
+            : translatedPrompt;
 
           // Use the economical 4B model by default; premium selects the higher-detail 9B model.
           // Keep the account token server-side; never expose it to the browser.
@@ -228,7 +302,9 @@ export const Route = createFileRoute("/api/image")({
             .from("generated_images")
             .insert({
               user_id: user.id,
-              prompt,
+              prompt: overlayText
+                ? `${prompt}\\n\\n[XOVA_TEXT_OVERLAY]\\n${overlayText}`
+                : prompt,
               aspect,
               quality,
               storage_path: path,
@@ -247,6 +323,7 @@ export const Route = createFileRoute("/api/image")({
             createdAt: row.created_at,
             aspect,
             quality,
+            overlayText: overlayText || undefined,
           });
         } catch (error) {
           console.error("XOVA image error", error);
