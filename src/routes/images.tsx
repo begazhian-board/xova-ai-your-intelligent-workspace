@@ -347,7 +347,11 @@ function ImageStudio() {
               <textarea
                 id="xova-image-overlay-text"
                 value={overlayText}
-                onChange={(event) => setOverlayText(event.target.value)}
+                onChange={(event) => {
+                  const value = event.target.value;
+                  setOverlayText(value);
+                  if (value.trim()) setQuality("standard");
+                }}
                 rows={3}
                 maxLength={500}
                 placeholder={t("studio.overlayTextPlaceholder")}
@@ -412,10 +416,11 @@ function ImageStudio() {
                     <button
                       key={value}
                       type="button"
+                      disabled={value === "premium" && overlayText.trim().length > 0}
                       aria-pressed={quality === value}
                       onClick={() => setQuality(value)}
                       className={cn(
-                        "xv-focus xv-studio-choice flex min-h-[82px] flex-col items-start justify-center gap-1 rounded-2xl border px-3 py-2 text-start transition-all",
+                        "xv-focus xv-studio-choice flex min-h-[82px] flex-col items-start justify-center gap-1 rounded-2xl border px-3 py-2 text-start transition-all disabled:cursor-not-allowed disabled:opacity-40",
                         quality === value && "is-selected",
                       )}
                     >
