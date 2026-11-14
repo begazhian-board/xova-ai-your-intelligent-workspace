@@ -25,7 +25,7 @@ export function Welcome({
     : t("welcome.greeting");
 
   return (
-    <div className="mx-auto flex w-full max-w-3xl flex-1 flex-col items-center justify-center px-4 py-10 text-center sm:px-6">
+    <div className="xv-welcome mx-auto flex w-full max-w-3xl flex-1 flex-col items-center justify-center px-4 py-10 text-center sm:px-6">
       <div className="xv-rise flex items-center justify-center gap-2" dir="ltr">
         <XovaLogoText className="h-14 w-[218px] drop-shadow-[0_0_24px_rgba(88,100,255,0.22)] sm:h-16 sm:w-[250px]" />
         <span className="xv-gradient-text mb-2 text-sm font-semibold tracking-[0.18em] sm:text-base">AI</span>
