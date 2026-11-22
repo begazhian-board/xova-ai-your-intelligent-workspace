@@ -18,6 +18,7 @@ const en: Dict = {
   "nav.account": "Account",
   "nav.signOut": "Sign out",
   "nav.imageStudio": "Image studio",
+  "nav.coder": "XOVA Coder",
   "nav.conversation": "Conversation",
 
   "welcome.greeting": "How can I help you today?",
@@ -271,6 +272,7 @@ const ar: Dict = {
   "nav.account": "الحساب",
   "nav.signOut": "تسجيل الخروج",
   "nav.imageStudio": "استوديو الصور",
+  "nav.coder": "XOVA Coder",
   "nav.conversation": "المحادثة",
 
   "welcome.greeting": "كيف أساعدك اليوم؟",
