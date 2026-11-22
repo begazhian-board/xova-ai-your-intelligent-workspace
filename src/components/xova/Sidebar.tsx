@@ -1,7 +1,7 @@
 import { useMemo, useState } from "react";
 import { Link } from "@tanstack/react-router";
 import {
-  Image as ImageIcon,
+  Code2,\n  Image as ImageIcon,
   LogOut,
   MessageSquare,
   PanelLeftClose,
@@ -112,6 +112,14 @@ export function Sidebar({
         >
           <span className="xv-sidebar-icon"><ImageIcon className="h-4 w-4" /></span>
         </Link>
+        <Link
+          to="/coder"
+          aria-label={t("nav.coder")}
+          title={t("nav.coder")}
+          className="xv-focus grid h-9 w-9 place-items-center rounded-lg text-muted-foreground hover:bg-hover hover:text-foreground"
+        >
+          <span className="xv-sidebar-icon"><Code2 className="h-4 w-4" /></span>
+        </Link>
         <button
           type="button"
           onClick={onOpenSettings}
@@ -172,6 +180,15 @@ export function Sidebar({
         >
           <span className="xv-sidebar-icon"><ImageIcon className="h-4 w-4" /></span>
           {t("nav.imageStudio")}
+        </Link>
+
+        <Link
+          to="/coder"
+          onClick={() => onCloseDrawer?.()}
+          className="xv-sidebar-image-link xv-focus inline-flex items-center gap-2 rounded-xl border border-border/70 bg-surface/60 px-3.5 py-2.5 text-sm font-medium text-muted-foreground transition-colors hover:border-brand/30 hover:bg-hover hover:text-foreground"
+        >
+          <span className="xv-sidebar-icon"><Code2 className="h-4 w-4" /></span>
+          {t("nav.coder")}
         </Link>
 
         <div className="relative">
