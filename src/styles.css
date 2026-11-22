@@ -2218,3 +2218,154 @@
     display: none !important;
   }
 }
+
+
+/* =========================================================
+   XOVA Coder — split workspace, responsive preview and chat
+   ========================================================= */
+.xv-coder-page {
+  background:
+    radial-gradient(ellipse 40rem 26rem at 8% -12%, color-mix(in oklab, var(--brand) 12%, transparent), transparent 72%),
+    radial-gradient(ellipse 34rem 25rem at 100% 100%, color-mix(in oklab, #168fff 8%, transparent), transparent 74%),
+    var(--background);
+}
+
+.xv-coder-header {
+  background: color-mix(in oklab, var(--surface) 82%, transparent);
+  backdrop-filter: blur(22px);
+  -webkit-backdrop-filter: blur(22px);
+}
+
+.dark .xv-coder-header {
+  background: linear-gradient(110deg, oklch(0.2 0.025 270 / 90%), oklch(0.16 0.018 255 / 94%));
+}
+
+.xv-coder-select {
+  color: var(--foreground);
+}
+
+.xv-coder-select option {
+  background: var(--surface);
+  color: var(--foreground);
+}
+
+.xv-coder-chat,
+.xv-coder-preview {
+  min-width: 0;
+  box-shadow: 0 14px 38px oklch(0.12 0.02 260 / 6%);
+  backdrop-filter: blur(18px);
+  -webkit-backdrop-filter: blur(18px);
+}
+
+:root:not(.dark) .xv-coder-chat,
+:root:not(.dark) .xv-coder-preview {
+  border-color: oklch(0.78 0.055 270 / 44%);
+  background: linear-gradient(155deg, oklch(1 0 0 / 78%), oklch(0.96 0.025 270 / 64%));
+}
+
+.dark .xv-coder-chat,
+.dark .xv-coder-preview {
+  border-color: oklch(0.72 0.14 270 / 16%);
+  background: linear-gradient(155deg, oklch(0.2 0.024 268 / 94%), oklch(0.15 0.016 255 / 97%));
+  box-shadow: 0 18px 42px oklch(0 0 0 / 18%), inset 0 1px 0 oklch(1 0 0 / 4%);
+}
+
+.xv-coder-messages {
+  scrollbar-width: thin;
+  scrollbar-color: color-mix(in oklab, var(--brand) 32%, transparent) transparent;
+}
+
+.xv-coder-starter {
+  box-shadow: 0 5px 16px oklch(0.2 0.03 270 / 3%);
+}
+
+.xv-coder-preview-stage {
+  background:
+    radial-gradient(circle at 50% 0%, color-mix(in oklab, var(--brand) 7%, transparent), transparent 54%),
+    color-mix(in oklab, var(--background) 88%, var(--surface));
+}
+
+.dark .xv-coder-preview-stage {
+  background:
+    radial-gradient(circle at 50% 0%, oklch(0.42 0.15 270 / 10%), transparent 54%),
+    oklch(0.115 0.015 255);
+}
+
+.xv-coder-device {
+  transition: width 220ms ease, border-radius 220ms ease, box-shadow 220ms ease;
+}
+
+.xv-coder-device.is-desktop {
+  border-radius: 14px;
+}
+
+.xv-coder-device.is-tablet {
+  border-radius: 22px;
+  box-shadow: 0 18px 48px oklch(0.1 0.02 260 / 16%);
+}
+
+.xv-coder-device.is-mobile {
+  flex: 0 1 844px;
+  border-width: 7px;
+  border-color: color-mix(in oklab, var(--foreground) 58%, #111827);
+  border-radius: 28px;
+  box-shadow:
+    0 20px 55px oklch(0.08 0.02 260 / 24%),
+    inset 0 0 0 1px oklch(1 0 0 / 16%);
+}
+
+.xv-coder-file-list summary::-webkit-details-marker {
+  display: none;
+}
+
+.xv-coder-mobile-tabs {
+  background: color-mix(in oklab, var(--surface) 72%, transparent);
+}
+
+@media (max-width: 1023px) {
+  .xv-coder-workspace {
+    gap: 8px;
+    padding: 8px;
+  }
+
+  .xv-coder-chat,
+  .xv-coder-preview {
+    min-height: 0;
+    height: 100%;
+  }
+
+  .xv-coder-preview-stage {
+    padding: 8px;
+  }
+}
+
+@media (max-width: 639px) {
+  .xv-coder-header {
+    gap: 8px;
+    padding-inline: 10px;
+  }
+
+  .xv-coder-header > span:nth-of-type(2) {
+    display: none;
+  }
+
+  .xv-coder-mobile-projects {
+    background: color-mix(in oklab, var(--surface) 75%, transparent);
+  }
+
+  .xv-coder-messages {
+    padding: 12px;
+  }
+
+  .xv-coder-device.is-mobile {
+    width: min(390px, 100%);
+    flex-basis: 100%;
+    border-radius: 22px;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .xv-coder-device {
+    transition: none !important;
+  }
+}
