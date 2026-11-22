@@ -2,6 +2,7 @@ import { useMemo, useState } from "react";
 import { Link } from "@tanstack/react-router";
 import {
   Image as ImageIcon,
+  Code2,
   LogOut,
   MessageSquare,
   PanelLeftClose,
@@ -111,6 +112,15 @@ export function Sidebar({
         >
           <ImageIcon className="h-4 w-4" />
         </Link>
+        <Link
+          to="/coder"
+          aria-label="XOVA Coder"
+          title="XOVA Coder — NEW"
+          className="xv-focus relative grid h-9 w-9 place-items-center rounded-lg text-muted-foreground hover:bg-hover hover:text-foreground"
+        >
+          <Code2 className="h-4 w-4" />
+          <span className="absolute -end-0.5 -top-0.5 h-2 w-2 rounded-full bg-brand" aria-hidden="true" />
+        </Link>
         <button
           type="button"
           onClick={onOpenSettings}
@@ -170,6 +180,18 @@ export function Sidebar({
         >
           <ImageIcon className="h-4 w-4" />
           {t("nav.imageStudio")}
+        </Link>
+
+        <Link
+          to="/coder"
+          onClick={() => onCloseDrawer?.()}
+          className="xv-focus inline-flex items-center gap-2 rounded-xl px-3 py-2 text-sm font-medium text-muted-foreground transition-colors hover:bg-hover hover:text-foreground"
+        >
+          <Code2 className="h-4 w-4" />
+          XOVA Coder
+          <span className="ms-auto rounded-full bg-brand px-1.5 py-px text-[9px] font-bold uppercase leading-4 tracking-wide text-brand-foreground">
+            NEW
+          </span>
         </Link>
 
         <div className="relative">

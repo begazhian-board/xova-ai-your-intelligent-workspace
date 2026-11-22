@@ -11,8 +11,10 @@
 import { Route as rootRouteImport } from './routes/__root'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as AuthRouteImport } from './routes/auth'
+import { Route as CoderRouteImport } from './routes/coder'
 import { Route as ImagesRouteImport } from './routes/images'
 import { Route as ApiChatRouteImport } from './routes/api/chat'
+import { Route as ApiCoderRouteImport } from './routes/api/coder'
 import { Route as ApiImageRouteImport } from './routes/api/image'
 
 const IndexRoute = IndexRouteImport.update({
@@ -25,6 +27,11 @@ const AuthRoute = AuthRouteImport.update({
   path: '/auth',
   getParentRoute: () => rootRouteImport,
 } as any)
+const CoderRoute = CoderRouteImport.update({
+  id: '/coder',
+  path: '/coder',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const ImagesRoute = ImagesRouteImport.update({
   id: '/images',
   path: '/images',
@@ -33,6 +40,11 @@ const ImagesRoute = ImagesRouteImport.update({
 const ApiChatRoute = ApiChatRouteImport.update({
   id: '/api/chat',
   path: '/api/chat',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ApiCoderRoute = ApiCoderRouteImport.update({
+  id: '/api/coder',
+  path: '/api/coder',
   getParentRoute: () => rootRouteImport,
 } as any)
 const ApiImageRoute = ApiImageRouteImport.update({
@@ -44,38 +56,68 @@ const ApiImageRoute = ApiImageRouteImport.update({
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/auth': typeof AuthRoute
+  '/coder': typeof CoderRoute
   '/images': typeof ImagesRoute
   '/api/chat': typeof ApiChatRoute
+  '/api/coder': typeof ApiCoderRoute
   '/api/image': typeof ApiImageRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/auth': typeof AuthRoute
+  '/coder': typeof CoderRoute
   '/images': typeof ImagesRoute
   '/api/chat': typeof ApiChatRoute
+  '/api/coder': typeof ApiCoderRoute
   '/api/image': typeof ApiImageRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
   '/auth': typeof AuthRoute
+  '/coder': typeof CoderRoute
   '/images': typeof ImagesRoute
   '/api/chat': typeof ApiChatRoute
+  '/api/coder': typeof ApiCoderRoute
   '/api/image': typeof ApiImageRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
-  fullPaths: '/' | '/auth' | '/images' | '/api/chat' | '/api/image'
+  fullPaths:
+    | '/'
+    | '/auth'
+    | '/coder'
+    | '/images'
+    | '/api/chat'
+    | '/api/coder'
+    | '/api/image'
   fileRoutesByTo: FileRoutesByTo
-  to: '/' | '/auth' | '/images' | '/api/chat' | '/api/image'
-  id: '__root__' | '/' | '/auth' | '/images' | '/api/chat' | '/api/image'
+  to:
+    | '/'
+    | '/auth'
+    | '/coder'
+    | '/images'
+    | '/api/chat'
+    | '/api/coder'
+    | '/api/image'
+  id:
+    | '__root__'
+    | '/'
+    | '/auth'
+    | '/coder'
+    | '/images'
+    | '/api/chat'
+    | '/api/coder'
+    | '/api/image'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
   AuthRoute: typeof AuthRoute
+  CoderRoute: typeof CoderRoute
   ImagesRoute: typeof ImagesRoute
   ApiChatRoute: typeof ApiChatRoute
+  ApiCoderRoute: typeof ApiCoderRoute
   ApiImageRoute: typeof ApiImageRoute
 }
 
@@ -95,6 +137,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/coder': {
+      id: '/coder'
+      path: '/coder'
+      fullPath: '/coder'
+      preLoaderRoute: typeof CoderRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/images': {
       id: '/images'
       path: '/images'
@@ -107,6 +156,13 @@ declare module '@tanstack/react-router' {
       path: '/api/chat'
       fullPath: '/api/chat'
       preLoaderRoute: typeof ApiChatRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/coder': {
+      id: '/api/coder'
+      path: '/api/coder'
+      fullPath: '/api/coder'
+      preLoaderRoute: typeof ApiCoderRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/api/image': {
@@ -122,8 +178,10 @@ declare module '@tanstack/react-router' {
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   AuthRoute: AuthRoute,
+  CoderRoute: CoderRoute,
   ImagesRoute: ImagesRoute,
   ApiChatRoute: ApiChatRoute,
+  ApiCoderRoute: ApiCoderRoute,
   ApiImageRoute: ApiImageRoute,
 }
 export const routeTree = rootRouteImport
