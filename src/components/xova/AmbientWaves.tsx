@@ -28,27 +28,22 @@ export function AmbientWaves() {
           <path className="xv-wave-halo" d="M-100 168 C105 148 184 35 365 28 S536 58 665 -24" />
           <path className="xv-wave-line" d="M-100 168 C105 148 184 35 365 28 S536 58 665 -24" />
           <path className="xv-wave-line xv-wave-line-soft" d="M-100 198 C115 178 198 66 374 59 S542 88 680 8" />
-          <path className="xv-wave-glimmer" d="M-100 168 C105 148 184 35 365 28 S536 58 665 -24" />
 
           {/* Right side: gentle arcs stay away from the center of the chat. */}
           <path className="xv-wave-halo xv-wave-reverse" d="M1510 132 C1328 118 1288 255 1120 270 S927 202 826 282" />
           <path className="xv-wave-line xv-wave-reverse" d="M1510 132 C1328 118 1288 255 1120 270 S927 202 826 282" />
           <path className="xv-wave-line xv-wave-line-soft" d="M1510 164 C1342 150 1301 286 1134 302 S943 236 846 312" />
-          <path className="xv-wave-glimmer xv-wave-reverse" d="M1510 132 C1328 118 1288 255 1120 270 S927 202 826 282" />
 
           <path className="xv-wave-halo xv-wave-reverse" d="M1515 520 C1330 470 1294 592 1125 624 S949 571 835 676" />
           <path className="xv-wave-line xv-wave-reverse" d="M1515 520 C1330 470 1294 592 1125 624 S949 571 835 676" />
-          <path className="xv-wave-glimmer xv-wave-reverse" d="M1515 520 C1330 470 1294 592 1125 624 S949 571 835 676" />
 
           {/* Lower edge: a broad, quiet curve with a parallel highlight. */}
           <path className="xv-wave-halo" d="M-100 784 C82 646 234 690 384 793 S550 913 710 841" />
           <path className="xv-wave-line" d="M-100 784 C82 646 234 690 384 793 S550 913 710 841" />
           <path className="xv-wave-line xv-wave-line-soft" d="M-100 818 C87 682 242 724 397 824 S559 943 727 876" />
-          <path className="xv-wave-glimmer" d="M-100 784 C82 646 234 690 384 793 S550 913 710 841" />
 
           <path className="xv-wave-halo xv-wave-reverse" d="M1515 820 C1345 748 1294 846 1123 882 S923 815 788 926" />
           <path className="xv-wave-line xv-wave-reverse" d="M1515 820 C1345 748 1294 846 1123 882 S923 815 788 926" />
-          <path className="xv-wave-glimmer xv-wave-reverse" d="M1515 820 C1345 748 1294 846 1123 882 S923 815 788 926" />
         </g>
       </svg>
     </div>
