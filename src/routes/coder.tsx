@@ -18,6 +18,7 @@ import {
   Smartphone,
   Sparkles,
   Tablet,
+  Trash2,
 } from "lucide-react";
 import { useAuth } from "@/hooks/useAuth";
 import { supabase } from "@/integrations/supabase/client";
@@ -251,6 +252,31 @@ function XovaCoder() {
     setMobileTab("chat");
   };
 
+  const deleteProject = (id: string) => {
+    if (busy) return;
+    const target = projects.find((project) => project.id === id);
+    if (!target) return;
+
+    const confirmed = window.confirm(
+      isArabic
+        ? `متأكد إنك عايز تحذف مشروع "${target.name}"؟ مش هتقدر ترجع المحادثة والملفات بعد الحذف.`
+        : `Delete "${target.name}"? Its chat and files cannot be recovered.`,
+    );
+    if (!confirmed) return;
+
+    const deletedIndex = projects.findIndex((project) => project.id === id);
+    const remaining = projects.filter((project) => project.id !== id);
+    setProjects(remaining);
+
+    if (activeProjectId === id) {
+      const nextProject = remaining[Math.min(deletedIndex, remaining.length - 1)] ?? null;
+      setActiveProjectId(nextProject?.id ?? null);
+      setPrompt("");
+      setMobileTab("chat");
+      setPreviewRefresh((value) => value + 1);
+    }
+  };
+
   const submitPrompt = async (event?: FormEvent<HTMLFormElement>, starter?: string) => {
     event?.preventDefault();
     const text = (starter ?? prompt).trim();
@@ -399,6 +425,17 @@ function XovaCoder() {
 
         <button
           type="button"
+          onClick={() => activeProjectId && deleteProject(activeProjectId)}
+          disabled={!activeProjectId || busy}
+          aria-label={isArabic ? "حذف المشروع الحالي" : "Delete current project"}
+          title={isArabic ? "حذف المشروع الحالي" : "Delete current project"}
+          className="xv-focus hidden h-9 w-9 shrink-0 place-items-center rounded-xl border border-border bg-surface/70 text-muted-foreground transition-colors hover:border-destructive/40 hover:bg-destructive/10 hover:text-destructive disabled:cursor-not-allowed disabled:opacity-35 sm:inline-grid"
+        >
+          <Trash2 className="h-4 w-4" />
+        </button>
+
+        <button
+          type="button"
           onClick={startNewProject}
           className="xv-focus inline-flex h-9 shrink-0 items-center gap-1.5 rounded-xl border border-border bg-surface/70 px-2.5 text-xs font-medium text-muted-foreground transition-colors hover:bg-hover hover:text-foreground"
         >
@@ -419,14 +456,29 @@ function XovaCoder() {
       {projects.length > 0 && (
         <div className="xv-coder-mobile-projects flex shrink-0 items-center gap-2 overflow-x-auto px-3 py-2 sm:hidden">
           {projects.map((project) => (
-            <button
+            <div
               key={project.id}
-              type="button"
-              onClick={() => setActiveProjectId(project.id)}
-              className={"xv-focus shrink-0 rounded-full border px-3 py-1.5 text-[11px] " + (project.id === activeProjectId ? "border-brand/40 bg-brand/10 text-brand" : "border-border text-muted-foreground")}
+              className={"inline-flex shrink-0 items-center rounded-full border " + (project.id === activeProjectId ? "border-brand/40 bg-brand/10 text-brand" : "border-border text-muted-foreground")}
             >
-              {project.name}
-            </button>
+              <button
+                type="button"
+                onClick={() => setActiveProjectId(project.id)}
+                aria-current={project.id === activeProjectId ? "page" : undefined}
+                className="xv-focus rounded-s-full px-3 py-1.5 text-[11px]"
+              >
+                {project.name}
+              </button>
+              <button
+                type="button"
+                onClick={() => deleteProject(project.id)}
+                disabled={busy}
+                aria-label={isArabic ? `حذف مشروع ${project.name}` : `Delete project ${project.name}`}
+                title={isArabic ? "حذف المشروع" : "Delete project"}
+                className="xv-focus grid h-7 w-7 place-items-center rounded-e-full text-muted-foreground transition-colors hover:bg-destructive/10 hover:text-destructive disabled:opacity-35"
+              >
+                <Trash2 className="h-3.5 w-3.5" />
+              </button>
+            </div>
           ))}
         </div>
       )}
