@@ -651,8 +651,7 @@
 }
 
 .xv-wave-line,
-.xv-wave-halo,
-.xv-wave-glimmer {
+.xv-wave-halo {
   fill: none;
   stroke: url(#xv-wave-gradient);
   stroke-linecap: round;
@@ -679,14 +678,6 @@
   filter: url(#xv-wave-blur);
 }
 
-.xv-wave-glimmer {
-  stroke-width: 2.1;
-  stroke-dasharray: 38 520;
-  stroke-dashoffset: 0;
-  opacity: 0.98;
-  animation: xv-wave-shimmer 22s linear infinite;
-}
-
 /* Dark theme: stronger neon contrast and a brighter moving highlight. */
 .dark .xv-main-panel {
   background-color: transparent;
@@ -708,17 +699,6 @@
 
 .dark .xv-wave-halo {
   opacity: 0.27;
-}
-
-.dark .xv-wave-glimmer {
-  opacity: 1;
-  stroke-width: 2.3;
-}
-
-@keyframes xv-wave-shimmer {
-  to {
-    stroke-dashoffset: -558;
-  }
 }
 
 @keyframes xv-wave-drift {
@@ -751,10 +731,6 @@
   opacity: 0.2;
 }
 
-:root:not(.dark) .xv-wave-glimmer {
-  opacity: 1;
-}
-
 @media (max-width: 767px) {
   .xv-wave-bg {
     opacity: 0.48;
@@ -766,8 +742,7 @@
 }
 
 @media (prefers-reduced-motion: reduce) {
-  .xv-wave-ribbons,
-  .xv-wave-glimmer {
+  .xv-wave-ribbons {
     animation: none !important;
   }
 }
