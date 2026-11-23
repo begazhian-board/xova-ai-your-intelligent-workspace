@@ -7,7 +7,8 @@ import {
   Image as ImageIcon,
   Lightbulb,
   MessageCircle,
-  Sparkles,
+  LayoutGrid,
+  Palette,
 } from "lucide-react";
 import { Link } from "@tanstack/react-router";
 import { XovaMark } from "./Logo";
@@ -48,7 +49,7 @@ export function Welcome({
       <section className="xv-home-hero relative flex min-h-[220px] items-center justify-between gap-4 rounded-[1.75rem] px-5 py-7 sm:px-8 lg:min-h-[250px] lg:px-10">
         <div className="xv-home-hero-copy relative z-10 max-w-2xl">
           <span className="mb-4 inline-flex items-center gap-2 rounded-full border border-brand/25 bg-brand/10 px-3 py-1.5 text-xs font-semibold text-brand">
-            <Sparkles className="h-3.5 w-3.5" />
+            <MessageCircle className="h-3.5 w-3.5" />
             {lang === "ar" ? "مساحة عملك الذكية" : "Your intelligent workspace"}
           </span>
           <h1 className="xv-gradient-text text-2xl font-bold leading-tight tracking-tight sm:text-4xl">
@@ -91,7 +92,6 @@ export function Welcome({
           <span className="xv-home-art-glow" />
           <XovaMark className="xv-home-art-mark" />
           <span className="xv-home-float-icon xv-home-float-one"><ImageIcon className="h-5 w-5" /></span>
-          <span className="xv-home-float-icon xv-home-float-two"><Sparkles className="h-5 w-5" /></span>
           <span className="xv-home-float-icon xv-home-float-three"><Lightbulb className="h-5 w-5" /></span>
         </div>
       </section>
@@ -107,7 +107,7 @@ export function Welcome({
             </p>
           </div>
           <span className="grid h-9 w-9 place-items-center rounded-xl bg-brand/10 text-brand">
-            <Sparkles className="h-4.5 w-4.5" />
+            <LayoutGrid className="h-4.5 w-4.5" />
           </span>
         </div>
 
@@ -226,7 +226,7 @@ export function Welcome({
           <div className="relative z-10 flex items-start justify-between gap-3">
             <div>
               <span className="inline-flex items-center gap-2 rounded-full border border-brand/20 bg-brand/10 px-2.5 py-1 text-[11px] font-semibold text-brand">
-                <Sparkles className="h-3.5 w-3.5" />
+                <Palette className="h-3.5 w-3.5" />
                 {lang === "ar" ? "مساحة الإبداع" : "Creative space"}
               </span>
               <h2 className="mt-3 text-lg font-bold">
