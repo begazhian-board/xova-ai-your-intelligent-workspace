@@ -16,7 +16,6 @@ import {
   RefreshCw,
   Send,
   Smartphone,
-  Sparkles,
   Tablet,
   Trash2,
 } from "lucide-react";
@@ -512,7 +511,7 @@ function XovaCoder() {
               </p>
             </div>
             <span className="grid h-9 w-9 shrink-0 place-items-center rounded-xl bg-brand/10 text-brand">
-              <Sparkles className="h-4 w-4" />
+              <Code2 className="h-4 w-4" />
             </span>
           </div>
 
@@ -539,7 +538,7 @@ function XovaCoder() {
                       onClick={() => void submitPrompt(undefined, isArabic ? starter.ar : starter.prompt)}
                       className="xv-coder-starter xv-focus flex items-center gap-3 rounded-xl border border-border/80 bg-background/65 px-3 py-3 text-start text-xs transition-colors hover:border-brand/35 hover:bg-brand/5 disabled:opacity-50"
                     >
-                      <Sparkles className="h-4 w-4 shrink-0 text-brand" />
+                      <FileCode2 className="h-4 w-4 shrink-0 text-brand" />
                       <span className="min-w-0 flex-1">{isArabic ? starter.ar : starter.en}</span>
                       <ArrowLeft className="h-3.5 w-3.5 shrink-0 text-muted-foreground" />
                     </button>
