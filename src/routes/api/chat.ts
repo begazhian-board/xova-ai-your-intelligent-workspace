@@ -1,7 +1,7 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { createClient } from "@supabase/supabase-js";
 import { buildSystemPrompt } from "@/lib/xova-prompt.server";
-import { GEMINI_MODEL } from "@/lib/gemini.server";
+import { GEMINI_FALLBACK_MODEL, GEMINI_MODEL } from "@/lib/gemini.server";
 import { chatProviderErrorCode, searchNoticeCode } from "@/lib/chat-contract";
 import type { ModeId } from "@/lib/xova";
 
@@ -117,10 +117,11 @@ async function streamGemini(
   messages: WireMessage[],
   signal: AbortSignal,
   onText: (text: string) => void,
+  model = GEMINI_MODEL,
 ) {
   const response = await fetch(
     "https://generativelanguage.googleapis.com/v1beta/models/" +
-      GEMINI_MODEL +
+      model +
       ":streamGenerateContent?alt=sse",
     {
       method: "POST",
@@ -351,10 +352,34 @@ export const Route = createFileRoute("/api/chat")({
 
               try {
                 try {
-                  await streamGemini(geminiKey, system, messages, local.signal, (delta) => {
-                    wroteText = true;
-                    controller.enqueue(encoder.encode(delta));
-                  });
+                  try {
+                    await streamGemini(geminiKey, system, messages, local.signal, (delta) => {
+                      wroteText = true;
+                      controller.enqueue(encoder.encode(delta));
+                    });
+                  } catch (primaryError) {
+                    const canFallback =
+                      !wroteText &&
+                      primaryError instanceof GeminiApiError &&
+                      (primaryError.statusCode === 500 || primaryError.statusCode === 503);
+                    if (!canFallback) throw primaryError;
+
+                    console.warn(
+                      "XOVA primary Gemini model temporarily unavailable; retrying with fallback",
+                      primaryError.statusCode,
+                    );
+                    await streamGemini(
+                      geminiKey,
+                      system,
+                      messages,
+                      local.signal,
+                      (delta) => {
+                        wroteText = true;
+                        controller.enqueue(encoder.encode(delta));
+                      },
+                      GEMINI_FALLBACK_MODEL,
+                    );
+                  }
                   if (!wroteText) throw new GeminiApiError(502, "Gemini returned no visible answer");
                 } catch (error) {
                   if (request.signal.aborted) {
