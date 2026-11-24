@@ -130,7 +130,7 @@ export const Route = createFileRoute("/api/diagnostics")({
         if (!user) return Response.json({ ok: false, error: "err.auth" }, { status: 401 });
 
         const apiKey = process.env["GEMINI_API_KEY"];
-        if (!apiKey) return Response.json({ ok: false, error: "err.geminiConfig" });
+        if (!apiKey) return Response.json({ ok: false, error: "err.generic" });
 
         let result = await probeGeminiStream(apiKey, GEMINI_MODEL);
         if (
@@ -143,7 +143,7 @@ export const Route = createFileRoute("/api/diagnostics")({
 
         if (!result.ok) {
           console.error("XOVA Gemini streaming diagnostic failed", result.status, result.detail);
-          return Response.json({ ok: false, error: classify(result.status, result.detail) });
+          return Response.json({ ok: false, error: "err.generic" });
         }
         return Response.json({ ok: true });
       },
