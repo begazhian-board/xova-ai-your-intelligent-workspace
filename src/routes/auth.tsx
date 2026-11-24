@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { toast } from "sonner";
 import { XovaWordmark } from "@/components/xova/Logo";
+import { Mascot } from "@/components/xova/Mascot";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 import { useI18n } from "@/lib/i18n";
@@ -73,7 +74,10 @@ function AuthPage() {
   return (
     <main className="flex min-h-screen items-center justify-center bg-background px-4 py-10">
       <div className="w-full max-w-sm">
-        <XovaWordmark className="justify-center" />
+        <div className="flex flex-col items-center gap-4">
+          <Mascot className="xv-rise h-20 w-20" />
+          <XovaWordmark className="items-center" />
+        </div>
         <h1 className="mt-6 text-center text-xl font-semibold tracking-[-0.01em]">
           {t("auth.title")}
         </h1>

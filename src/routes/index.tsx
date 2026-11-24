@@ -8,6 +8,7 @@ import { Sidebar } from "@/components/xova/Sidebar";
 import { SettingsDialog } from "@/components/xova/SettingsDialog";
 import { Topbar } from "@/components/xova/Topbar";
 import { Welcome } from "@/components/xova/Welcome";
+import { Mascot, useMascotState } from "@/components/xova/Mascot";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -143,6 +144,7 @@ function Workspace() {
     rename,
     remove,
   } = useConversation(user?.id, aiConfig);
+  const mascotState = useMascotState(status);
 
   // Intelligent scrolling: follow the stream only while the user is at the bottom.
   useEffect(() => {
@@ -194,10 +196,22 @@ function Workspace() {
     node?.scrollIntoView({ behavior: "smooth", block: "center" });
   }, []);
 
+  const [signingOut, setSigningOut] = useState(false);
   const handleSignOut = useCallback(async () => {
-    await signOut();
+    setSigningOut(true);
+    // Real sign-out runs immediately; the farewell only adds a short minimum display.
+    await Promise.all([signOut(), new Promise((resolve) => setTimeout(resolve, 900))]);
     void navigate({ to: "/auth", replace: true });
   }, [navigate, signOut]);
+
+  if (signingOut) {
+    return (
+      <main className="flex min-h-screen flex-col items-center justify-center gap-4 bg-background px-6 text-center">
+        <Mascot state="bye" className="h-20 w-20" />
+        <p className="xv-rise text-sm text-muted-foreground">{t("mascot.bye")}</p>
+      </main>
+    );
+  }
 
   if (authLoading || !user || profileLoading || !profile) {
     return (
@@ -274,7 +288,7 @@ function Workspace() {
             </div>
           ) : messages.length === 0 ? (
             <div className="flex min-h-full flex-col">
-              <Welcome displayName={profile.display_name} onPick={(text) => setDraft(text)} />
+              <Welcome displayName={profile.display_name} mascotState={mascotState} onPick={(text) => setDraft(text)} />
             </div>
           ) : (
             <div className="mx-auto flex w-full max-w-3xl flex-col gap-6 px-4 py-6 sm:px-6">
@@ -306,6 +320,12 @@ function Workspace() {
                 {t(notice)}
               </Banner>
             )}
+          </div>
+        )}
+
+        {messages.length > 0 && mascotState !== "idle" && (
+          <div className="pointer-events-none flex justify-center pb-1" aria-hidden="true">
+            <Mascot state={mascotState} className="h-10 w-10" />
           </div>
         )}
 

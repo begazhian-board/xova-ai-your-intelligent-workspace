@@ -1,5 +1,6 @@
 import { Code2, FileSearch, Lightbulb, PenLine } from "lucide-react";
-import { XovaLogoText, XovaMark } from "./Logo";
+import { XovaLogoText } from "./Logo";
+import { Mascot, type MascotState } from "./Mascot";
 import { useI18n } from "@/lib/i18n";
 
 const SUGGESTIONS = [
@@ -12,9 +13,11 @@ const SUGGESTIONS = [
 export function Welcome({
   onPick,
   displayName,
+  mascotState = "idle",
 }: {
   onPick: (text: string) => void;
   displayName?: string | null;
+  mascotState?: MascotState;
 }) {
   const { t, lang } = useI18n();
   const preferredName = displayName?.trim();
@@ -26,9 +29,7 @@ export function Welcome({
 
   return (
     <div className="mx-auto flex w-full max-w-2xl flex-1 flex-col items-center justify-center px-4 py-10 text-center">
-      <span className="xv-rise relative grid h-16 w-16 place-items-center rounded-2xl border border-brand/25 bg-brand-soft text-brand shadow-panel">
-        <XovaMark className="h-8 w-8" />
-      </span>
+      <Mascot state={mascotState} className="xv-rise h-20 w-20" />
       <div className="mt-5 flex items-baseline" dir="ltr">
         <XovaLogoText className="h-10" />
         <span className="-ml-0.5 text-[2.75rem] font-semibold leading-none tracking-[-0.06em] text-foreground">

@@ -17,6 +17,7 @@ const en: Dict = {
   "nav.close": "Close",
   "nav.account": "Account",
   "nav.signOut": "Sign out",
+  "mascot.bye": "See you soon.",
   "nav.imageStudio": "Image studio",
   "nav.conversation": "Conversation",
 
@@ -231,6 +232,7 @@ const ar: Dict = {
   "nav.close": "إغلاق",
   "nav.account": "الحساب",
   "nav.signOut": "تسجيل الخروج",
+  "mascot.bye": "نشوفك قريب.",
   "nav.imageStudio": "استوديو الصور",
   "nav.conversation": "المحادثة",
 
