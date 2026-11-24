@@ -209,6 +209,8 @@ export function useConversation(userId: string | undefined, config: AiConfig) {
         streaming: true,
       };
       setMessages((current) => [...current, assistantMessage]);
+      let text = "";
+      let sources: SourceRef[] = [];
 
       try {
         const { data: sessionData } = await supabase.auth.getSession();
@@ -248,8 +250,6 @@ export function useConversation(userId: string | undefined, config: AiConfig) {
         const reader = response.body.getReader();
         const decoder = new TextDecoder();
         let buffer = "";
-        let text = "";
-        let sources: SourceRef[] = [];
         let streamNotice: string | null = null;
         let preludeDone = false;
 
