@@ -2576,18 +2576,18 @@
 .dark .xv-bot-aura { opacity: .95; }
 .dark .xv-bot-aura-ring { stroke: #397cff; filter: drop-shadow(0 0 5px #397cff); }
 .dark .xv-bot-aura-core { fill: #397cff12; }
-.dark .xv-bot-shell { fill: #202e46; stroke: #648fe0; }
-.dark .xv-bot-ear { fill: #263c5b; stroke: #648fe0; }
+.dark .xv-bot-shell { fill: #6685ad; stroke: #b5d7ff; }
+.dark .xv-bot-ear { fill: #7899c2; stroke: #b5d7ff; }
 .dark .xv-bot-ear-light { stroke: #55caff; }
 .dark .xv-bot-top-highlight { stroke: #9dbdff; opacity: .65; }
 .dark .xv-bot-visor { fill: #071426; stroke: #4778bb; }
 .dark .xv-bot-visor-glint { stroke: #8ddfff; }
 .dark .xv-bot-eye { fill: #67ddff; filter: drop-shadow(0 0 5px #35bfff) drop-shadow(0 0 11px #168fff); }
 .dark .xv-bot-mouth { stroke: #8be7ff; }
-.dark .xv-bot-lower-seam { stroke: #557bb4; }
+.dark .xv-bot-lower-seam { stroke: #c0ddff; }
 .dark .xv-bot-status { fill: #71e4ff; filter: drop-shadow(0 0 5px #42caff); }
 .dark .xv-bot-neck,
-.dark .xv-bot-chest { fill: #253955; stroke: #648fe0; }
+.dark .xv-bot-chest { fill: #6685ad; stroke: #b5d7ff; }
 .dark .xv-bot-chest-line { stroke: #68d8ff; filter: drop-shadow(0 0 3px #168fff); }
 .dark .xv-bot-ear-light { filter: drop-shadow(0 0 5px #168fff); }
 
