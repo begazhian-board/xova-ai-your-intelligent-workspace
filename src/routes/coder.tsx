@@ -155,7 +155,11 @@ function friendlyError(code: string | undefined, lang: string) {
     "err.coderFiles": "ملفات المشروع كبيرة أو فيها صيغة غير مدعومة.",
     "err.coderTooLarge": "الموقع كبير على طلب واحد. قسم التعديل لخطوات أصغر.",
     "err.coderFormat": "الذكاء الاصطناعي رجّع ملفات بصيغة غير متوقعة. جرّب تاني.",
-    "err.coderGeneration": "حصلت مشكلة أثناء بناء الموقع. جرّب وصف أبسط.",
+    "err.coderGeneration": "حصلت مشكلة أثناء بناء الموقع. جرّب تاني بعد شوية.",
+    "err.coderProviderRequest": "طلب إنشاء الموقع اترفض من Gemini. راجع وصف الموقع أو إعدادات التوليد.",
+    "err.coderProviderPermission": "مفتاح Gemini مش مسموح له باستخدام الموديل المطلوب.",
+    "err.coderProviderModel": "موديل إنشاء المواقع غير متاح في إعدادات Gemini الحالية.",
+    "err.coderProviderUnavailable": "خدمة Gemini مشغولة أو غير متاحة مؤقتًا. جرّب بعد شوية.",
   };
   const english: Record<string, string> = {
     "err.auth": "Your sign-in session expired. Please sign in again.",
@@ -166,7 +170,11 @@ function friendlyError(code: string | undefined, lang: string) {
     "err.coderFiles": "The project files are too large or contain an unsupported file type.",
     "err.coderTooLarge": "This project is too large for one request. Split the change into smaller steps.",
     "err.coderFormat": "The AI returned an unexpected file format. Please try again.",
-    "err.coderGeneration": "Something went wrong while building the website. Try a simpler request.",
+    "err.coderGeneration": "Something went wrong while building the website. Please try again shortly.",
+    "err.coderProviderRequest": "Gemini rejected the website-generation request. Check the prompt or generation settings.",
+    "err.coderProviderPermission": "The Gemini API key does not have permission to use the selected model.",
+    "err.coderProviderModel": "The website-generation model is not available to this Gemini API configuration.",
+    "err.coderProviderUnavailable": "Gemini is temporarily busy or unavailable. Please try again shortly.",
   };
   return (lang === "ar" ? arabic : english)[code ?? ""] ?? (lang === "ar" ? "حصل خطأ. جرّب تاني." : "Something went wrong. Please try again.");
 }
