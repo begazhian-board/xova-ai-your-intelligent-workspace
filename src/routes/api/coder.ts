@@ -271,7 +271,8 @@ export const Route = createFileRoute("/api/coder")({
           return Response.json({ error: "err.coderRate" }, { status: 429 });
         }
 
-        // Use the exact same configured model as chat: chat success confirms this provider/model pair works.\n        const provider = getAIProviderConfig("chat");
+        // Use the exact same configured model as chat: chat success confirms this provider/model pair works.
+        const provider = getAIProviderConfig("chat");
         if (!provider) return Response.json({ error: "err.aiConfig" }, { status: 503 });
 
         let body: WireBody;
