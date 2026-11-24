@@ -60,8 +60,12 @@ export function aiProviderErrorCode(status?: number, details = "") {
     return "err.aiCredits";
   }
   if (status === 404 || status === 410) return "err.aiModel";
-  if (status === 400) return "err.aiRequest";
+  if (status === 400 || status === 422) return "err.aiRequest";
+  if (status === 413) return "err.aiOutputLimit";
   if (status === 429) return "err.rate";
-  if ([500, 502, 503, 504].includes(status ?? 0)) return "err.aiBusy";
+  if (
+    [408, 500, 502, 503, 504, 520, 521, 522, 523, 524, 529].includes(status ?? 0) ||
+    /timeout|temporarily unavailable|overloaded/i.test(details)
+  ) return "err.aiBusy";
   return "err.unavailable";
 }

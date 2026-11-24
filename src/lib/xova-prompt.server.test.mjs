@@ -7,8 +7,11 @@ describe("AI provider errors", () => {
   it("maps provider failures to actionable error codes", () => {
     expect(aiProviderErrorCode(402)).toBe("err.aiCredits");
     expect(aiProviderErrorCode(404)).toBe("err.aiModel");
+    expect(aiProviderErrorCode(413)).toBe("err.aiOutputLimit");
+    expect(aiProviderErrorCode(422)).toBe("err.aiRequest");
     expect(aiProviderErrorCode(429)).toBe("err.rate");
     expect(aiProviderErrorCode(503)).toBe("err.aiBusy");
+    expect(aiProviderErrorCode(520)).toBe("err.aiBusy");
   });
 });
 

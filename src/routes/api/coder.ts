@@ -175,8 +175,7 @@ export const Route = createFileRoute("/api/coder")({
             body: JSON.stringify({
               model: provider.model,
               temperature: 0.35,
-              max_tokens: 32_000,
-              response_format: { type: "json_object" },
+              max_tokens: 8_192,
               messages: [
                 { role: "system", content: systemPrompt },
                 { role: "user", content: userPrompt },

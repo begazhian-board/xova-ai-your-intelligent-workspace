@@ -159,6 +159,8 @@ function friendlyError(code: string | undefined, lang: string) {
     "err.aiCredits": "حساب مزود الذكاء الاصطناعي مفيهوش رصيد أو حصة كفاية.",
     "err.aiModel": "موديل إنشاء المواقع مش موجود في إعدادات مزود الذكاء الاصطناعي.",
     "err.aiRequest": "مزود الذكاء الاصطناعي رفض طلب إنشاء الموقع. راجع الوصف أو إعدادات التوليد.",
+    "err.aiOutputLimit": "الموقع المطلوب كبير على الحد الحالي للتوليد. قسمه لخطوات أصغر.",
+    "err.unavailable": "مزود الذكاء الاصطناعي رجّع خطأ غير متوقع. جرّب تاني، ولو استمر العطل راجع سجلات السيرفر.",
     "err.aiBusy": "خدمة الذكاء الاصطناعي مشغولة أو غير متاحة مؤقتًا. جرّب بعد شوية.",
     "err.aiNetwork": "XOVA معرفش يتصل بمزود الذكاء الاصطناعي. راجع اتصال السيرفر وجرب تاني.",
     "err.rate": "فيه طلبات كتير على الخدمة. استنى شوية وجرب تاني.",
@@ -176,6 +178,8 @@ function friendlyError(code: string | undefined, lang: string) {
     "err.aiCredits": "The AI provider account has no remaining credits or quota.",
     "err.aiModel": "The website-generation model was not found. Check the configured model name.",
     "err.aiRequest": "The AI provider rejected the website-generation request. Check the prompt or settings.",
+    "err.aiOutputLimit": "The generated website exceeded the current output limit. Split it into smaller changes.",
+    "err.unavailable": "The AI provider returned an unexpected error. Please retry; check server logs if it continues.",
     "err.aiBusy": "The AI provider is temporarily busy or unavailable. Please try again shortly.",
     "err.aiNetwork": "XOVA could not connect to the AI provider. Check the server connection and retry.",
     "err.rate": "The service is receiving too many requests. Please wait and try again.",
@@ -334,7 +338,14 @@ function XovaCoder() {
           files: project.files,
         }),
       });
-      const payload = (await response.json()) as CoderResponse;
+      const responseText = await response.text();
+      let payload: CoderResponse;
+      try {
+        payload = JSON.parse(responseText) as CoderResponse;
+      } catch {
+        console.error("XOVA Coder received a non-JSON response", response.status, responseText.slice(0, 400));
+        throw new Error(response.ok ? "err.coderGeneration" : "err.aiBusy");
+      }
       if (!response.ok || !Array.isArray(payload.files)) {
         throw new Error(payload.error ?? "err.coderGeneration");
       }
