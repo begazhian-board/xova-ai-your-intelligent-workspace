@@ -1,6 +1,6 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { createClient } from "@supabase/supabase-js";
-import { GEMINI_MODEL } from "@/lib/gemini.server";
+import { GEMINI_FALLBACK_MODEL, GEMINI_MODEL } from "@/lib/gemini.server";
 
 interface ProjectFile {
   path: string;
@@ -166,45 +166,55 @@ export const Route = createFileRoute("/api/coder")({
           `Current project name: ${projectName}\n\nUser request:\n${prompt}${existingProject}`;
 
         try {
-          const response = await fetch(
-            `https://generativelanguage.googleapis.com/v1beta/models/${GEMINI_MODEL}:generateContent`,
-            {
-              method: "POST",
-              headers: {
-                "Content-Type": "application/json",
-                "x-goog-api-key": apiKey,
-              },
-              body: JSON.stringify({
-                systemInstruction: { parts: [{ text: systemPrompt }] },
-                contents: [{ role: "user", parts: [{ text: userPrompt }] }],
-                generationConfig: {
-                  temperature: 0.35,
-                  maxOutputTokens: 12_000,
-                  responseMimeType: "application/json",
-                  responseSchema: {
-                    type: "OBJECT",
-                    properties: {
-                      name: { type: "STRING" },
-                      description: { type: "STRING" },
-                      files: {
-                        type: "ARRAY",
-                        items: {
-                          type: "OBJECT",
-                          properties: {
-                            path: { type: "STRING" },
-                            content: { type: "STRING" },
-                          },
-                          required: ["path", "content"],
-                        },
+          const generationRequest = {
+            systemInstruction: { parts: [{ text: systemPrompt }] },
+            contents: [{ role: "user", parts: [{ text: userPrompt }] }],
+            generationConfig: {
+              temperature: 0.35,
+              maxOutputTokens: 20_000,
+              responseMimeType: "application/json",
+              responseSchema: {
+                type: "OBJECT",
+                properties: {
+                  name: { type: "STRING" },
+                  description: { type: "STRING" },
+                  files: {
+                    type: "ARRAY",
+                    items: {
+                      type: "OBJECT",
+                      properties: {
+                        path: { type: "STRING" },
+                        content: { type: "STRING" },
                       },
+                      required: ["path", "content"],
                     },
-                    required: ["name", "description", "files"],
                   },
                 },
-              }),
-              signal: request.signal,
+                required: ["name", "description", "files"],
+              },
             },
+          };
+          const requestOptions = {
+            method: "POST",
+            headers: {
+              "Content-Type": "application/json",
+              "x-goog-api-key": apiKey,
+            },
+            body: JSON.stringify(generationRequest),
+            signal: request.signal,
+          };
+          let response = await fetch(
+            `https://generativelanguage.googleapis.com/v1beta/models/${GEMINI_MODEL}:generateContent`,
+            requestOptions,
           );
+
+          if (!response.ok && [429, 500, 502, 503, 504].includes(response.status)) {
+            console.warn("XOVA Coder primary model unavailable; retrying with fallback", response.status);
+            response = await fetch(
+              `https://generativelanguage.googleapis.com/v1beta/models/${GEMINI_FALLBACK_MODEL}:generateContent`,
+              requestOptions,
+            );
+          }
 
           if (!response.ok) {
             const detail = (await response.text().catch(() => "")).slice(0, 500);
