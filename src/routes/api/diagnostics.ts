@@ -2,21 +2,6 @@ import { createFileRoute } from "@tanstack/react-router";
 import { createClient } from "@supabase/supabase-js";
 import { GEMINI_FALLBACK_MODEL, GEMINI_MODEL } from "@/lib/gemini.server";
 
-function classify(status: number, message: string) {
-  const lower = message.toLowerCase();
-  if (status === 401 || status === 403 || /api key not valid|api_key_invalid|invalid api key/.test(lower)) {
-    return "err.geminiConfig";
-  }
-  if (status === 404) return "err.geminiModel";
-  if (status === 429 || /quota|rate limit|resource exhausted/.test(lower)) return "err.rate";
-  if (status === 400) return "err.geminiRequest";
-  if (status === 500 || status === 503 || /UNAVAILABLE|high demand|no capacity/i.test(message)) {
-    return "err.geminiBusy";
-  }
-  if (status === 0 || status === 502 || status === 504) return "err.geminiNetwork";
-  return "err.unavailable";
-}
-
 async function probeGeminiStream(apiKey: string, model: string) {
   try {
     const response = await fetch(
