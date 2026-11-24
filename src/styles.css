@@ -2343,3 +2343,37 @@
     transition: none !important;
   }
 }
+
+/* Mascot: calm envelope robot */
+@utility xv-mascot {
+  --m-shell: color-mix(in oklab, var(--foreground) 94%, var(--brand));
+  --m-ink: var(--background);
+  & .xv-mascot-shell { fill: var(--m-shell); }
+  & .xv-mascot-stroke { stroke: var(--m-ink); }
+  & .xv-mascot-line-fill { fill: var(--faint); }
+  & .xv-mascot-eye { fill: var(--m-ink); transform-box: fill-box; transform-origin: center; animation: xv-m-blink 5s infinite; }
+  & .xv-mascot-pupil { fill: var(--m-shell); }
+  & .xv-mascot-accent { fill: var(--brand); }
+  & .xv-mascot-accent-stroke { stroke: var(--brand); }
+  & .xv-mascot-bulb { opacity: 0; transition: opacity 300ms ease; }
+  & .xv-mascot-bulb-glass { fill: var(--faint); transition: fill 300ms ease; }
+  & .xv-mascot-body { transform-origin: 50% 90%; animation: xv-m-float 4s ease-in-out infinite; }
+  &[data-state="thinking"] .xv-mascot-eye { animation-duration: 1.6s; }
+  &[data-state="thinking"] .xv-mascot-pupil { transform: translate(1.5px, -2px); transition: transform 300ms ease; }
+  &[data-state="thinking"] .xv-mascot-accent { animation: xv-m-pulse 1.2s ease-in-out infinite; }
+  & .xv-mascot-dots { opacity: 0; transition: opacity 250ms ease; }
+  & .xv-mascot-dots circle { animation: xv-m-pulse 1.2s ease-in-out infinite; }
+  & .xv-mascot-dots circle:nth-child(2) { animation-delay: 0.2s; }
+  & .xv-mascot-dots circle:nth-child(3) { animation-delay: 0.4s; }
+  & .xv-mascot-smile { transition: opacity 250ms ease; }
+  &[data-state="thinking"] .xv-mascot-dots { opacity: 1; }
+  &[data-state="thinking"] .xv-mascot-smile { opacity: 0; }
+  &[data-state="lit"] .xv-mascot-bulb { opacity: 1; filter: drop-shadow(0 0 3px var(--brand)); }
+  &[data-state="lit"] .xv-mascot-bulb-glass { fill: var(--brand); }
+  &[data-state="bye"] .xv-mascot-body { animation: xv-m-wave 0.9s ease-in-out 2; }
+  &[data-state="bye"] .xv-mascot-eye { transform: scaleY(0.25); }
+}
+@keyframes xv-m-blink { 0%, 94%, 100% { transform: scaleY(1); } 97% { transform: scaleY(0.1); } }
+@keyframes xv-m-float { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-2px); } }
+@keyframes xv-m-pulse { 0%, 100% { opacity: 1; } 50% { opacity: 0.35; } }
+@keyframes xv-m-wave { 0%, 100% { transform: rotate(0); } 30% { transform: rotate(-6deg); } 70% { transform: rotate(6deg); } }
