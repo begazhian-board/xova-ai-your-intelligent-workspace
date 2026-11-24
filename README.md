@@ -1387,6 +1387,7 @@ npm run dev
 
 - `CLOUDFLARE_ACCOUNT_ID` and `CLOUDFLARE_API_TOKEN`: required for Cloudflare Workers AI chat, XOVA Coder, and image generation.
 - `AI_MODEL`: optional shared model override for chat and XOVA Coder. The default text model is `@cf/qwen/qwen3.8-27b`.
+- `AI_CODER_MAX_OUTPUT_TOKENS`: optional website-generation output limit (default 24,576; allowed range 8,192–32,768). Chat keeps its separate `AI_MAX_OUTPUT_TOKENS` setting.
 - `TAVILY_API_KEY`: enables live web search in Research mode.
 
 Set these as server environment secrets in your hosting provider. Do not commit real `.env` files or API keys. A placeholder template is available in `.env.example`.
