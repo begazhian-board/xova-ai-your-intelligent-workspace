@@ -1386,7 +1386,7 @@ npm run dev
 ## Server-side AI configuration
 
 - `CLOUDFLARE_ACCOUNT_ID` and `CLOUDFLARE_API_TOKEN`: required for Cloudflare Workers AI chat, XOVA Coder, and image generation.
-- `AI_MODEL` and `AI_CODER_MODEL`: optional model overrides. The default text model is `@cf/qwen/qwen3.8-27b`.
+- `AI_MODEL`: optional shared model override for chat and XOVA Coder. The default text model is `@cf/qwen/qwen3.8-27b`.
 - `TAVILY_API_KEY`: enables live web search in Research mode.
 
 Set these as server environment secrets in your hosting provider. Do not commit real `.env` files or API keys. A placeholder template is available in `.env.example`.

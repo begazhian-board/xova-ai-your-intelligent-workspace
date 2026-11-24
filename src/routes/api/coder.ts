@@ -16,9 +16,158 @@ interface WireBody {
 interface AICompletionResponse {
   choices?: Array<{
     finish_reason?: string | null;
-    message?: { content?: string | Array<{ type?: string; text?: string }> };
+    message?: { content?: unknown };
   }>;
   error?: { message?: string; type?: string; code?: string | number };
+}
+
+interface AIStreamChunk {
+  choices?: Array<{
+    delta?: { content?: unknown };
+    finish_reason?: string | null;
+  }>;
+  error?: { message?: string; type?: string; code?: string | number };
+}
+
+class AIProviderError extends Error {
+  readonly statusCode: number;
+  readonly detail: string;
+
+  constructor(statusCode: number, detail: string) {
+    super(detail || "AI provider request failed");
+    this.name = "AIProviderError";
+    this.statusCode = statusCode;
+    this.detail = detail;
+  }
+}
+
+const MAX_PROVIDER_OUTPUT_CHARS = 1_500_000;
+
+function extractCompletionText(value: unknown): string {
+  if (typeof value === "string") return value;
+  if (!Array.isArray(value)) return "";
+  return value
+    .map((part) => {
+      if (!part || typeof part !== "object") return "";
+      const text = (part as { text?: unknown }).text;
+      return typeof text === "string" ? text : "";
+    })
+    .join("");
+}
+
+async function readAICompletion(response: Response): Promise<string> {
+  if (!response.body) {
+    throw new AIProviderError(502, "The AI provider returned an empty response body");
+  }
+
+  const contentType = response.headers.get("content-type") ?? "";
+  if (!contentType.includes("text/event-stream")) {
+    let payload: AICompletionResponse;
+    try {
+      payload = (await response.json()) as AICompletionResponse;
+    } catch {
+      throw new AIProviderError(502, "The AI provider returned an invalid completion response");
+    }
+    if (payload.error) {
+      const status = typeof payload.error.code === "number" ? payload.error.code : 502;
+      throw new AIProviderError(status, payload.error.message ?? payload.error.type ?? "Provider error");
+    }
+    const choice = payload.choices?.[0];
+    if (choice?.finish_reason === "length") {
+      throw new AIProviderError(413, "The generated project reached the output-token limit");
+    }
+    const content = extractCompletionText(choice?.message?.content).trim();
+    if (!content) throw new AIProviderError(502, "The AI provider returned no generated content");
+    return content;
+  }
+
+  const reader = response.body.getReader();
+  const decoder = new TextDecoder();
+  const encoder = new TextEncoder();
+  let buffer = "";
+  let eventData: string[] = [];
+  let content = "";
+  let contentBytes = 0;
+  let completed = false;
+
+  const consumeEvent = () => {
+    if (eventData.length === 0) return;
+    const data = eventData.join("\n").trim();
+    eventData = [];
+    if (!data) return;
+    if (data === "[DONE]") {
+      completed = true;
+      return;
+    }
+
+    let chunk: AIStreamChunk;
+    try {
+      chunk = JSON.parse(data) as AIStreamChunk;
+    } catch {
+      throw new AIProviderError(502, "The AI provider returned an unreadable stream event");
+    }
+
+    if (chunk.error) {
+      const errorCode = chunk.error.code;
+      const parsedStatus = typeof errorCode === "string" ? Number.parseInt(errorCode, 10) : NaN;
+      const status =
+        typeof errorCode === "number" ? errorCode : Number.isFinite(parsedStatus) ? parsedStatus : 502;
+      throw new AIProviderError(status, chunk.error.message ?? chunk.error.type ?? "Provider stream error");
+    }
+
+    for (const choice of chunk.choices ?? []) {
+      const delta = extractCompletionText(choice.delta?.content);
+      if (delta) {
+        contentBytes += encoder.encode(delta).byteLength;
+        if (contentBytes > MAX_PROVIDER_OUTPUT_CHARS) {
+          throw new AIProviderError(413, "The generated project exceeded the response-size limit");
+        }
+        content += delta;
+      }
+      if (choice.finish_reason === "length") {
+        throw new AIProviderError(413, "The generated project reached the output-token limit");
+      }
+      if (choice.finish_reason === "content_filter") {
+        throw new AIProviderError(400, "The provider filtered the generated response");
+      }
+      if (typeof choice.finish_reason === "string") completed = true;
+    }
+  };
+
+  try {
+    while (true) {
+      const item = await reader.read();
+      if (item.done) break;
+      buffer += decoder.decode(item.value, { stream: true });
+      const lines = buffer.split("\n");
+      buffer = lines.pop() ?? "";
+      for (const rawLine of lines) {
+        const line = rawLine.endsWith("\r") ? rawLine.slice(0, -1) : rawLine;
+        if (line === "") {
+          consumeEvent();
+        } else if (line.startsWith("data:")) {
+          eventData.push(line.slice(5).replace(/^ /, ""));
+        }
+      }
+    }
+
+    buffer += decoder.decode();
+    if (buffer.trim()) {
+      const line = buffer.endsWith("\r") ? buffer.slice(0, -1) : buffer;
+      if (line.startsWith("data:")) eventData.push(line.slice(5).replace(/^ /, ""));
+    }
+    consumeEvent();
+  } finally {
+    reader.releaseLock();
+  }
+
+  if (!completed) {
+    throw new AIProviderError(502, "The provider stream ended before completion");
+  }
+  if (!content.trim()) {
+    throw new AIProviderError(502, "The AI provider completed without generated content");
+  }
+  return content.trim();
 }
 
 interface GeneratedProject {
@@ -122,7 +271,7 @@ export const Route = createFileRoute("/api/coder")({
           return Response.json({ error: "err.coderRate" }, { status: 429 });
         }
 
-        const provider = getAIProviderConfig("coder");
+        // Use the exact same configured model as chat: chat success confirms this provider/model pair works.\n        const provider = getAIProviderConfig("chat");
         if (!provider) return Response.json({ error: "err.aiConfig" }, { status: 503 });
 
         let body: WireBody;
@@ -174,8 +323,11 @@ export const Route = createFileRoute("/api/coder")({
             },
             body: JSON.stringify({
               model: provider.model,
-              temperature: 0.35,
-              max_tokens: 8_192,
+              temperature: 0.25,
+              reasoning_effort: "low",
+              max_completion_tokens: 8_192,
+              response_format: { type: "json_object" },
+              stream: true,
               messages: [
                 { role: "system", content: systemPrompt },
                 { role: "user", content: userPrompt },
@@ -186,27 +338,19 @@ export const Route = createFileRoute("/api/coder")({
 
           if (!response.ok) {
             const detail = (await response.text().catch(() => "")).slice(0, 800);
-            console.error("XOVA Coder AI provider request failed", response.status, detail);
+            console.error("XOVA Coder AI provider request failed", {
+              status: response.status,
+              model: provider.model,
+              endpoint: provider.baseUrl,
+              detail,
+            });
             return Response.json(
               { error: aiProviderErrorCode(response.status, detail) },
               { status: response.status === 429 ? 429 : 502 },
             );
           }
 
-          const payload = (await response.json()) as AICompletionResponse;
-          const choice = payload.choices?.[0];
-          if (choice?.finish_reason === "length") {
-            return Response.json({ error: "err.coderTooLarge" }, { status: 413 });
-          }
-
-          const rawContent = choice?.message?.content;
-          const raw = (
-            typeof rawContent === "string"
-              ? rawContent
-              : Array.isArray(rawContent)
-                ? rawContent.map((part) => part.text ?? "").join("")
-                : ""
-          ).trim();
+          const raw = await readAICompletion(response);
           const generated = parseGeneratedProject(raw);
           if (!generated || !Array.isArray(generated.files)) {
             return Response.json({ error: "err.coderFormat" }, { status: 502 });
@@ -231,7 +375,23 @@ export const Route = createFileRoute("/api/coder")({
           });
         } catch (error) {
           if (request.signal.aborted) return new Response(null, { status: 499 });
-          console.error("XOVA Coder generation failed", error);
+          if (error instanceof AIProviderError) {
+            console.error("XOVA Coder provider stream failed", {
+              status: error.statusCode,
+              model: provider.model,
+              detail: error.detail,
+            });
+            return Response.json(
+              {
+                error:
+                  error.statusCode === 413
+                    ? "err.aiOutputLimit"
+                    : aiProviderErrorCode(error.statusCode, error.detail),
+              },
+              { status: error.statusCode === 429 ? 429 : 502 },
+            );
+          }
+          console.error("XOVA Coder generation failed", { model: provider.model, error });
           return Response.json(
             { error: error instanceof TypeError ? "err.aiNetwork" : "err.coderGeneration" },
             { status: 502 },

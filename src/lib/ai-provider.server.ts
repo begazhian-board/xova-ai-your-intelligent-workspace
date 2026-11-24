@@ -26,10 +26,8 @@ export function getAIProviderConfig(purpose: "chat" | "coder" = "chat"): AIProvi
     (useCloudflareByDefault ? cloudflareBaseUrl : "https://api.openai.com/v1")
   )?.replace(/\/+$/, "");
   const defaultModel = useCloudflareByDefault ? DEFAULT_CLOUDFLARE_MODEL : undefined;
-  const model =
-    (purpose === "coder" ? process.env["AI_CODER_MODEL"] : undefined) ??
-    process.env["AI_MODEL"] ??
-    defaultModel;
+  // Chat and Coder share one model so a stale coder-only override cannot break one route.
+  const model = process.env["AI_MODEL"] ?? defaultModel;
 
   if (!apiKey?.trim() || !baseUrl || !model?.trim()) return null;
 
