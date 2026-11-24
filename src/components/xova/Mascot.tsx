@@ -40,32 +40,44 @@ export function Mascot({
           </g>
           {/* small X mark */}
           <path d="M70 68 l6 6 M76 68 l-6 6" className="xv-mascot-accent-stroke" strokeWidth="2.4" strokeLinecap="round" />
+          {/* thinking dots */}
+          <g className="xv-mascot-dots">
+            <circle cx="44" cy="70" r="1.6" className="xv-mascot-accent" />
+            <circle cx="50" cy="70" r="1.6" className="xv-mascot-accent" />
+            <circle cx="56" cy="70" r="1.6" className="xv-mascot-accent" />
+          </g>
           {/* smile */}
-          <path d="M45 68 Q50 72 55 68" fill="none" className="xv-mascot-stroke" strokeWidth="2" strokeLinecap="round" />
+          <path className="xv-mascot-smile xv-mascot-stroke" d="M45 68 Q50 72 55 68" fill="none" strokeWidth="2" strokeLinecap="round" />
         </g>
       </svg>
     </span>
   );
 }
 
-/** Derive mascot state from chat status: thinking while busy, brief bulb after completion. */
+/**
+ * Derive mascot state from real chat status:
+ * waiting for the first token → thinking; answer arriving (streaming) → bulb lit;
+ * brief lit hold after completion, then idle.
+ */
 export function useMascotState(status: string): MascotState {
-  const busy = status === "submitted" || status === "streaming" || status === "generating";
-  const wasBusy = useRef(false);
-  const [lit, setLit] = useState(false);
+  const waiting = status === "submitted" || status === "generating";
+  const streaming = status === "streaming";
+  const wasActive = useRef(false);
+  const [hold, setHold] = useState(false);
   useEffect(() => {
-    if (busy) {
-      wasBusy.current = true;
-      setLit(false);
+    if (waiting || streaming) {
+      wasActive.current = true;
+      setHold(false);
       return;
     }
-    if (wasBusy.current) {
-      wasBusy.current = false;
-      setLit(true);
-      const timer = window.setTimeout(() => setLit(false), 1600);
+    if (wasActive.current) {
+      wasActive.current = false;
+      setHold(true);
+      const timer = window.setTimeout(() => setHold(false), 1400);
       return () => window.clearTimeout(timer);
     }
     return undefined;
-  }, [busy]);
-  return busy ? "thinking" : lit ? "lit" : "idle";
+  }, [waiting, streaming]);
+  if (waiting) return "thinking";
+  return streaming || hold ? "lit" : "idle";
 }
