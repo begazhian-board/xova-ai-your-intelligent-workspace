@@ -132,7 +132,7 @@ async function streamGemini(
       body: JSON.stringify({
         systemInstruction: { parts: [{ text: system }] },
         contents: toGeminiContents(messages),
-        generationConfig: { maxOutputTokens: 4096 },
+        generationConfig: { maxOutputTokens: 8192 },
       }),
       signal,
     },
