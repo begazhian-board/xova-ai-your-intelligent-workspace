@@ -2,7 +2,7 @@ import { createFileRoute } from "@tanstack/react-router";
 import { createClient } from "@supabase/supabase-js";
 import { buildSystemPrompt } from "@/lib/xova-prompt.server";
 import { GEMINI_FALLBACK_MODEL, GEMINI_MODEL } from "@/lib/gemini.server";
-import { chatProviderErrorCode, searchNoticeCode } from "@/lib/chat-contract";
+import { searchNoticeCode } from "@/lib/chat-contract";
 import type { ModeId } from "@/lib/xova";
 
 interface WireAttachment {
@@ -269,7 +269,7 @@ export const Route = createFileRoute("/api/chat")({
 
         const geminiKey = process.env["GEMINI_API_KEY"];
         if (!geminiKey) {
-          return Response.json({ error: "err.geminiConfig" }, { status: 503 });
+          return Response.json({ error: "err.generic" }, { status: 503 });
         }
 
         let body: WireBody;
@@ -394,10 +394,10 @@ export const Route = createFileRoute("/api/chat")({
                   }
                   if (error instanceof GeminiApiError) {
                     console.error("XOVA Gemini REST stream failed", error.statusCode, error.detail);
-                    errorCode = chatProviderErrorCode(error.statusCode, error.detail);
+                    errorCode = "err.generic";
                   } else {
                     console.error("XOVA Gemini network/stream failure", error);
-                    errorCode = "err.geminiNetwork";
+                    errorCode = "err.generic";
                   }
                 }
 
