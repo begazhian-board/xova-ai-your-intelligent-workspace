@@ -10,6 +10,7 @@ import { Topbar } from "@/components/xova/Topbar";
 import { Welcome } from "@/components/xova/Welcome";
 import { QuickTools } from "@/components/xova/QuickTools";
 import { AmbientWaves } from "@/components/xova/AmbientWaves";
+import { Mascot, useMascotState } from "@/components/xova/Mascot";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -204,6 +205,7 @@ function Workspace() {
     rename,
     remove,
   } = useConversation(user?.id, aiConfig);
+  const mascotState = useMascotState(status);
 
   // Intelligent scrolling: follow the stream only while the user is at the bottom.
   useEffect(() => {
@@ -378,6 +380,9 @@ function Workspace() {
           </div>
         )}
 
+        <div className="mx-auto flex w-full max-w-3xl items-center px-4 pb-1 sm:px-6">
+          <Mascot state={mascotState} className="h-11 w-11 shrink-0" />
+        </div>
         <Composer
           mode={mode}
           onModeChange={setMode}
