@@ -2,7 +2,7 @@ import { createFileRoute } from "@tanstack/react-router";
 import { createClient } from "@supabase/supabase-js";
 import { GEMINI_MODEL } from "@/lib/gemini.server";
 
-const CODER_MODEL = "gemini-3.5-flash";
+const CODER_MODEL = "gemini-3.8-flash";
 
 interface ProjectFile {
   path: string;
@@ -221,8 +221,20 @@ export const Route = createFileRoute("/api/coder")({
           if (!response.ok) {
             const detail = (await response.text().catch(() => "")).slice(0, 500);
             console.error("XOVA Coder Gemini request failed", response.status, detail);
+            const providerError =
+              response.status === 429
+                ? "err.coderRate"
+                : response.status === 400
+                  ? "err.coderProviderRequest"
+                  : response.status === 403
+                    ? "err.coderProviderPermission"
+                    : response.status === 404
+                      ? "err.coderProviderModel"
+                      : response.status >= 500
+                        ? "err.coderProviderUnavailable"
+                        : "err.coderGeneration";
             return Response.json(
-              { error: response.status === 429 ? "err.coderRate" : "err.coderGeneration" },
+              { error: providerError },
               { status: response.status === 429 ? 429 : 502 },
             );
           }
