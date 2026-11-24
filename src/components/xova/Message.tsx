@@ -16,7 +16,7 @@ import {
 } from "lucide-react";
 import { toast } from "sonner";
 import { Markdown } from "./Markdown";
-import { XovaMark } from "./Logo";
+import { Mascot, useMascotState } from "./Mascot";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -65,6 +65,9 @@ function IconButton({
 
 export function Message({ message, onRegenerate, onEdit }: MessageProps) {
   const { t } = useI18n();
+  const mascotState = useMascotState(
+    message.streaming ? (message.content ? "streaming" : "submitted") : "idle",
+  );
   const [copied, setCopied] = useState(false);
   const [vote, setVote] = useState<"up" | "down" | null>(null);
   const [speaking, setSpeaking] = useState(false);
@@ -135,12 +138,7 @@ export function Message({ message, onRegenerate, onEdit }: MessageProps) {
 
   return (
     <article className="xv-assistant-message group/msg flex gap-3">
-      <span
-        className="mt-0.5 grid h-7 w-7 shrink-0 place-items-center rounded-lg bg-brand-soft text-brand"
-        aria-hidden="true"
-      >
-        <XovaMark className="h-4 w-4" />
-      </span>
+      <Mascot state={mascotState} className="mt-0.5 h-10 w-10 shrink-0" />
 
       <div className="min-w-0 flex-1">
         {message.imageUrl && (
