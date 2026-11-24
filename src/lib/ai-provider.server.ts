@@ -6,7 +6,7 @@ export interface AIProviderConfig {
 }
 
 export function getAIProviderConfig(purpose: "chat" | "coder" = "chat"): AIProviderConfig | null {
-  const apiKey = process.env["AI_API_KEY"] ?? process.env["OPENAI_API_KEY"];
+  const apiKey = process.env["AI_API_KEY"] || process.env["OPENAI_API_KEY"];
   const baseUrl = (process.env["AI_API_BASE_URL"] ?? "https://api.openai.com/v1").replace(/\/+$/, "");
   const model =
     (purpose === "coder" ? process.env["AI_CODER_MODEL"] : undefined) ??

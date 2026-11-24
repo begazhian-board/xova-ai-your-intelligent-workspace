@@ -156,10 +156,12 @@ function friendlyError(code: string | undefined, lang: string) {
     "err.coderTooLarge": "الموقع كبير على طلب واحد. قسم التعديل لخطوات أصغر.",
     "err.coderFormat": "الذكاء الاصطناعي رجّع ملفات بصيغة غير متوقعة. جرّب تاني.",
     "err.coderGeneration": "حصلت مشكلة أثناء بناء الموقع. جرّب تاني بعد شوية.",
-    "err.coderProviderRequest": "مزود الذكاء الاصطناعي رفض طلب إنشاء الموقع. راجع وصف الموقع أو إعدادات التوليد.",
-    "err.coderProviderPermission": "مفتاح مزود الذكاء الاصطناعي مش مسموح له باستخدام الموديل المطلوب.",
-    "err.coderProviderModel": "موديل إنشاء المواقع مش موجود في إعدادات مزود الذكاء الاصطناعي.",
-    "err.coderProviderUnavailable": "خدمة الذكاء الاصطناعي مشغولة أو غير متاحة مؤقتًا. جرّب بعد شوية.",
+    "err.aiCredits": "حساب مزود الذكاء الاصطناعي مفيهوش رصيد أو حصة كفاية.",
+    "err.aiModel": "موديل إنشاء المواقع مش موجود في إعدادات مزود الذكاء الاصطناعي.",
+    "err.aiRequest": "مزود الذكاء الاصطناعي رفض طلب إنشاء الموقع. راجع الوصف أو إعدادات التوليد.",
+    "err.aiBusy": "خدمة الذكاء الاصطناعي مشغولة أو غير متاحة مؤقتًا. جرّب بعد شوية.",
+    "err.aiNetwork": "XOVA معرفش يتصل بمزود الذكاء الاصطناعي. راجع اتصال السيرفر وجرب تاني.",
+    "err.rate": "فيه طلبات كتير على الخدمة. استنى شوية وجرب تاني.",
   };
   const english: Record<string, string> = {
     "err.auth": "Your sign-in session expired. Please sign in again.",
@@ -171,10 +173,12 @@ function friendlyError(code: string | undefined, lang: string) {
     "err.coderTooLarge": "This project is too large for one request. Split the change into smaller steps.",
     "err.coderFormat": "The AI returned an unexpected file format. Please try again.",
     "err.coderGeneration": "Something went wrong while building the website. Please try again shortly.",
-    "err.coderProviderRequest": "The AI provider rejected the website-generation request. Check the prompt or generation settings.",
-    "err.coderProviderPermission": "The AI provider key does not have permission to use the selected model.",
-    "err.coderProviderModel": "The website-generation model is not available in the current AI provider configuration.",
-    "err.coderProviderUnavailable": "The AI provider is temporarily busy or unavailable. Please try again shortly.",
+    "err.aiCredits": "The AI provider account has no remaining credits or quota.",
+    "err.aiModel": "The website-generation model was not found. Check the configured model name.",
+    "err.aiRequest": "The AI provider rejected the website-generation request. Check the prompt or settings.",
+    "err.aiBusy": "The AI provider is temporarily busy or unavailable. Please try again shortly.",
+    "err.aiNetwork": "XOVA could not connect to the AI provider. Check the server connection and retry.",
+    "err.rate": "The service is receiving too many requests. Please wait and try again.",
   };
   return (lang === "ar" ? arabic : english)[code ?? ""] ?? (lang === "ar" ? "حصل خطأ. جرّب تاني." : "Something went wrong. Please try again.");
 }
