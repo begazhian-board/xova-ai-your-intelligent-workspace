@@ -1,6 +1,8 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { createClient } from "@supabase/supabase-js";
-import { GEMINI_FALLBACK_MODEL, GEMINI_MODEL } from "@/lib/gemini.server";
+import { GEMINI_MODEL } from "@/lib/gemini.server";
+
+const CODER_MODEL = "gemini-3.5-flash";
 
 interface ProjectFile {
   path: string;
@@ -50,7 +52,7 @@ async function authenticate(request: Request) {
   return data.user;
 }
 
-function getSafeProjectFiles(value: unknown): ProjectFile[] | null {
+function getSafeProjectFiles(value: unknown, maxTotalBytes = MAX_INPUT_BYTES): ProjectFile[] | null {
   if (!Array.isArray(value) || value.length > MAX_FILES) return null;
   const files: ProjectFile[] = [];
   const seen = new Set<string>();
@@ -77,7 +79,7 @@ function getSafeProjectFiles(value: unknown): ProjectFile[] | null {
     const size = new TextEncoder().encode(record.content).byteLength;
     if (size > MAX_FILE_BYTES) return null;
     totalBytes += size;
-    if (totalBytes > MAX_INPUT_BYTES) return null;
+    if (totalBytes > maxTotalBytes) return null;
     seen.add(path);
     files.push({ path, content: record.content });
   }
@@ -171,7 +173,7 @@ export const Route = createFileRoute("/api/coder")({
             contents: [{ role: "user", parts: [{ text: userPrompt }] }],
             generationConfig: {
               temperature: 0.35,
-              maxOutputTokens: 20_000,
+              maxOutputTokens: 32_000,
               responseMimeType: "application/json",
               responseSchema: {
                 type: "OBJECT",
@@ -204,14 +206,14 @@ export const Route = createFileRoute("/api/coder")({
             signal: request.signal,
           };
           let response = await fetch(
-            `https://generativelanguage.googleapis.com/v1beta/models/${GEMINI_MODEL}:generateContent`,
+            `https://generativelanguage.googleapis.com/v1beta/models/${CODER_MODEL}:generateContent`,
             requestOptions,
           );
 
           if (!response.ok && [429, 500, 502, 503, 504].includes(response.status)) {
             console.warn("XOVA Coder primary model unavailable; retrying with fallback", response.status);
             response = await fetch(
-              `https://generativelanguage.googleapis.com/v1beta/models/${GEMINI_FALLBACK_MODEL}:generateContent`,
+              `https://generativelanguage.googleapis.com/v1beta/models/${GEMINI_MODEL}:generateContent`,
               requestOptions,
             );
           }
@@ -239,7 +241,7 @@ export const Route = createFileRoute("/api/coder")({
             return Response.json({ error: "err.coderFormat" }, { status: 502 });
           }
 
-          const outputFiles = getSafeProjectFiles(generated.files);
+          const outputFiles = getSafeProjectFiles(generated.files, MAX_OUTPUT_BYTES);
           if (!outputFiles || outputFiles.length === 0 || !outputFiles.some((file) => file.path.toLowerCase() === "index.html")) {
             return Response.json({ error: "err.coderFiles" }, { status: 502 });
           }
