@@ -44,8 +44,10 @@ async function probeGeminiStream(apiKey: string, model: string) {
     const reader = response.body.getReader();
     const decoder = new TextDecoder();
     let buffer = "";
-    let hasText = false;
-    let streamError: { code?: number; message?: string; status?: string } | null = null;
+    const streamState: {
+      hasText: boolean;
+      error: { code?: number; message?: string; status?: string } | null;
+    } = { hasText: false, error: null };
 
     const consumeLine = (line: string) => {
       const trimmed = line.trim();
@@ -58,14 +60,14 @@ async function probeGeminiStream(apiKey: string, model: string) {
           candidates?: Array<{ content?: { parts?: Array<{ text?: string }> } }>;
         };
         if (chunk.error) {
-          streamError = chunk.error;
+          streamState.error = chunk.error;
           return;
         }
         if ((chunk.candidates?.[0]?.content?.parts ?? []).some((part) => typeof part.text === "string" && part.text.trim())) {
-          hasText = true;
+          streamState.hasText = true;
         }
       } catch {
-        streamError = { code: 502, message: "Gemini returned an unreadable stream chunk" };
+        streamState.error = { code: 502, message: "Gemini returned an unreadable stream chunk" };
       }
     };
 
@@ -77,26 +79,26 @@ async function probeGeminiStream(apiKey: string, model: string) {
         const lines = buffer.split("\n");
         buffer = lines.pop() ?? "";
         for (const line of lines) consumeLine(line);
-        if (streamError) break;
-        if (hasText) break;
+        if (streamState.error) break;
+        if (streamState.hasText) break;
       }
-      if (!hasText && !streamError) {
+      if (!streamState.hasText && !streamState.error) {
         buffer += decoder.decode();
         if (buffer.trim()) consumeLine(buffer);
       }
     } finally {
-      if (!reader.closed) await reader.cancel().catch(() => undefined);
+      await reader.cancel().catch(() => undefined);
       reader.releaseLock();
     }
 
-    if (streamError) {
+    if (streamState.error) {
       return {
         ok: false,
-        status: streamError.code ?? 502,
-        detail: streamError.message ?? streamError.status ?? "Gemini stream error",
+        status: streamState.error.code ?? 502,
+        detail: streamState.error.message ?? streamState.error.status ?? "Gemini stream error",
       };
     }
-    if (!hasText) return { ok: false, status: 502, detail: "Gemini stream returned no text" };
+    if (!streamState.hasText) return { ok: false, status: 502, detail: "Gemini stream returned no text" };
     return { ok: true, status: 200, detail: "" };
   } catch (error) {
     const detail = error instanceof Error ? error.message : String(error);
