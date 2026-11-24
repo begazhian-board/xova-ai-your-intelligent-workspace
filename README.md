@@ -8,9 +8,9 @@ XOVA AI
 
 by Begad
 
-XOVA AI is a modern general-purpose AI assistant inspired by the simplicity, usability, and conversational experience of products such as ChatGPT and Google Gemini — but it MUST have its own original visual identity, UX decisions, structure, components, and branding.
+XOVA AI is a modern general-purpose AI assistant inspired by the simplicity, usability, and conversational experience of modern AI assistants — but it MUST have its own original visual identity, UX decisions, structure, components, and branding.
 
-Do NOT copy proprietary branding, logos, icons, illustrations, exact layouts, or visual assets from ChatGPT, Gemini, Claude, or any other product.
+Do NOT copy proprietary branding, logos, icons, illustrations, exact layouts, or visual assets from other products.
 
 The result must feel like a real commercial AI product rather than a landing page, template, mockup, or demo.
 
@@ -151,7 +151,7 @@ Use a restrained accent color that works naturally in both dark and light themes
 
 Do not imitate ChatGPT green.
 
-Do not imitate Gemini multicolor branding.
+Do not imitate the visual branding of other AI providers.
 
 ==================================================
 3. DARK MODE
@@ -1385,9 +1385,9 @@ npm run dev
 
 ## Server-side AI configuration
 
-- `GEMINI_API_KEY`: required for direct Gemini chat and primary image generation.
-- `TAVILY_API_KEY`: enables live web search in Research mode and when a user explicitly asks for current or online information.
-- `HUGGINGFACE_API_KEY`: optional backup for image generation if direct Gemini image generation is unavailable.
+- `CLOUDFLARE_ACCOUNT_ID` and `CLOUDFLARE_API_TOKEN`: required for Cloudflare Workers AI chat, XOVA Coder, and image generation.
+- `AI_MODEL` and `AI_CODER_MODEL`: optional model overrides. The default text model is `@cf/qwen/qwen3.8-27b`.
+- `TAVILY_API_KEY`: enables live web search in Research mode.
 
 Set these as server environment secrets in your hosting provider. Do not commit real `.env` files or API keys. A placeholder template is available in `.env.example`.
 
