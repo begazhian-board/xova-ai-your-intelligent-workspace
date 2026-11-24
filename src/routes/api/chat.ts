@@ -360,13 +360,19 @@ export const Route = createFileRoute("/api/chat")({
                   } catch (primaryError) {
                     const canFallback =
                       !wroteText &&
-                      primaryError instanceof GeminiApiError &&
-                      (primaryError.statusCode === 500 || primaryError.statusCode === 503);
+                      ((primaryError instanceof GeminiApiError &&
+                        [500, 502, 503, 504].includes(primaryError.statusCode)) ||
+                        (primaryError instanceof TypeError &&
+                          !local.signal.aborted));
                     if (!canFallback) throw primaryError;
 
                     console.warn(
-                      "XOVA primary Gemini model temporarily unavailable; retrying with fallback",
-                      primaryError.statusCode,
+                      "XOVA primary Gemini stream failed before output; retrying with fallback",
+                      primaryError instanceof GeminiApiError
+                        ? primaryError.statusCode
+                        : primaryError instanceof Error
+                          ? primaryError.message
+                          : "unknown network error",
                     );
                     await streamGemini(
                       geminiKey,
