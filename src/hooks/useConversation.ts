@@ -166,8 +166,8 @@ export function useConversation(userId: string | undefined, config: AiConfig) {
   }, []);
 
   const persist = useCallback(
-    async (message: ChatMessage) => {
-      const conversationId = activeIdRef.current;
+    async (message: ChatMessage, targetConversationId?: string) => {
+      const conversationId = targetConversationId ?? activeIdRef.current;
       if (!userId || !conversationId) return;
       touch(conversationId);
       const { error: dbError } = await supabase.from("messages").insert({
@@ -190,7 +190,7 @@ export function useConversation(userId: string | undefined, config: AiConfig) {
   );
 
   const runCompletion = useCallback(
-    async (history: ChatMessage[], mode: ModeId) => {
+    async (history: ChatMessage[], mode: ModeId, conversationId: string) => {
       const controller = new AbortController();
       abortRef.current = controller;
       setError(null);
@@ -316,19 +316,25 @@ export function useConversation(userId: string | undefined, config: AiConfig) {
         setMessages((current) =>
           current.map((message) => (message.id === assistantId ? finalMessage : message)),
         );
-        await persist(finalMessage);
+        await persist(finalMessage, conversationId);
         if (streamError) setError(streamError);
       } catch (caught) {
         const aborted = caught instanceof DOMException && caught.name === "AbortError";
-        setMessages((current) => {
-          const target = current.find((m) => m.id === assistantId);
-          if (aborted && target && target.content.trim()) {
-            const kept = { ...target, streaming: false };
-            void persist(kept);
-            return current.map((m) => (m.id === assistantId ? kept : m));
-          }
-          return current.filter((m) => m.id !== assistantId);
-        });
+        const partial = text.split(TRAILER_PREFIX)[0]!.trim();
+        if (partial) {
+          const kept: ChatMessage = {
+            ...assistantMessage,
+            content: partial,
+            sources,
+            streaming: false,
+          };
+          setMessages((current) =>
+            current.map((message) => (message.id === assistantId ? kept : message)),
+          );
+          await persist(kept, conversationId);
+        } else {
+          setMessages((current) => current.filter((message) => message.id !== assistantId));
+        }
         if (!aborted) {
           let code = caught instanceof Error ? caught.message : "err.generic";
           setError(code.startsWith("err.") ? code : "err.network");
@@ -355,12 +361,13 @@ export function useConversation(userId: string | undefined, config: AiConfig) {
       };
       const history = [...messages.filter((m) => !m.streaming), userMessage];
       setMessages(history);
-      if (!(await ensureConversation(text))) {
+      const conversationId = await ensureConversation(text);
+      if (!conversationId) {
         setError("err.generic");
         return;
       }
-      void persist(userMessage);
-      await runCompletion(history, mode);
+      await persist(userMessage, conversationId);
+      await runCompletion(history, mode, conversationId);
     },
     [messages, persist, runCompletion, userId, ensureConversation],
   );
@@ -372,7 +379,9 @@ export function useConversation(userId: string | undefined, config: AiConfig) {
       const history = messages.slice(0, index);
       setMessages(history);
       await supabase.from("messages").delete().eq("id", assistantId);
-      await runCompletion(history, mode);
+      const conversationId = activeIdRef.current;
+      if (!conversationId) return;
+      await runCompletion(history, mode, conversationId);
     },
     [messages, runCompletion],
   );
@@ -383,6 +392,7 @@ export function useConversation(userId: string | undefined, config: AiConfig) {
 
   const newChat = useCallback(() => {
     abortRef.current?.abort();
+    activeIdRef.current = null;
     setActiveId(null);
     setMessages([]);
     setError(null);
@@ -393,6 +403,7 @@ export function useConversation(userId: string | undefined, config: AiConfig) {
     abortRef.current?.abort();
     setError(null);
     setNotice(null);
+    activeIdRef.current = id;
     setActiveId(id);
   }, []);
 
