@@ -381,7 +381,7 @@ function Workspace() {
         )}
 
         <div className="mx-auto flex w-full max-w-3xl items-center px-4 pb-1 sm:px-6">
-          <Mascot state={mascotState} className="h-11 w-11 shrink-0" />
+          <Mascot state={mascotState} className="h-[4.5rem] w-[4.5rem] sm:h-20 sm:w-20 shrink-0" />
         </div>
         <Composer
           mode={mode}
