@@ -286,6 +286,11 @@ export function useConversation(userId: string | undefined, config: AiConfig) {
             );
           }
         }
+        buffer += decoder.decode();
+        if (preludeDone && buffer) {
+          text += buffer;
+          buffer = "";
+        }
 
         let streamError: string | null = null;
         const trailerAt = text.indexOf(TRAILER_PREFIX);
@@ -441,11 +446,12 @@ export function useConversation(userId: string | undefined, config: AiConfig) {
         createdAt: new Date().toISOString(),
       };
       setMessages((current) => [...current.filter((m) => !m.streaming), userMessage]);
-      if (!(await ensureConversation(prompt))) {
+      const conversationId = await ensureConversation(prompt);
+      if (!conversationId) {
         setError("err.generic");
         return undefined;
       }
-      void persist(userMessage);
+      await persist(userMessage, conversationId);
       setStatus("generating");
 
       try {
@@ -471,7 +477,7 @@ export function useConversation(userId: string | undefined, config: AiConfig) {
           createdAt: new Date().toISOString(),
         };
         setMessages((current) => [...current, imageMessage]);
-        await persist(imageMessage);
+        await persist(imageMessage, conversationId);
         return imageMessage;
       } catch (caught) {
         const code = caught instanceof Error ? caught.message : "err.imageFailed";
