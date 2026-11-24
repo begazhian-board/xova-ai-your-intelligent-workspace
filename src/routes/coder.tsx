@@ -148,7 +148,7 @@ function buildPreviewHtml(files: ProjectFile[]) {
 function friendlyError(code: string | undefined, lang: string) {
   const arabic: Record<string, string> = {
     "err.auth": "انتهت جلسة تسجيل الدخول. سجّل دخولك تاني.",
-    "err.aiConfig": "مزود الذكاء الاصطناعي مش متظبط على السيرفر. ضيف إعدادات AI_API_KEY وAI_MODEL.",
+    "err.aiConfig": "بيانات Cloudflare الخاصة بالذكاء الاصطناعي مش متظبطة. راجع CLOUDFLARE_ACCOUNT_ID وCLOUDFLARE_API_TOKEN.",
     "err.coderRate": "وصلت للحد المؤقت لإنشاء المواقع. جرّب بعد شوية.",
     "err.coderPrompt": "اكتب وصف للموقع، وخليه أقل من 6000 حرف.",
     "err.coderRequest": "الطلب مش واضح. جرّب تاني.",
@@ -165,7 +165,7 @@ function friendlyError(code: string | undefined, lang: string) {
   };
   const english: Record<string, string> = {
     "err.auth": "Your sign-in session expired. Please sign in again.",
-    "err.aiConfig": "The AI provider is not configured on the server. Add AI_API_KEY and AI_MODEL.",
+    "err.aiConfig": "Cloudflare AI is not configured. Check CLOUDFLARE_ACCOUNT_ID and CLOUDFLARE_API_TOKEN on the server.",
     "err.coderRate": "You reached the temporary website-generation limit. Try again later.",
     "err.coderPrompt": "Describe the website in fewer than 6,000 characters.",
     "err.coderRequest": "The request was not clear. Please try again.",

@@ -345,7 +345,7 @@ export function useConversation(userId: string | undefined, config: AiConfig) {
           setMessages((current) => current.filter((message) => message.id !== assistantId));
         }
         if (!aborted) {
-          let code = caught instanceof Error ? caught.message : "err.generic";
+          const code = caught instanceof Error ? caught.message : "err.generic";
           setError(code.startsWith("err.") ? code : "err.network");
         }
       } finally {

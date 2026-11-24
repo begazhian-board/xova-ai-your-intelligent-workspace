@@ -40,9 +40,10 @@ interface TavilyResponse {
   results?: TavilyResult[];
 }
 
-type ProviderContentPart =
-  | { type: "text"; text: string }
-  | { type: "image_url"; image_url: { url: string } };
+type ProviderContentPart = { type: "text"; text: string } | {
+  type: "image_url";
+  image_url: { url: string };
+};
 
 type ProviderMessage = {
   role: "system" | "user" | "assistant";
@@ -92,17 +93,11 @@ function toProviderMessages(system: string, messages: WireMessage[]): ProviderMe
 
     const textParts = (message.attachments ?? [])
       .filter((attachment) => typeof attachment.text === "string" && attachment.text.trim())
-      .map((attachment) =>
-        "\n\n--- Attached file: " +
-        attachment.name +
-        " (" +
-        (attachment.mime || "text") +
-        ") ---\n" +
-        attachment.text!.slice(0, 120_000) +
-        "\n--- end of " +
-        attachment.name +
-        " ---",
-      );
+      .map((attachment) => {
+        const mime = attachment.mime || "text";
+        const content = attachment.text!.slice(0, 120_000);
+        return `\n\n--- Attached file: ${attachment.name} (${mime}) ---\n${content}\n--- end of ${attachment.name} ---`;
+      });
 
     const text = message.content + textParts.join("");
     const imageParts: ProviderContentPart[] = (message.attachments ?? [])
@@ -208,9 +203,11 @@ async function streamAI(
     }
 
     if (chunk.error) {
-      const status =
-        typeof chunk.error.code === "number" ? chunk.error.code : 502;
-      throw new AIProviderError(status, chunk.error.message ?? chunk.error.type ?? "Provider stream error");
+      const status = typeof chunk.error.code === "number" ? chunk.error.code : 502;
+      throw new AIProviderError(
+        status,
+        chunk.error.message ?? chunk.error.type ?? "Provider stream error",
+      );
     }
 
     for (const choice of chunk.choices ?? []) {

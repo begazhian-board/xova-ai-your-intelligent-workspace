@@ -85,9 +85,10 @@ export const Route = createFileRoute("/api/diagnostics")({
           return Response.json(
             {
               ok: false,
-              error: error instanceof Error && error.name === "TimeoutError"
-                ? "err.aiBusy"
-                : "err.aiNetwork",
+              error:
+                error instanceof Error && error.name === "TimeoutError"
+                  ? "err.aiBusy"
+                  : "err.aiNetwork",
             },
             { status: 502 },
           );

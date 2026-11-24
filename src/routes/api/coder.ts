@@ -86,7 +86,7 @@ function getSafeProjectFiles(value: unknown, maxTotalBytes = MAX_INPUT_BYTES): P
 }
 
 function parseGeneratedProject(raw: string): GeneratedProject | null {
-  const cleaned = raw.trim().replace(/^\`\`\`(?:json)?\s*/i, "").replace(/\s*\`\`\`$/, "");
+  const cleaned = raw.trim().replace(/^```(?:json)?\s*/i, "").replace(/\s*```$/, "");
   try {
     const parsed = JSON.parse(cleaned) as GeneratedProject;
     return parsed && typeof parsed === "object" ? parsed : null;

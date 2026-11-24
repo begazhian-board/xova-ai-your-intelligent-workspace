@@ -10,4 +10,4 @@
 <!-- LOVABLE:END -->
 
 ## Architecture decisions
-- Chat and XOVA Coder use a server-held OpenAI-compatible Chat Completions endpoint configured through AI_API_KEY, AI_API_BASE_URL, AI_MODEL, and AI_CODER_MODEL. Tavily remains a separate server-side search provider.
+- Chat and XOVA Coder use Cloudflare Workers AI through its OpenAI-compatible Chat Completions endpoint. They reuse the server-held CLOUDFLARE_ACCOUNT_ID and CLOUDFLARE_API_TOKEN used by image generation; AI_API_KEY, AI_API_BASE_URL, AI_MODEL, and AI_CODER_MODEL are optional overrides. Tavily remains a separate server-side search provider.
