@@ -323,7 +323,7 @@ function Workspace() {
           </div>
         )}
 
-        {messages.length > 0 && mascotState !== "idle" && (
+        {messages.length > 0 && (
           <div className="pointer-events-none flex justify-center pb-1" aria-hidden="true">
             <Mascot state={mascotState} className="h-10 w-10" />
           </div>
