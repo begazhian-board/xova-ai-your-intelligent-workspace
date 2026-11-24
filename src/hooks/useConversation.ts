@@ -292,29 +292,32 @@ export function useConversation(userId: string | undefined, config: AiConfig) {
           buffer = "";
         }
 
+        if (!preludeDone) throw new Error("err.streamInterrupted");
+
         let streamError: string | null = null;
         const trailerAt = text.indexOf(TRAILER_PREFIX);
-        if (trailerAt !== -1) {
-          try {
-            const trailer = JSON.parse(text.slice(trailerAt + TRAILER_PREFIX.length)) as {
-              sources?: SourceRef[];
-              error?: string | null;
-              notice?: string | null;
-            };
-            if (Array.isArray(trailer.sources)) sources = trailer.sources;
-            streamError = trailer.error ?? null;
-            streamNotice = trailer.notice ?? null;
-          } catch {
-            /* ignore malformed trailer */
-          }
-          text = text.slice(0, trailerAt);
+        if (trailerAt === -1) throw new Error("err.streamInterrupted");
+
+        try {
+          const trailer = JSON.parse(text.slice(trailerAt + TRAILER_PREFIX.length)) as {
+            sources?: SourceRef[];
+            error?: string | null;
+            notice?: string | null;
+          };
+          if (Array.isArray(trailer.sources)) sources = trailer.sources;
+          streamError = trailer.error ?? null;
+          streamNotice = trailer.notice ?? null;
+        } catch {
+          throw new Error("err.streamInterrupted");
         }
+        text = text.slice(0, trailerAt);
 
         const finalMessage: ChatMessage = {
           ...assistantMessage,
           content: text.trim(),
           sources,
           streaming: false,
+          failed: Boolean(streamError),
         };
         if (streamNotice) setNotice(streamNotice);
         if (!finalMessage.content) throw new Error(streamError ?? "err.unavailable");
@@ -332,6 +335,7 @@ export function useConversation(userId: string | undefined, config: AiConfig) {
             content: partial,
             sources,
             streaming: false,
+            failed: !aborted,
           };
           setMessages((current) =>
             current.map((message) => (message.id === assistantId ? kept : message)),

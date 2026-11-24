@@ -148,7 +148,7 @@ function buildPreviewHtml(files: ProjectFile[]) {
 function friendlyError(code: string | undefined, lang: string) {
   const arabic: Record<string, string> = {
     "err.auth": "انتهت جلسة تسجيل الدخول. سجّل دخولك تاني.",
-    "err.geminiConfig": "مفتاح Gemini مش متظبط على السيرفر.",
+    "err.aiConfig": "مزود الذكاء الاصطناعي مش متظبط على السيرفر. ضيف إعدادات AI_API_KEY وAI_MODEL.",
     "err.coderRate": "وصلت للحد المؤقت لإنشاء المواقع. جرّب بعد شوية.",
     "err.coderPrompt": "اكتب وصف للموقع، وخليه أقل من 6000 حرف.",
     "err.coderRequest": "الطلب مش واضح. جرّب تاني.",
@@ -156,14 +156,14 @@ function friendlyError(code: string | undefined, lang: string) {
     "err.coderTooLarge": "الموقع كبير على طلب واحد. قسم التعديل لخطوات أصغر.",
     "err.coderFormat": "الذكاء الاصطناعي رجّع ملفات بصيغة غير متوقعة. جرّب تاني.",
     "err.coderGeneration": "حصلت مشكلة أثناء بناء الموقع. جرّب تاني بعد شوية.",
-    "err.coderProviderRequest": "طلب إنشاء الموقع اترفض من Gemini. راجع وصف الموقع أو إعدادات التوليد.",
-    "err.coderProviderPermission": "مفتاح Gemini مش مسموح له باستخدام الموديل المطلوب.",
-    "err.coderProviderModel": "موديل إنشاء المواقع غير متاح في إعدادات Gemini الحالية.",
-    "err.coderProviderUnavailable": "خدمة Gemini مشغولة أو غير متاحة مؤقتًا. جرّب بعد شوية.",
+    "err.coderProviderRequest": "مزود الذكاء الاصطناعي رفض طلب إنشاء الموقع. راجع وصف الموقع أو إعدادات التوليد.",
+    "err.coderProviderPermission": "مفتاح مزود الذكاء الاصطناعي مش مسموح له باستخدام الموديل المطلوب.",
+    "err.coderProviderModel": "موديل إنشاء المواقع مش موجود في إعدادات مزود الذكاء الاصطناعي.",
+    "err.coderProviderUnavailable": "خدمة الذكاء الاصطناعي مشغولة أو غير متاحة مؤقتًا. جرّب بعد شوية.",
   };
   const english: Record<string, string> = {
     "err.auth": "Your sign-in session expired. Please sign in again.",
-    "err.geminiConfig": "Gemini is not configured on the server.",
+    "err.aiConfig": "The AI provider is not configured on the server. Add AI_API_KEY and AI_MODEL.",
     "err.coderRate": "You reached the temporary website-generation limit. Try again later.",
     "err.coderPrompt": "Describe the website in fewer than 6,000 characters.",
     "err.coderRequest": "The request was not clear. Please try again.",
@@ -171,10 +171,10 @@ function friendlyError(code: string | undefined, lang: string) {
     "err.coderTooLarge": "This project is too large for one request. Split the change into smaller steps.",
     "err.coderFormat": "The AI returned an unexpected file format. Please try again.",
     "err.coderGeneration": "Something went wrong while building the website. Please try again shortly.",
-    "err.coderProviderRequest": "Gemini rejected the website-generation request. Check the prompt or generation settings.",
-    "err.coderProviderPermission": "The Gemini API key does not have permission to use the selected model.",
-    "err.coderProviderModel": "The website-generation model is not available to this Gemini API configuration.",
-    "err.coderProviderUnavailable": "Gemini is temporarily busy or unavailable. Please try again shortly.",
+    "err.coderProviderRequest": "The AI provider rejected the website-generation request. Check the prompt or generation settings.",
+    "err.coderProviderPermission": "The AI provider key does not have permission to use the selected model.",
+    "err.coderProviderModel": "The website-generation model is not available in the current AI provider configuration.",
+    "err.coderProviderUnavailable": "The AI provider is temporarily busy or unavailable. Please try again shortly.",
   };
   return (lang === "ar" ? arabic : english)[code ?? ""] ?? (lang === "ar" ? "حصل خطأ. جرّب تاني." : "Something went wrong. Please try again.");
 }

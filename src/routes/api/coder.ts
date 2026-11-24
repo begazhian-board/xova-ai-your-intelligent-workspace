@@ -1,8 +1,6 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { createClient } from "@supabase/supabase-js";
-import { GEMINI_MODEL } from "@/lib/gemini.server";
-
-const CODER_MODEL = "gemini-3.8-flash";
+import { aiProviderErrorCode, getAIProviderConfig } from "@/lib/ai-provider.server";
 
 interface ProjectFile {
   path: string;
@@ -15,12 +13,12 @@ interface WireBody {
   files?: ProjectFile[];
 }
 
-interface GeminiResponse {
-  candidates?: Array<{
-    finishReason?: string;
-    content?: { parts?: Array<{ text?: string }> };
+interface AICompletionResponse {
+  choices?: Array<{
+    finish_reason?: string | null;
+    message?: { content?: string | Array<{ type?: string; text?: string }> };
   }>;
-  error?: { message?: string; status?: string };
+  error?: { message?: string; type?: string; code?: string | number };
 }
 
 interface GeneratedProject {
@@ -124,8 +122,8 @@ export const Route = createFileRoute("/api/coder")({
           return Response.json({ error: "err.coderRate" }, { status: 429 });
         }
 
-        const apiKey = process.env["GEMINI_API_KEY"];
-        if (!apiKey) return Response.json({ error: "err.geminiConfig" }, { status: 503 });
+        const provider = getAIProviderConfig("coder");
+        if (!provider) return Response.json({ error: "err.aiConfig" }, { status: 503 });
 
         let body: WireBody;
         try {
@@ -168,86 +166,48 @@ export const Route = createFileRoute("/api/coder")({
           `Current project name: ${projectName}\n\nUser request:\n${prompt}${existingProject}`;
 
         try {
-          const generationRequest = {
-            systemInstruction: { parts: [{ text: systemPrompt }] },
-            contents: [{ role: "user", parts: [{ text: userPrompt }] }],
-            generationConfig: {
-              temperature: 0.35,
-              maxOutputTokens: 32_000,
-              responseMimeType: "application/json",
-              responseSchema: {
-                type: "OBJECT",
-                properties: {
-                  name: { type: "STRING" },
-                  description: { type: "STRING" },
-                  files: {
-                    type: "ARRAY",
-                    items: {
-                      type: "OBJECT",
-                      properties: {
-                        path: { type: "STRING" },
-                        content: { type: "STRING" },
-                      },
-                      required: ["path", "content"],
-                    },
-                  },
-                },
-                required: ["name", "description", "files"],
-              },
-            },
-          };
-          const requestOptions = {
+          const response = await fetch(provider.endpoint, {
             method: "POST",
             headers: {
               "Content-Type": "application/json",
-              "x-goog-api-key": apiKey,
+              Authorization: "Bearer " + provider.apiKey,
             },
-            body: JSON.stringify(generationRequest),
+            body: JSON.stringify({
+              model: provider.model,
+              temperature: 0.35,
+              max_tokens: 32_000,
+              response_format: { type: "json_object" },
+              messages: [
+                { role: "system", content: systemPrompt },
+                { role: "user", content: userPrompt },
+              ],
+            }),
             signal: request.signal,
-          };
-          let response = await fetch(
-            `https://generativelanguage.googleapis.com/v1beta/models/${CODER_MODEL}:generateContent`,
-            requestOptions,
-          );
-
-          if (!response.ok && [429, 500, 502, 503, 504].includes(response.status)) {
-            console.warn("XOVA Coder primary model unavailable; retrying with fallback", response.status);
-            response = await fetch(
-              `https://generativelanguage.googleapis.com/v1beta/models/${GEMINI_MODEL}:generateContent`,
-              requestOptions,
-            );
-          }
+          });
 
           if (!response.ok) {
-            const detail = (await response.text().catch(() => "")).slice(0, 500);
-            console.error("XOVA Coder Gemini request failed", response.status, detail);
-            const providerError =
-              response.status === 429
-                ? "err.coderRate"
-                : response.status === 400
-                  ? "err.coderProviderRequest"
-                  : response.status === 403
-                    ? "err.coderProviderPermission"
-                    : response.status === 404
-                      ? "err.coderProviderModel"
-                      : response.status >= 500
-                        ? "err.coderProviderUnavailable"
-                        : "err.coderGeneration";
+            const detail = (await response.text().catch(() => "")).slice(0, 800);
+            console.error("XOVA Coder AI provider request failed", response.status, detail);
             return Response.json(
-              { error: providerError },
+              { error: aiProviderErrorCode(response.status, detail) },
               { status: response.status === 429 ? 429 : 502 },
             );
           }
 
-          const payload = (await response.json()) as GeminiResponse;
-          const candidate = payload.candidates?.[0];
-          if (candidate?.finishReason === "MAX_TOKENS") {
+          const payload = (await response.json()) as AICompletionResponse;
+          const choice = payload.choices?.[0];
+          if (choice?.finish_reason === "length") {
             return Response.json({ error: "err.coderTooLarge" }, { status: 413 });
           }
-          const raw = (candidate?.content?.parts ?? [])
-            .map((part) => part.text ?? "")
-            .join("")
-            .trim();
+
+          const rawContent = choice?.message?.content;
+          const raw = (
+            typeof rawContent === "string"
+              ? rawContent
+              : Array.isArray(rawContent)
+                ? rawContent.map((part) => part.text ?? "").join("")
+                : ""
+          ).trim();
           const generated = parseGeneratedProject(raw);
           if (!generated || !Array.isArray(generated.files)) {
             return Response.json({ error: "err.coderFormat" }, { status: 502 });
@@ -273,7 +233,10 @@ export const Route = createFileRoute("/api/coder")({
         } catch (error) {
           if (request.signal.aborted) return new Response(null, { status: 499 });
           console.error("XOVA Coder generation failed", error);
-          return Response.json({ error: "err.coderGeneration" }, { status: 502 });
+          return Response.json(
+            { error: error instanceof TypeError ? "err.aiNetwork" : "err.coderGeneration" },
+            { status: 502 },
+          );
         }
       },
     },

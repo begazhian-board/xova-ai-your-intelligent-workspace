@@ -10,4 +10,4 @@
 <!-- LOVABLE:END -->
 
 ## Architecture decisions
-- Chat uses server-held direct Google Gemini for answers and server-side Tavily search results for web research and verified source URLs. There is no Lovable AI Gateway fallback.
+- Chat and XOVA Coder use a server-held OpenAI-compatible Chat Completions endpoint configured through AI_API_KEY, AI_API_BASE_URL, AI_MODEL, and AI_CODER_MODEL. Tavily remains a separate server-side search provider.
