@@ -342,8 +342,7 @@ function Workspace() {
             <div className="flex min-h-full flex-col">
               <Welcome
                 displayName={profile.display_name}
-                conversations={conversations}
-                onSelectConversation={select}
+                mascotState={mascotState}
                 onPick={(text) => setDraft(text)}
               />
             </div>
@@ -380,11 +379,13 @@ function Workspace() {
           </div>
         )}
 
-        <div className="xv-composer-dock mx-auto flex w-full max-w-4xl items-end gap-2 px-4 sm:gap-3 sm:px-6">
-          <Mascot
-            state={mascotState}
-            className="h-14 w-14 shrink-0 sm:h-24 sm:w-24 lg:h-28 lg:w-28"
-          />
+        <div className="xv-composer-dock mx-auto flex w-full max-w-6xl items-end gap-2 px-4 sm:gap-3 sm:px-6">
+          {messages.length > 0 && (
+            <Mascot
+              state={mascotState}
+              className="h-14 w-14 shrink-0 sm:h-24 sm:w-24 lg:h-28 lg:w-28"
+            />
+          )}
           <Composer
             mode={mode}
             onModeChange={setMode}
