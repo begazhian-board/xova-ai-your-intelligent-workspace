@@ -2821,3 +2821,79 @@
     animation: none !important;
   }
 }
+
+
+/* Final accent alignment: states and icon wells follow the muted teal token too. */
+.xv-gradient-text,
+.xv-auth-gradient {
+  background: linear-gradient(
+    110deg,
+    var(--foreground) 22%,
+    color-mix(in oklab, var(--brand) 84%, var(--foreground)) 76%
+  );
+  background-clip: text;
+  -webkit-background-clip: text;
+  color: transparent;
+}
+
+.xv-home-tool-icon,
+.xv-home-float-icon,
+.xv-settings-title-icon,
+.xv-home-studio-mark {
+  border-color: color-mix(in oklab, var(--brand) 22%, var(--border));
+  background: color-mix(in oklab, var(--brand-soft) 78%, var(--surface));
+  color: var(--brand);
+  box-shadow: none;
+}
+
+:root:not(.dark) .xv-sidebar-icon,
+:root:not(.dark) .xv-sidebar-conversation-icon,
+:root:not(.dark) .xv-sidebar-avatar {
+  border-color: color-mix(in oklab, var(--brand) 22%, var(--border));
+  background: color-mix(in oklab, var(--brand-soft) 72%, var(--surface));
+  color: var(--brand);
+  box-shadow: none;
+}
+
+.dark .xv-sidebar-icon,
+.dark .xv-sidebar-conversation-icon,
+.dark .xv-sidebar-avatar {
+  border-color: oklch(1 0 0 / 9%);
+  background: linear-gradient(145deg, var(--elevated), var(--surface));
+  color: var(--brand);
+  box-shadow: inset 0 1px 0 oklch(1 0 0 / 5%);
+}
+
+:root:not(.dark) .xv-sidebar-conversation:has([aria-current="page"]) {
+  border-color: color-mix(in oklab, var(--brand) 35%, var(--border));
+  background: color-mix(in oklab, var(--brand-soft) 72%, var(--surface));
+  box-shadow: 0 5px 16px color-mix(in oklab, var(--brand) 8%, transparent);
+}
+
+.dark .xv-sidebar-conversation:has([aria-current="page"]) {
+  border-color: color-mix(in oklab, var(--brand) 36%, var(--border));
+  background: color-mix(in oklab, var(--brand-soft) 72%, var(--surface));
+  box-shadow: inset 0 0 0 1px color-mix(in oklab, var(--brand) 9%, transparent);
+}
+
+.xv-studio-choice.is-selected,
+.xv-settings-nav-item.is-active {
+  border-color: color-mix(in oklab, var(--brand) 40%, var(--border));
+  background: color-mix(in oklab, var(--brand-soft) 82%, var(--surface));
+  color: var(--brand);
+  box-shadow: 0 5px 16px color-mix(in oklab, var(--brand) 8%, transparent);
+}
+
+.dark .xv-studio-choice.is-selected,
+.dark .xv-settings-nav-item.is-active {
+  border-color: color-mix(in oklab, var(--brand) 40%, var(--border));
+  background: color-mix(in oklab, var(--brand-soft) 78%, var(--surface));
+  color: var(--brand);
+}
+
+.dark .xv-home-primary-action,
+.dark .xv-studio-generate,
+.dark .xv-auth-submit,
+.dark .xv-sidebar-new-chat {
+  color: var(--primary-foreground);
+}
