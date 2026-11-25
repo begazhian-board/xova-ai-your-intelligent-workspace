@@ -3124,3 +3124,398 @@
 :root:not(.dark) .xv-settings-nav-item.is-active {
   background: color-mix(in oklab, var(--brand-soft) 76%, oklch(0.95 0.008 255));
 }
+
+
+/* =========================================================
+   XOVA studio refresh — richer atmosphere, refined toolbar,
+   and a cleaner, editorial quick-tools dock.
+   ========================================================= */
+
+/* Background geometry: more depth and movement without reducing readability. */
+.xv-wave-bg {
+  opacity: 0.46;
+}
+
+:root:not(.dark) .xv-wave-bg {
+  opacity: 0.34;
+}
+
+.dark .xv-wave-bg {
+  opacity: 0.42;
+}
+
+.xv-wave-geometry {
+  transform-box: fill-box;
+  transform-origin: center;
+  animation: xv-geometry-drift 34s ease-in-out infinite alternate;
+}
+
+.xv-wave-orbit {
+  fill: none;
+  stroke: url(#xv-wave-gradient);
+  stroke-width: 1.2;
+  stroke-opacity: 0.34;
+}
+
+.xv-wave-orbit-dashed {
+  stroke: url(#xv-wave-reverse);
+  stroke-width: 1;
+  stroke-dasharray: 3 9;
+  stroke-opacity: 0.42;
+}
+
+.xv-wave-orbit-fine {
+  stroke-width: 0.8;
+  stroke-opacity: 0.22;
+}
+
+.xv-wave-orbit-dot,
+.xv-wave-geometry-dot {
+  fill: #7c75ff;
+  filter: drop-shadow(0 0 5px #716dff);
+}
+
+.xv-wave-geometry-dot {
+  opacity: 0.72;
+}
+
+.xv-wave-geometry-line {
+  fill: none;
+  stroke: url(#xv-wave-reverse);
+  stroke-width: 1.1;
+  stroke-opacity: 0.26;
+}
+
+.xv-wave-geometry-line-soft {
+  stroke: url(#xv-wave-gradient);
+  stroke-dasharray: 2 8;
+  stroke-opacity: 0.3;
+}
+
+.xv-wave-ribbon-extra {
+  stroke-width: 1.35;
+  stroke-opacity: 0.38;
+}
+
+@keyframes xv-geometry-drift {
+  from { transform: translate3d(-4px, 2px, 0) rotate(-0.4deg); }
+  to { transform: translate3d(5px, -5px, 0) rotate(0.5deg); }
+}
+
+/* A premium floating toolbar with a clear visual hierarchy. */
+.xv-topbar-v2 {
+  min-height: 70px;
+  margin: 13px 16px 0;
+  padding: 9px 12px;
+  border: 1px solid color-mix(in oklab, var(--brand) 20%, var(--border));
+  border-radius: 22px;
+  background:
+    radial-gradient(ellipse 22rem 8rem at 0% 0%, color-mix(in oklab, var(--brand) 9%, transparent), transparent 75%),
+    color-mix(in oklab, var(--surface) 90%, transparent);
+  box-shadow:
+    0 14px 34px color-mix(in oklab, var(--brand) 7%, transparent),
+    inset 0 1px 0 color-mix(in oklab, white 52%, transparent);
+  backdrop-filter: blur(26px) saturate(155%);
+  -webkit-backdrop-filter: blur(26px) saturate(155%);
+  isolation: isolate;
+}
+
+.xv-topbar-v2::after {
+  position: absolute;
+  inset-block: 10px;
+  inset-inline-end: 22%;
+  width: 1px;
+  content: "";
+  background: linear-gradient(transparent, color-mix(in oklab, var(--brand) 16%, transparent), transparent);
+  pointer-events: none;
+}
+
+.xv-topbar-heading {
+  position: relative;
+  z-index: 1;
+  padding-inline: 5px;
+}
+
+.xv-topbar-eyebrow {
+  color: var(--brand);
+  opacity: 0.78;
+}
+
+.xv-topbar-actions {
+  position: relative;
+  z-index: 1;
+}
+
+.xv-toolbar-divider {
+  background: color-mix(in oklab, var(--brand) 20%, var(--border));
+}
+
+.xv-toolbar-icon {
+  border: 1px solid color-mix(in oklab, var(--brand) 16%, var(--border));
+  background: color-mix(in oklab, var(--surface) 76%, var(--brand-soft));
+  color: var(--muted-foreground);
+  box-shadow: 0 3px 10px color-mix(in oklab, var(--foreground) 4%, transparent);
+  transition: transform 160ms ease, color 160ms ease, border-color 160ms ease, background 160ms ease, box-shadow 160ms ease;
+}
+
+.xv-toolbar-icon:hover {
+  transform: translateY(-1px);
+  border-color: color-mix(in oklab, var(--brand) 42%, var(--border));
+  background: color-mix(in oklab, var(--brand-soft) 72%, var(--surface));
+  color: var(--brand);
+  box-shadow: 0 6px 16px color-mix(in oklab, var(--brand) 10%, transparent);
+}
+
+.xv-toolbar-primary {
+  color: white;
+  border: 1px solid color-mix(in oklab, var(--brand) 68%, white);
+  background: linear-gradient(112deg, oklch(0.56 0.23 285), oklch(0.55 0.2 245));
+  box-shadow: 0 7px 18px color-mix(in oklab, var(--brand) 22%, transparent);
+  transition: transform 160ms ease, filter 160ms ease, box-shadow 160ms ease;
+}
+
+.xv-toolbar-primary:hover {
+  transform: translateY(-1px);
+  filter: brightness(1.07);
+  box-shadow: 0 10px 24px color-mix(in oklab, var(--brand) 28%, transparent);
+}
+
+.xv-toolbar-mode {
+  min-height: 42px;
+  padding: 3px;
+  border: 1px solid color-mix(in oklab, var(--brand) 13%, var(--border));
+  border-radius: 14px;
+  background: color-mix(in oklab, var(--surface) 72%, var(--brand-soft));
+}
+
+.xv-toolbar-mode > * {
+  border-radius: 11px;
+}
+
+.dark .xv-topbar-v2 {
+  border-color: oklch(0.7 0.14 275 / 22%);
+  background:
+    radial-gradient(ellipse 24rem 8rem at 0% 0%, oklch(0.48 0.18 280 / 18%), transparent 74%),
+    linear-gradient(115deg, oklch(0.22 0.026 270 / 96%), oklch(0.17 0.018 255 / 96%));
+  box-shadow: 0 16px 38px oklch(0 0 0 / 22%), inset 0 1px 0 oklch(1 0 0 / 6%);
+}
+
+.dark .xv-toolbar-icon {
+  border-color: oklch(0.72 0.14 270 / 18%);
+  background: oklch(0.27 0.035 270 / 82%);
+  color: oklch(0.78 0.035 265);
+}
+
+.dark .xv-toolbar-icon:hover {
+  border-color: oklch(0.72 0.16 280 / 42%);
+  background: oklch(0.32 0.07 278 / 78%);
+  color: oklch(0.9 0.08 275);
+}
+
+.dark .xv-toolbar-mode {
+  border-color: oklch(0.72 0.14 270 / 18%);
+  background: oklch(0.15 0.018 255 / 72%);
+}
+
+:root:not(.dark) .xv-topbar-v2 {
+  border-color: oklch(0.76 0.07 275 / 32%);
+  background:
+    radial-gradient(ellipse 24rem 8rem at 0% 0%, oklch(0.88 0.08 278 / 24%), transparent 74%),
+    linear-gradient(115deg, oklch(0.975 0.008 255 / 96%), oklch(0.945 0.018 265 / 94%));
+  box-shadow: 0 13px 30px oklch(0.38 0.1 275 / 8%), inset 0 1px 0 white;
+}
+
+:root:not(.dark) .xv-toolbar-mode {
+  background: oklch(0.925 0.025 270 / 72%);
+  border-color: oklch(0.79 0.06 275 / 34%);
+}
+
+@media (max-width: 767px) {
+  .xv-topbar-v2 {
+    min-height: 60px;
+    margin: 8px 9px 0;
+    padding: 7px 8px;
+    border-radius: 17px;
+  }
+
+  .xv-topbar-v2::after {
+    display: none;
+  }
+}
+
+/* Quick tools become a curated vertical dock rather than a cramped tile grid. */
+.xv-tools-rail-v2 {
+  width: 260px;
+  margin: 13px 10px 13px 0;
+  gap: 17px;
+  border: 1px solid color-mix(in oklab, var(--brand) 16%, var(--border));
+  border-radius: 24px;
+  background:
+    radial-gradient(ellipse 18rem 14rem at 100% 0%, color-mix(in oklab, var(--brand) 9%, transparent), transparent 76%),
+    color-mix(in oklab, var(--surface) 84%, transparent);
+  box-shadow: 0 16px 38px color-mix(in oklab, var(--foreground) 6%, transparent);
+  backdrop-filter: blur(24px) saturate(145%);
+  -webkit-backdrop-filter: blur(24px) saturate(145%);
+}
+
+.xv-tools-kicker {
+  color: var(--brand);
+  opacity: 0.76;
+}
+
+.xv-tools-heading-icon {
+  border: 1px solid color-mix(in oklab, var(--brand) 24%, var(--border));
+  background: linear-gradient(145deg, color-mix(in oklab, var(--brand-soft) 88%, var(--surface)), color-mix(in oklab, var(--brand) 12%, var(--surface)));
+  color: var(--brand);
+  box-shadow: 0 7px 18px color-mix(in oklab, var(--brand) 10%, transparent);
+}
+
+.xv-tools-section-label {
+  color: var(--faint);
+}
+
+.xv-tools-section-label > span:first-child,
+.xv-tools-section-label > span:last-child {
+  background: color-mix(in oklab, var(--brand) 18%, var(--border));
+}
+
+.xv-quicktool-card {
+  min-height: 72px;
+  border: 1px solid color-mix(in oklab, var(--foreground) 8%, var(--border));
+  background: color-mix(in oklab, var(--surface) 80%, transparent);
+  color: var(--foreground);
+  box-shadow: 0 5px 15px color-mix(in oklab, var(--foreground) 3%, transparent);
+  text-decoration: none;
+}
+
+.xv-quicktool-card:hover {
+  transform: translateY(-2px);
+  border-color: color-mix(in oklab, var(--brand) 36%, var(--border));
+  background: color-mix(in oklab, var(--brand-soft) 34%, var(--surface));
+  box-shadow: 0 10px 22px color-mix(in oklab, var(--brand) 9%, transparent);
+}
+
+.xv-quicktool-featured {
+  min-height: 86px;
+  border-color: color-mix(in oklab, var(--brand) 36%, var(--border));
+  background:
+    radial-gradient(ellipse 13rem 7rem at 5% 0%, color-mix(in oklab, #36aaff 18%, transparent), transparent 75%),
+    linear-gradient(120deg, color-mix(in oklab, var(--brand-soft) 88%, var(--surface)), color-mix(in oklab, var(--surface) 80%, #a68cff));
+  box-shadow: 0 9px 22px color-mix(in oklab, var(--brand) 10%, transparent);
+}
+
+.xv-quicktool-icon {
+  border: 1px solid color-mix(in oklab, var(--brand) 18%, var(--border));
+  background: color-mix(in oklab, var(--brand-soft) 76%, var(--surface));
+  color: var(--brand);
+  transition: transform 160ms ease;
+}
+
+.xv-quicktool-card:hover .xv-quicktool-icon {
+  transform: scale(1.05);
+}
+
+.xv-quicktool-icon-image {
+  border-color: oklch(0.7 0.13 280 / 34%);
+  background: linear-gradient(145deg, oklch(0.56 0.22 285), oklch(0.54 0.2 245));
+  color: white;
+  box-shadow: 0 5px 13px oklch(0.48 0.18 275 / 20%);
+}
+
+.xv-quicktool-arrow,
+.xv-quicktool-number {
+  color: color-mix(in oklab, var(--brand) 66%, var(--muted-foreground));
+  opacity: 0.75;
+}
+
+.xv-quicktool-blue .xv-quicktool-icon {
+  color: oklch(0.62 0.18 245);
+  background: color-mix(in oklab, oklch(0.7 0.18 245) 13%, var(--surface));
+}
+
+.xv-quicktool-violet .xv-quicktool-icon {
+  color: oklch(0.62 0.2 295);
+  background: color-mix(in oklab, oklch(0.7 0.18 295) 13%, var(--surface));
+}
+
+.xv-quicktool-indigo .xv-quicktool-icon {
+  color: oklch(0.58 0.2 270);
+  background: color-mix(in oklab, oklch(0.68 0.18 270) 13%, var(--surface));
+}
+
+.xv-tools-footer {
+  border: 1px solid color-mix(in oklab, var(--brand) 17%, var(--border));
+  background:
+    radial-gradient(ellipse 10rem 7rem at 0% 0%, color-mix(in oklab, var(--brand) 12%, transparent), transparent 75%),
+    color-mix(in oklab, var(--brand-soft) 42%, var(--surface));
+}
+
+.xv-tools-footer-mark {
+  background: linear-gradient(145deg, oklch(0.56 0.22 285), oklch(0.54 0.2 245));
+  color: white;
+}
+
+.dark .xv-tools-rail-v2 {
+  border-color: oklch(0.7 0.14 275 / 20%);
+  background:
+    radial-gradient(ellipse 18rem 14rem at 100% 0%, oklch(0.46 0.18 285 / 17%), transparent 76%),
+    linear-gradient(165deg, oklch(0.205 0.026 270 / 96%), oklch(0.155 0.018 255 / 97%));
+  box-shadow: 0 18px 44px oklch(0 0 0 / 22%);
+}
+
+.dark .xv-quicktool-card {
+  border-color: oklch(0.72 0.12 275 / 13%);
+  background: linear-gradient(145deg, oklch(0.25 0.03 270 / 82%), oklch(0.2 0.02 255 / 86%));
+}
+
+.dark .xv-quicktool-card:hover {
+  border-color: oklch(0.72 0.16 280 / 36%);
+  background: linear-gradient(145deg, oklch(0.29 0.05 280 / 88%), oklch(0.22 0.025 255 / 94%));
+}
+
+.dark .xv-quicktool-featured {
+  border-color: oklch(0.68 0.16 280 / 38%);
+  background:
+    radial-gradient(ellipse 13rem 7rem at 5% 0%, oklch(0.5 0.19 245 / 18%), transparent 75%),
+    linear-gradient(125deg, oklch(0.3 0.065 280 / 94%), oklch(0.22 0.04 255 / 98%));
+}
+
+.dark .xv-tools-footer {
+  border-color: oklch(0.7 0.14 275 / 18%);
+  background: linear-gradient(145deg, oklch(0.26 0.045 280 / 78%), oklch(0.19 0.022 255 / 86%));
+}
+
+:root:not(.dark) .xv-tools-rail-v2 {
+  border-color: oklch(0.79 0.07 275 / 38%);
+  background:
+    radial-gradient(ellipse 18rem 14rem at 100% 0%, oklch(0.88 0.08 278 / 25%), transparent 76%),
+    linear-gradient(165deg, oklch(0.96 0.012 255 / 97%), oklch(0.93 0.018 265 / 96%));
+}
+
+:root:not(.dark) .xv-quicktool-card {
+  border-color: oklch(0.82 0.035 270 / 46%);
+  background: linear-gradient(145deg, oklch(0.975 0.008 255 / 96%), oklch(0.945 0.018 265 / 94%));
+}
+
+:root:not(.dark) .xv-quicktool-featured {
+  border-color: oklch(0.75 0.09 280 / 46%);
+  background:
+    radial-gradient(ellipse 13rem 7rem at 5% 0%, oklch(0.83 0.1 245 / 28%), transparent 75%),
+    linear-gradient(125deg, oklch(0.93 0.04 280), oklch(0.95 0.025 250));
+}
+
+:root:not(.dark) .xv-tools-footer {
+  border-color: oklch(0.82 0.055 275 / 42%);
+  background: linear-gradient(145deg, oklch(0.94 0.035 275 / 90%), oklch(0.94 0.02 245 / 94%));
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .xv-wave-geometry,
+  .xv-wave-ribbons,
+  .xv-quicktool-card,
+  .xv-toolbar-icon,
+  .xv-toolbar-primary {
+    animation: none !important;
+    transition: none !important;
+  }
+}
