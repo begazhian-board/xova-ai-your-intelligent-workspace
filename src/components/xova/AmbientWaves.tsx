@@ -19,8 +19,8 @@ export function AmbientWaves() {
             <stop offset="100%" stopColor="#B64DFF" />
           </linearGradient>
           <radialGradient id="xv-wave-orb-fill">
-            <stop offset="0%" stopColor="#8C79FF" stopOpacity="0.24" />
-            <stop offset="72%" stopColor="#39B8FF" stopOpacity="0.08" />
+            <stop offset="0%" stopColor="#9B8CFF" stopOpacity="0.38" />
+            <stop offset="68%" stopColor="#39B8FF" stopOpacity="0.17" />
             <stop offset="100%" stopColor="#39B8FF" stopOpacity="0" />
           </radialGradient>
           <filter id="xv-wave-blur" x="-30%" y="-80%" width="160%" height="260%">
