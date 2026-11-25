@@ -2,7 +2,6 @@ import {
   ArrowUpRight,
   BrainCircuit,
   Code2,
-  Globe2,
   Image as ImageIcon,
   Lightbulb,
   MessageCircle,
