@@ -192,7 +192,7 @@ async function generateConversationTitle(messages: WireMessage[], apiKey: string
       prompt: context.join("\n\n"),
       maxOutputTokens: 24,
       temperature: 0.2,
-      maxRetries: 0,
+      maxRetries: 2,
     });
 
     const title = result.text
@@ -324,7 +324,7 @@ export const Route = createFileRoute("/api/chat")({
                       system,
                       messages: modelMessages,
                       abortSignal: local.signal,
-                      maxRetries: 0,
+                      maxRetries: 2,
                     }).fullStream,
                   );
                   if (!wroteText) throw new Error("Gemini returned no visible answer");
