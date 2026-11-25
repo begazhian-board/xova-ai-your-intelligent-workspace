@@ -4349,3 +4349,40 @@
     opacity: 0.5;
   }
 }
+
+
+/* Keep XOVA's robot standing beside the chat input instead of above it. */
+.xv-composer-dock {
+  position: relative;
+  z-index: 1;
+}
+
+.xv-composer-dock > .xv-composer-wrap {
+  min-width: 0;
+  width: 100%;
+  flex: 1 1 0%;
+  padding-inline: 0;
+}
+
+.xv-composer-dock .xv-composer-wrap > div {
+  width: 100%;
+  max-width: none;
+}
+
+.xv-composer-dock .xv-mascot {
+  margin-bottom: 1.25rem;
+}
+
+@media (max-width: 639px) {
+  .xv-composer-dock {
+    gap: 6px;
+  }
+
+  .xv-composer-dock .xv-composer-wrap {
+    padding-top: 8px;
+  }
+
+  .xv-composer-dock .xv-mascot {
+    margin-bottom: 1.1rem;
+  }
+}
