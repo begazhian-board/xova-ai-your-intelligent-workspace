@@ -2608,3 +2608,216 @@
 @media (prefers-reduced-motion: reduce) {
   .xv-bot-body, .xv-bot-eye, .xv-bot-thinking circle, .xv-bot-aura { animation: none !important; }
 }
+
+
+/* =========================================================
+   XOVA visual system — quiet slate + muted teal
+   Final token and surface pass for consistent light/dark UI.
+   ========================================================= */
+:root:not(.dark) {
+  --background: oklch(0.965 0.006 245);
+  --foreground: oklch(0.24 0.014 250);
+  --rail: oklch(0.947 0.008 245);
+  --surface: oklch(0.985 0.004 245);
+  --elevated: oklch(0.978 0.006 245);
+  --composer: oklch(0.982 0.005 245);
+  --hover: oklch(0.945 0.009 245);
+  --active: oklch(0.925 0.012 235);
+  --subtle: oklch(0.95 0.008 245);
+  --faint: oklch(0.57 0.012 250);
+  --card: oklch(0.982 0.005 245);
+  --popover: oklch(0.99 0.003 245);
+  --primary: oklch(0.5 0.12 205);
+  --primary-foreground: oklch(0.99 0.004 210);
+  --secondary: oklch(0.945 0.008 245);
+  --secondary-foreground: oklch(0.29 0.012 250);
+  --muted: oklch(0.95 0.008 245);
+  --muted-foreground: oklch(0.51 0.012 250);
+  --accent: oklch(0.94 0.025 205);
+  --accent-foreground: oklch(0.32 0.07 205);
+  --border: oklch(0.88 0.009 245);
+  --input: oklch(0.87 0.01 245);
+  --ring: oklch(0.57 0.12 205);
+  --brand: oklch(0.5 0.12 205);
+  --brand-soft: oklch(0.925 0.03 205);
+  --brand-foreground: oklch(0.99 0.004 210);
+  --shadow-panel: 0 1px 2px oklch(0.2 0.015 250 / 5%), 0 10px 28px oklch(0.2 0.015 250 / 5%);
+  --shadow-float: 0 14px 40px oklch(0.2 0.015 250 / 10%);
+}
+
+.dark {
+  --background: oklch(0.17 0.012 250);
+  --foreground: oklch(0.94 0.006 245);
+  --rail: oklch(0.145 0.012 250);
+  --surface: oklch(0.205 0.013 250);
+  --elevated: oklch(0.23 0.014 250);
+  --composer: oklch(0.215 0.014 250);
+  --hover: oklch(0.25 0.015 245);
+  --active: oklch(0.275 0.018 220);
+  --subtle: oklch(0.215 0.013 250);
+  --faint: oklch(0.66 0.012 245);
+  --card: oklch(0.205 0.013 250);
+  --popover: oklch(0.23 0.014 250);
+  --primary: oklch(0.68 0.12 205);
+  --primary-foreground: oklch(0.15 0.018 240);
+  --secondary: oklch(0.245 0.014 250);
+  --secondary-foreground: oklch(0.93 0.006 245);
+  --muted: oklch(0.245 0.014 250);
+  --muted-foreground: oklch(0.72 0.012 245);
+  --accent: oklch(0.28 0.045 205);
+  --accent-foreground: oklch(0.92 0.025 205);
+  --border: oklch(1 0 0 / 9%);
+  --input: oklch(1 0 0 / 12%);
+  --ring: oklch(0.66 0.12 205);
+  --brand: oklch(0.68 0.12 205);
+  --brand-soft: oklch(0.28 0.045 205);
+  --brand-foreground: oklch(0.97 0.006 205);
+  --shadow-panel: 0 1px 2px oklch(0 0 0 / 28%), 0 12px 32px oklch(0 0 0 / 22%);
+  --shadow-float: 0 16px 46px oklch(0 0 0 / 36%);
+}
+
+/* Replace the old violet/blue glass gradients with subtle slate surfaces. */
+.xv-shell,
+.xv-studio-shell,
+.xv-coder-page,
+.xv-auth-page {
+  background:
+    radial-gradient(ellipse 44rem 28rem at 8% 0%, color-mix(in oklab, var(--brand) 6%, transparent), transparent 74%),
+    var(--background);
+}
+
+.dark .xv-shell,
+.dark .xv-studio-shell,
+.dark .xv-coder-page,
+.dark .xv-auth-page {
+  background:
+    radial-gradient(ellipse 44rem 28rem at 8% 0%, color-mix(in oklab, var(--brand) 9%, transparent), transparent 74%),
+    linear-gradient(145deg, oklch(0.18 0.014 250), oklch(0.155 0.012 250)),
+    var(--background);
+}
+
+:root:not(.dark) .xv-shell {
+  background:
+    radial-gradient(ellipse 42rem 28rem at 8% 0%, color-mix(in oklab, var(--brand) 5%, transparent), transparent 74%),
+    linear-gradient(145deg, oklch(0.97 0.005 245), oklch(0.955 0.008 240)),
+    var(--background);
+}
+
+.xv-sidebar-panel,
+.xv-sidebar-collapsed,
+.xv-topbar,
+.xv-tools-rail,
+.xv-composer,
+.xv-tool-card,
+.xv-home-tool-card,
+.xv-home-panel,
+.xv-studio-panel,
+.xv-studio-preview,
+.xv-coder-chat,
+.xv-coder-preview,
+.xv-auth-card {
+  border-color: color-mix(in oklab, var(--foreground) 10%, var(--border));
+  box-shadow: var(--shadow-panel);
+}
+
+:root:not(.dark) .xv-sidebar-panel,
+:root:not(.dark) .xv-sidebar-collapsed,
+:root:not(.dark) .xv-topbar,
+:root:not(.dark) .xv-tools-rail,
+:root:not(.dark) .xv-composer,
+:root:not(.dark) .xv-tool-card,
+:root:not(.dark) .xv-home-tool-card,
+:root:not(.dark) .xv-home-panel,
+:root:not(.dark) .xv-studio-panel,
+:root:not(.dark) .xv-studio-preview,
+:root:not(.dark) .xv-coder-chat,
+:root:not(.dark) .xv-coder-preview,
+:root:not(.dark) .xv-auth-card {
+  background: color-mix(in oklab, var(--surface) 94%, var(--background));
+  border-color: color-mix(in oklab, var(--foreground) 10%, var(--border));
+}
+
+.dark .xv-sidebar-panel,
+.dark .xv-sidebar-collapsed,
+.dark .xv-topbar,
+.dark .xv-tools-rail,
+.dark .xv-composer,
+.dark .xv-tool-card,
+.dark .xv-home-tool-card,
+.dark .xv-home-panel,
+.dark .xv-studio-panel,
+.dark .xv-studio-preview,
+.dark .xv-coder-chat,
+.dark .xv-coder-preview,
+.dark .xv-auth-card {
+  background: linear-gradient(145deg, color-mix(in oklab, var(--surface) 96%, white 1%), var(--surface));
+  border-color: oklch(1 0 0 / 8%);
+}
+
+.xv-home-hero {
+  border-color: color-mix(in oklab, var(--brand) 18%, var(--border));
+  background:
+    radial-gradient(ellipse 28rem 18rem at 8% 45%, color-mix(in oklab, var(--brand) 10%, transparent), transparent 72%),
+    linear-gradient(120deg, color-mix(in oklab, var(--surface) 96%, var(--brand-soft)), var(--surface));
+  box-shadow: var(--shadow-panel);
+}
+
+.dark .xv-home-hero {
+  background:
+    radial-gradient(ellipse 28rem 18rem at 8% 45%, color-mix(in oklab, var(--brand) 14%, transparent), transparent 74%),
+    linear-gradient(120deg, oklch(0.205 0.018 245), oklch(0.175 0.014 250));
+}
+
+.xv-home-primary-action,
+.xv-studio-generate,
+.xv-auth-submit,
+.xv-sidebar-new-chat {
+  border-color: color-mix(in oklab, var(--brand) 72%, var(--border));
+  background: linear-gradient(110deg, var(--brand), color-mix(in oklab, var(--brand) 78%, #6aabb1));
+  box-shadow: 0 7px 18px color-mix(in oklab, var(--brand) 16%, transparent);
+}
+
+.xv-home-primary-action:hover,
+.xv-studio-generate:hover:not(:disabled),
+.xv-auth-submit:hover:not(:disabled),
+.xv-sidebar-new-chat:hover:not(:disabled) {
+  filter: brightness(1.04);
+  box-shadow: 0 10px 24px color-mix(in oklab, var(--brand) 20%, transparent);
+}
+
+.xv-home-art-glow,
+.xv-home-studio-glow {
+  opacity: 0.52;
+}
+
+.xv-wave-bg {
+  opacity: 0.2;
+}
+
+.dark .xv-wave-bg {
+  opacity: 0.28;
+}
+
+:root:not(.dark) .xv-wave-bg {
+  opacity: 0.16;
+}
+
+.dark .xv-bot-aura {
+  opacity: 0.52;
+}
+
+.dark .xv-bot-aura-ring {
+  stroke: color-mix(in oklab, var(--brand) 62%, #b8d6d7);
+  filter: none;
+}
+
+.dark .xv-bot-eye {
+  filter: drop-shadow(0 0 3px color-mix(in oklab, var(--brand) 70%, transparent));
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .xv-home-art-mark,
+  .xv-wave-ribbons {
+    animation: none !important;
+  }
+}
