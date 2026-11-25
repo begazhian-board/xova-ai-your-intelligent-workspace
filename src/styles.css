@@ -4223,3 +4223,129 @@
 :root:not(.dark) .xv-shell .xv-sidebar-v3 .xv-sidebar-v3-new-chat:hover {
   background: linear-gradient(112deg, oklch(0.58 0.23 285), oklch(0.57 0.2 245));
 }
+
+
+/* Background ornaments — clearer luminous blue/violet accents in both themes. */
+.xv-wave-bg {
+  opacity: 0.72;
+}
+
+.xv-wave-line {
+  stroke-opacity: 0.96;
+  stroke-width: 2;
+  filter: drop-shadow(0 0 3px rgb(75 143 255 / 30%));
+}
+
+.xv-wave-line-soft {
+  stroke-opacity: 0.68;
+  stroke-width: 1.35;
+}
+
+.xv-wave-halo {
+  stroke-width: 23;
+  opacity: 0.34;
+}
+
+.xv-wave-orbit {
+  stroke-opacity: 0.56;
+  stroke-width: 1.55;
+  filter: drop-shadow(0 0 3px rgb(111 105 255 / 28%));
+}
+
+.xv-wave-orbit-dashed {
+  stroke-opacity: 0.62;
+  stroke-width: 1.2;
+}
+
+.xv-wave-orbit-fine {
+  stroke-opacity: 0.4;
+  stroke-width: 1;
+}
+
+.xv-wave-orbit-dot,
+.xv-wave-geometry-dot {
+  opacity: 0.94;
+  filter: drop-shadow(0 0 5px #716dff) drop-shadow(0 0 10px rgb(72 164 255 / 44%));
+}
+
+.xv-wave-geometry-line {
+  stroke-opacity: 0.48;
+  stroke-width: 1.35;
+}
+
+.xv-wave-geometry-line-soft {
+  stroke-opacity: 0.46;
+}
+
+.xv-wave-ribbon-extra {
+  stroke-opacity: 0.56;
+  stroke-width: 1.55;
+}
+
+.dark .xv-wave-bg {
+  opacity: 0.88;
+}
+
+.dark .xv-wave-line {
+  stroke-opacity: 1;
+  filter: drop-shadow(0 0 4px rgb(67 156 255 / 40%));
+}
+
+.dark .xv-wave-line-soft {
+  stroke-opacity: 0.76;
+}
+
+.dark .xv-wave-halo {
+  opacity: 0.42;
+}
+
+.dark .xv-wave-orbit {
+  stroke-opacity: 0.68;
+}
+
+.dark .xv-wave-orbit-dashed {
+  stroke-opacity: 0.72;
+}
+
+.dark .xv-wave-geometry-line {
+  stroke-opacity: 0.58;
+}
+
+:root:not(.dark) .xv-wave-bg {
+  opacity: 0.7;
+}
+
+:root:not(.dark) .xv-wave-line {
+  stroke-opacity: 0.94;
+  filter: drop-shadow(0 0 3px rgb(91 110 255 / 24%));
+}
+
+:root:not(.dark) .xv-wave-line-soft {
+  stroke-opacity: 0.7;
+}
+
+:root:not(.dark) .xv-wave-halo {
+  opacity: 0.28;
+}
+
+:root:not(.dark) .xv-wave-orbit {
+  stroke-opacity: 0.54;
+}
+
+:root:not(.dark) .xv-wave-geometry-line {
+  stroke-opacity: 0.42;
+}
+
+@media (max-width: 767px) {
+  .xv-wave-bg {
+    opacity: 0.52;
+  }
+
+  .dark .xv-wave-bg {
+    opacity: 0.62;
+  }
+
+  :root:not(.dark) .xv-wave-bg {
+    opacity: 0.5;
+  }
+}
