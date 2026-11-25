@@ -4182,3 +4182,14 @@
     transition: none !important;
   }
 }
+
+
+.xv-sidebar-v3.xv-sidebar-collapsed {
+  width: 68px;
+  min-height: 0;
+  height: calc(100% - 20px);
+  flex: 0 0 68px;
+  align-items: center;
+  gap: 8px;
+  padding: 12px 0;
+}
