@@ -3029,3 +3029,98 @@
 .dark .xv-bot-eye {
   filter: drop-shadow(0 0 5px #35bfff) drop-shadow(0 0 11px #168fff);
 }
+
+
+/* =========================================================
+   Light mode correction — visibly softer neutral surfaces.
+   Brand colors remain violet/blue; only light backgrounds change.
+   ========================================================= */
+:root:not(.dark) {
+  --background: oklch(0.935 0.009 255);
+  --rail: oklch(0.915 0.01 255);
+  --surface: oklch(0.958 0.006 255);
+  --elevated: oklch(0.972 0.004 255);
+  --composer: oklch(0.968 0.005 255);
+  --hover: oklch(0.92 0.01 255);
+  --active: oklch(0.895 0.014 265);
+  --subtle: oklch(0.935 0.008 255);
+  --card: oklch(0.96 0.006 255);
+  --popover: oklch(0.975 0.004 255);
+  --secondary: oklch(0.93 0.008 255);
+  --muted: oklch(0.935 0.008 255);
+  --border: oklch(0.865 0.012 255);
+  --input: oklch(0.88 0.01 255);
+}
+
+/* Main workspace: soft gray canvas instead of a white sheet. */
+:root:not(.dark) .xv-shell,
+:root:not(.dark) .xv-studio-shell,
+:root:not(.dark) .xv-coder-page,
+:root:not(.dark) .xv-auth-page {
+  background:
+    radial-gradient(ellipse 44rem 28rem at 8% 0%, color-mix(in oklab, var(--brand) 7%, transparent), transparent 74%),
+    linear-gradient(145deg, oklch(0.945 0.008 255), oklch(0.925 0.012 255));
+}
+
+/* The sidebar and top navigation get a distinct, slightly deeper layer. */
+:root:not(.dark) .xv-sidebar-panel,
+:root:not(.dark) .xv-sidebar-collapsed,
+:root:not(.dark) .xv-topbar,
+:root:not(.dark) .xv-tools-rail {
+  background: linear-gradient(155deg, oklch(0.958 0.007 255), oklch(0.935 0.01 255));
+  border-color: oklch(0.84 0.016 255);
+  box-shadow: 0 12px 30px oklch(0.25 0.02 255 / 7%), inset 0 1px 0 oklch(1 0 0 / 40%);
+}
+
+/* Message composer and content cards are lighter than the page, not pure white. */
+:root:not(.dark) .xv-composer,
+:root:not(.dark) .xv-tool-card,
+:root:not(.dark) .xv-welcome .xv-tool-card,
+:root:not(.dark) .xv-home-tool-card,
+:root:not(.dark) .xv-home-panel,
+:root:not(.dark) .xv-studio-panel,
+:root:not(.dark) .xv-studio-preview,
+:root:not(.dark) .xv-coder-chat,
+:root:not(.dark) .xv-coder-preview,
+:root:not(.dark) .xv-auth-card,
+:root:not(.dark) .xv-auth-story {
+  background: linear-gradient(150deg, oklch(0.97 0.005 255), oklch(0.95 0.008 255));
+  border-color: oklch(0.85 0.014 255);
+}
+
+/* Home hero and studio promotion keep their original violet/blue accents. */
+:root:not(.dark) .xv-home-hero,
+:root:not(.dark) .xv-home-studio-panel {
+  background:
+    radial-gradient(ellipse 27rem 18rem at 8% 45%, color-mix(in oklab, #168fff 10%, transparent), transparent 72%),
+    radial-gradient(ellipse 28rem 20rem at 92% 15%, color-mix(in oklab, #8a45e8 9%, transparent), transparent 74%),
+    linear-gradient(120deg, oklch(0.955 0.018 270), oklch(0.94 0.01 255));
+}
+
+/* Inputs and small control surfaces follow the softer light palette. */
+:root:not(.dark) .xv-composer textarea,
+:root:not(.dark) .xv-studio-input,
+:root:not(.dark) .xv-auth-input,
+:root:not(.dark) .xv-coder-select,
+:root:not(.dark) .xv-settings-field,
+:root:not(.dark) .xv-settings-contact-card {
+  background-color: oklch(0.972 0.004 255);
+  border-color: oklch(0.85 0.012 255);
+}
+
+:root:not(.dark) .xv-home-recent-row {
+  background: oklch(0.945 0.008 255);
+  border-color: oklch(0.87 0.01 255);
+}
+
+:root:not(.dark) .xv-settings-dialog {
+  background: linear-gradient(145deg, oklch(0.965 0.006 255), oklch(0.94 0.01 255));
+  border-color: oklch(0.85 0.012 255);
+}
+
+/* Preserve the original brand hue on active navigation and selected controls. */
+:root:not(.dark) .xv-sidebar-conversation:has([aria-current="page"]),
+:root:not(.dark) .xv-studio-choice.is-selected,
+:root:not(.dark) .xv-settings-nav-item.is-active {
+  background: color-mix(in oklab, var(--brand-soft) 76%, oklch(0.95 0.008 255));
+}
