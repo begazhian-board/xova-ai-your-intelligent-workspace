@@ -204,17 +204,17 @@ const en: Dict = {
 
   "err.generic": "Something went wrong. Please try again.",
   "err.network": "Connection lost. Check your internet and retry.",
-  "err.unavailable": "XOVA's AI service is temporarily unavailable. Please try again shortly.",
+  "err.unavailable": "Something went wrong while processing your request. Please try again later."
   "err.aiConfig": "Cloudflare AI is not configured. Check CLOUDFLARE_ACCOUNT_ID and CLOUDFLARE_API_TOKEN on the server.",
   "err.aiCredits": "The AI provider account has no remaining credits or quota.",
-  "err.aiDailyLimit": "XOVA has used the Cloudflare AI free daily allocation shared by chat and image generation. It resets at 00:00 UTC; enable Workers Paid or connect another provider to continue before then.",
+  "err.aiDailyLimit": "Something went wrong while processing your request. Please try again later.",
   "err.aiModel": "The configured AI model was not found. Check AI_MODEL.",
   "err.aiRequest": "The AI provider rejected this request. Check the model settings or try a shorter prompt.",
-  "err.aiBusy": "The AI provider is temporarily unavailable. Please retry shortly.",
+  "err.aiBusy": "Something went wrong while processing your request. Please try again.",
   "err.aiNetwork": "XOVA could not connect to the AI provider. Check the server connection and retry.",
   "err.aiOutputLimit": "The reply reached the provider's output limit. Increase AI_MAX_OUTPUT_TOKENS or ask for a shorter answer.",
   "err.streamInterrupted": "The response stream ended before the answer completed. The partial reply was kept; retry to continue.",
-  "err.rate": "The service is receiving too many requests. Please wait and try again.",
+  "err.rate": "Something went wrong while processing your request. Please try again later.",
   "err.auth": "Your session expired. Please sign in again.",
   "err.upload": "That file couldn't be attached.",
   "err.unsupported": "That file type isn't supported yet.",
@@ -461,17 +461,17 @@ const ar: Dict = {
 
   "err.generic": "حدث خطأ ما. حاول مرة أخرى.",
   "err.network": "انقطع الاتصال. تحقق من الإنترنت وأعد المحاولة.",
-  "err.unavailable": "خدمة الذكاء الاصطناعي في XOVA مش متاحة مؤقتًا. جرّب بعد شوية.",
+  "err.unavailable": "حدث خطأ أثناء تنفيذ الطلب. حاول مرة أخرى لاحقًا."
   "err.aiConfig": "بيانات Cloudflare AI مش متظبطة. راجع CLOUDFLARE_ACCOUNT_ID وCLOUDFLARE_API_TOKEN على السيرفر.",
   "err.aiCredits": "حساب مزود الذكاء الاصطناعي مفيهوش رصيد أو حصة كفاية.",
-  "err.aiDailyLimit": "حصة Cloudflare AI المجانية اليومية خلصت، وهي مشتركة بين الشات وتوليد الصور. الحصة بتتجدد الساعة 12 منتصف الليل بتوقيت UTC؛ للاستمرار قبلها لازم تفعيل Workers Paid أو ربط مزود ذكاء اصطناعي تاني.",
+  "err.aiDailyLimit": "حدث خطأ أثناء تنفيذ طلبك. حاول مرة أخرى لاحقًا."
   "err.aiModel": "اسم الموديل المحدد مش موجود. راجع قيمة AI_MODEL.",
   "err.aiRequest": "مزود الذكاء الاصطناعي رفض الطلب. راجع إعدادات الموديل أو جرّب رسالة أقصر.",
-  "err.aiBusy": "مزود الذكاء الاصطناعي مشغول أو غير متاح مؤقتًا. جرّب بعد شوية.",
+  "err.aiBusy": "حدث خطأ أثناء تنفيذ الطلب. حاول مرة أخرى."
   "err.aiNetwork": "XOVA معرفش يتصل بمزود الذكاء الاصطناعي. راجع اتصال السيرفر وجرب تاني.",
   "err.aiOutputLimit": "الرد وصل لحد التوليد المسموح. زوّد AI_MAX_OUTPUT_TOKENS أو اطلب إجابة أقصر.",
   "err.streamInterrupted": "الاتصال انتهى قبل ما الإجابة تكتمل. حفظت الجزء اللي وصل، وجرب تاني عشان تكمل.",
-  "err.rate": "فيه طلبات كتير على الخدمة. استنى شوية وجرب تاني.",
+  "err.rate": "حدث خطأ أثناء تنفيذ الطلب. حاول مرة أخرى لاحقًا."
   "err.auth": "انتهت الجلسة. سجّل الدخول من جديد.",
   "err.upload": "تعذّر إرفاق هذا الملف.",
   "err.unsupported": "نوع الملف غير مدعوم بعد.",
