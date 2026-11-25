@@ -1,5 +1,6 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { createClient } from "@supabase/supabase-js";
+import { aiProviderErrorCode } from "@/lib/ai-provider.server";
 
 interface WireBody {
   operation?: "generate" | "save-overlay";
@@ -216,6 +217,7 @@ export const Route = createFileRoute("/api/image")({
         try {
           let bytes: Uint8Array | null = null;
           let lastStatus: number | undefined;
+          let lastProviderDetail = "";
           // Faithful English translation of the user's own words — nothing added.
           const translatedPrompt = await translateToEnglish(prompt);
           const english = overlayText
@@ -237,23 +239,36 @@ export const Route = createFileRoute("/api/image")({
           form.set("guidance", quality === "premium" ? "5" : "4");
 
           try {
-            const res = await fetch(
-              `https://api.cloudflare.com/client/v4/accounts/${encodeURIComponent(cloudflareAccountId)}/ai/run/${modelId}`,
-              {
-                method: "POST",
-                headers: { Authorization: `Bearer ${cloudflareApiToken}` },
-                body: form,
-              },
-            );
-
-            if (!res.ok) {
-              lastStatus = res.status;
-              console.error(
-                "XOVA Cloudflare image error",
-                res.status,
-                (await res.text()).slice(0, 500),
+            for (let attempt = 1; attempt <= 3; attempt += 1) {
+              const res = await fetch(
+                "https://api.cloudflare.com/client/v4/accounts/" +
+                  encodeURIComponent(cloudflareAccountId) + "/ai/run/" + modelId,
+                {
+                  method: "POST",
+                  headers: { Authorization: "Bearer " + cloudflareApiToken },
+                  body: form,
+                  signal: request.signal,
+                },
               );
-            } else {
+
+              if (!res.ok) {
+                lastStatus = res.status;
+                lastProviderDetail = await res.text().catch(() => "");
+                console.error("XOVA Cloudflare image error", res.status, lastProviderDetail.slice(0, 500));
+
+                const dailyQuotaExceeded =
+                  /3036|daily free allocation|used up your daily/i.test(lastProviderDetail);
+                const retryable = [429, 500, 502, 503, 504].includes(res.status) && !dailyQuotaExceeded;
+                if (!retryable || attempt === 3) break;
+
+                const retryAfter = Number(res.headers.get("retry-after"));
+                const delayMs = Number.isFinite(retryAfter) && retryAfter > 0
+                  ? Math.min(retryAfter * 1000, 3000)
+                  : attempt * 800;
+                await new Promise<void>((resolve) => setTimeout(resolve, delayMs));
+                continue;
+              }
+
               const contentType = res.headers.get("content-type") ?? "";
               if (contentType.startsWith("image/")) {
                 bytes = new Uint8Array(await res.arrayBuffer());
@@ -261,28 +276,31 @@ export const Route = createFileRoute("/api/image")({
                 const payload = (await res.json()) as {
                   result?: { image?: string };
                   success?: boolean;
-                  errors?: Array<{ message?: string }>;
+                  errors?: Array<{ message?: string; code?: number | string }>;
                 };
                 const base64 = payload.result?.image;
                 if (payload.success !== false && typeof base64 === "string" && base64.length > 0) {
                   bytes = base64ToBytes(base64.replace(/^data:[^;]+;base64,/, ""));
                 } else {
-                  console.error(
-                    "XOVA Cloudflare image response missing image data",
-                    JSON.stringify(payload.errors ?? []).slice(0, 500),
-                  );
+                  lastProviderDetail = JSON.stringify(payload.errors ?? []);
+                  console.error("XOVA Cloudflare image response missing image data", lastProviderDetail.slice(0, 500));
                 }
               }
+              break;
             }
           } catch (error) {
+            if (request.signal.aborted) return new Response(null, { status: 499 });
             console.error("XOVA Cloudflare image request failed", error);
           }
 
           if (!bytes) {
-            return Response.json(
-              { error: lastStatus === 429 ? "err.rate" : "err.imageFailed" },
-              { status: 502 },
-            );
+            const providerError = lastStatus
+              ? aiProviderErrorCode(lastStatus, lastProviderDetail)
+              : "err.imageFailed";
+            const errorCode = ["err.aiDailyLimit", "err.aiBusy", "err.rate"].includes(providerError)
+              ? providerError
+              : "err.imageFailed";
+            return Response.json({ error: errorCode }, { status: 502 });
           }
 
           const isJpeg = bytes[0] === 0xff && bytes[1] === 0xd8;
