@@ -147,7 +147,7 @@ export function Sidebar({
     <nav
       aria-label={t("nav.conversation")}
       dir={dir}
-      className="xv-sidebar xv-sidebar-panel xv-sidebar-v3 flex h-full w-full shrink-0 flex-col md:w-[264px]"
+      className="xv-sidebar xv-sidebar-panel xv-sidebar-v3 flex h-full w-full shrink-0 flex-col md:w-[280px]"
     >
       <div className="xv-sidebar-v3-header">
         <div className="xv-sidebar-brand-lockup">
