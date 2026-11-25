@@ -15,7 +15,7 @@ import {
   User,
   X,
 } from "lucide-react";
-import { XovaWordmark } from "./Logo";
+import { XovaMark, XovaWordmark } from "./Logo";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -67,7 +67,7 @@ export function Sidebar({
   avatarUrl,
   onCloseDrawer,
 }: SidebarProps) {
-  const { t, dir } = useI18n();
+  const { t, dir, lang } = useI18n();
   const [query, setQuery] = useState("");
 
   const results = useMemo(() => {
@@ -79,56 +79,65 @@ export function Sidebar({
       .reverse();
   }, [messages, query]);
 
+  const formattedDate = (value: string | number) =>
+    new Date(value).toLocaleDateString(lang === "ar" ? "ar-EG" : "en-US", {
+      month: "short",
+      day: "numeric",
+    });
 
   if (collapsed) {
     return (
       <nav
         aria-label={t("nav.conversation")}
         dir={dir}
-        className="xv-sidebar xv-sidebar-collapsed hidden w-[64px] shrink-0 flex-col items-center gap-2 border-s border-border py-3 md:flex"
+        className="xv-sidebar xv-sidebar-v3 xv-sidebar-collapsed hidden w-[68px] shrink-0 flex-col items-center gap-2 py-3 md:flex"
       >
+        <span className="xv-sidebar-mini-brand" aria-label="XOVA">
+          <XovaMark className="h-7 w-7" />
+        </span>
         <button
           type="button"
           onClick={onToggleCollapsed}
           aria-label={t("nav.expand")}
           title={t("nav.expand")}
-          className="xv-focus grid h-9 w-9 place-items-center rounded-lg text-muted-foreground hover:bg-hover hover:text-foreground"
+          className="xv-sidebar-mini-button xv-focus"
         >
-          <PanelLeftOpen className="h-4 w-4" />
+          <PanelLeftOpen className="h-[17px] w-[17px]" />
         </button>
+        <span className="xv-sidebar-mini-separator" />
         <button
           type="button"
           onClick={onNewChat}
           aria-label={t("nav.newChat")}
           title={t("nav.newChat")}
-          className="xv-focus grid h-9 w-9 place-items-center rounded-lg bg-brand-soft text-brand hover:opacity-90"
+          className="xv-sidebar-mini-button xv-sidebar-mini-primary xv-focus"
         >
-          <Plus className="h-4 w-4" />
+          <Plus className="h-[18px] w-[18px]" />
         </button>
         <Link
           to="/images"
           aria-label={t("nav.imageStudio")}
           title={t("nav.imageStudio")}
-          className="xv-focus grid h-9 w-9 place-items-center rounded-lg text-muted-foreground hover:bg-hover hover:text-foreground"
+          className="xv-sidebar-mini-button xv-focus"
         >
-          <span className="xv-sidebar-icon"><ImageIcon className="h-4 w-4" /></span>
+          <ImageIcon className="h-[17px] w-[17px]" />
         </Link>
         <Link
           to="/coder"
           aria-label={t("nav.coder")}
           title={t("nav.coder")}
-          className="xv-focus grid h-9 w-9 place-items-center rounded-lg text-muted-foreground hover:bg-hover hover:text-foreground"
+          className="xv-sidebar-mini-button xv-focus"
         >
-          <span className="xv-sidebar-icon"><Code2 className="h-4 w-4" /></span>
+          <Code2 className="h-[17px] w-[17px]" />
         </Link>
         <button
           type="button"
           onClick={onOpenSettings}
           aria-label={t("nav.settings")}
           title={t("nav.settings")}
-          className="xv-focus mt-auto grid h-9 w-9 place-items-center rounded-lg text-muted-foreground hover:bg-hover hover:text-foreground"
+          className="xv-sidebar-mini-button xv-focus mt-auto"
         >
-          <span className="xv-sidebar-icon"><Settings className="h-4 w-4" /></span>
+          <Settings className="h-[17px] w-[17px]" />
         </button>
       </nav>
     );
@@ -138,16 +147,26 @@ export function Sidebar({
     <nav
       aria-label={t("nav.conversation")}
       dir={dir}
-      className="xv-sidebar xv-sidebar-panel flex h-full w-full shrink-0 flex-col border-s border-border md:w-[248px]"
+      className="xv-sidebar xv-sidebar-panel xv-sidebar-v3 flex h-full w-full shrink-0 flex-col md:w-[264px]"
     >
-      <div className="xv-sidebar-header flex items-center gap-2 px-4 py-4">
-        <XovaWordmark className="min-w-0 flex-1" />
+      <div className="xv-sidebar-v3-header">
+        <div className="xv-sidebar-brand-lockup">
+          <span className="xv-sidebar-brand-mark">
+            <XovaMark className="h-8 w-8" />
+          </span>
+          <span className="xv-sidebar-brand-copy">
+            <XovaWordmark className="h-5 w-auto" />
+            <span className="xv-sidebar-brand-caption">
+              {lang === "ar" ? "مساحة العمل الذكية" : "AI WORKSPACE"}
+            </span>
+          </span>
+        </div>
         {onCloseDrawer ? (
           <button
             type="button"
             onClick={onCloseDrawer}
             aria-label={t("nav.close")}
-            className="xv-focus grid h-8 w-8 place-items-center rounded-lg text-muted-foreground hover:bg-hover hover:text-foreground"
+            className="xv-sidebar-collapse-button xv-focus"
           >
             <X className="h-4 w-4" />
           </button>
@@ -157,175 +176,194 @@ export function Sidebar({
             onClick={onToggleCollapsed}
             aria-label={t("nav.collapse")}
             title={t("nav.collapse")}
-            className="xv-focus hidden h-8 w-8 place-items-center rounded-lg text-muted-foreground hover:bg-hover hover:text-foreground md:grid"
+            className="xv-sidebar-collapse-button xv-focus hidden md:grid"
           >
             <PanelLeftClose className="h-4 w-4" />
           </button>
         )}
       </div>
 
-      <div className="xv-sidebar-actions flex flex-col gap-2.5 px-3.5">
+      <div className="xv-sidebar-v3-primary">
         <button
           type="button"
           onClick={onNewChat}
-          className="xv-sidebar-new-chat xv-focus inline-flex items-center gap-2 rounded-xl border border-brand/25 bg-brand px-3.5 py-2.5 text-sm font-semibold text-brand-foreground shadow-panel transition-all hover:-translate-y-0.5 hover:opacity-95"
+          className="xv-sidebar-v3-new-chat xv-focus"
         >
-          <span className="xv-sidebar-icon"><Plus className="h-4 w-4" /></span>
-          {t("nav.newChat")}
+          <span className="xv-sidebar-v3-new-icon"><Plus className="h-[18px] w-[18px]" /></span>
+          <span className="flex-1 text-start">{t("nav.newChat")}</span>
+          <span className="xv-sidebar-new-spark" aria-hidden="true">✦</span>
         </button>
 
-        <Link
-          to="/images"
-          onClick={() => onCloseDrawer?.()}
-          className="xv-sidebar-image-link xv-focus inline-flex items-center gap-2 rounded-xl border border-border/70 bg-surface/60 px-3.5 py-2.5 text-sm font-medium text-muted-foreground transition-colors hover:border-brand/30 hover:bg-hover hover:text-foreground"
-        >
-          <span className="xv-sidebar-icon"><ImageIcon className="h-4 w-4" /></span>
-          {t("nav.imageStudio")}
-        </Link>
-
-        <Link
-          to="/coder"
-          onClick={() => onCloseDrawer?.()}
-          className="xv-sidebar-image-link xv-focus inline-flex items-center gap-2 rounded-xl border border-border/70 bg-surface/60 px-3.5 py-2.5 text-sm font-medium text-muted-foreground transition-colors hover:border-brand/30 hover:bg-hover hover:text-foreground"
-        >
-          <span className="xv-sidebar-icon"><Code2 className="h-4 w-4" /></span>
-          {t("nav.coder")}
-        </Link>
-
-        <div className="relative">
-          <Search
-            className="xv-sidebar-search-icon pointer-events-none absolute start-2.5 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-muted-foreground"
-            aria-hidden="true"
-          />
-          <input
-            value={query}
-            onChange={(event) => setQuery(event.target.value)}
-            placeholder={t("search.placeholder")}
-            aria-label={t("nav.search")}
-            className="xv-sidebar-search xv-focus w-full rounded-full border border-border/80 bg-background/70 py-2.5 pe-9 ps-9 text-xs outline-none placeholder:text-muted-foreground"
-          />
-          {query && (
-            <button
-              type="button"
-              onClick={() => setQuery("")}
-              aria-label={t("search.clear")}
-              className="xv-focus absolute end-1.5 top-1/2 grid h-6 w-6 -translate-y-1/2 place-items-center rounded-md text-muted-foreground hover:text-foreground"
-            >
-              <X className="h-3.5 w-3.5" />
-            </button>
-          )}
+        <div className="xv-sidebar-v3-section-label">
+          {lang === "ar" ? "مساحتك" : "YOUR SPACE"}
+        </div>
+        <div className="xv-sidebar-v3-nav">
+          <Link
+            to="/images"
+            onClick={() => onCloseDrawer?.()}
+            className="xv-sidebar-v3-nav-link xv-focus"
+          >
+            <span className="xv-sidebar-v3-nav-icon xv-sidebar-v3-image-icon"><ImageIcon className="h-[17px] w-[17px]" /></span>
+            <span>{t("nav.imageStudio")}</span>
+          </Link>
+          <Link
+            to="/coder"
+            onClick={() => onCloseDrawer?.()}
+            className="xv-sidebar-v3-nav-link xv-focus"
+          >
+            <span className="xv-sidebar-v3-nav-icon xv-sidebar-v3-code-icon"><Code2 className="h-[17px] w-[17px]" /></span>
+            <span>{t("nav.coder")}</span>
+          </Link>
         </div>
       </div>
 
-      <div className="xv-sidebar-list mt-5 min-h-0 flex-1 overflow-y-auto px-3.5 pb-3">
+      <div className="xv-sidebar-v3-search-wrap">
+        <Search
+          className="xv-sidebar-search-icon pointer-events-none absolute start-3.5 top-1/2 h-4 w-4 -translate-y-1/2"
+          aria-hidden="true"
+        />
+        <input
+          value={query}
+          onChange={(event) => setQuery(event.target.value)}
+          placeholder={t("search.placeholder")}
+          aria-label={t("nav.search")}
+          className="xv-sidebar-v3-search xv-focus w-full"
+        />
+        {query && (
+          <button
+            type="button"
+            onClick={() => setQuery("")}
+            aria-label={t("search.clear")}
+            className="xv-sidebar-search-clear xv-focus"
+          >
+            <X className="h-3.5 w-3.5" />
+          </button>
+        )}
+      </div>
+
+      <div className="xv-sidebar-v3-list-head">
+        <span>{query ? t("search.results") : lang === "ar" ? "محادثاتك" : "RECENTS"}</span>
+        {!query && <span className="xv-sidebar-v3-count">{conversations.length}</span>}
+      </div>
+
+      <div className="xv-sidebar-list xv-sidebar-v3-list min-h-0 flex-1 overflow-y-auto">
         {query ? (
-          <>
-            <h2 className="mb-1.5 px-1 text-xxs font-semibold uppercase tracking-wide text-muted-foreground">
-              {t("search.results")}
-            </h2>
-            {results.length === 0 ? (
-              <p className="px-1 py-4 text-xs text-muted-foreground">{t("search.empty")}</p>
-            ) : (
-              <ul className="flex flex-col gap-0.5">
-                {results.map((message) => (
-                  <li key={message.id}>
-                    <button
-                      type="button"
-                      onClick={() => {
-                        onJumpTo(message.id);
-                        onCloseDrawer?.();
-                      }}
-                      className="xv-focus w-full rounded-lg px-2 py-2 text-start transition-colors hover:bg-hover"
-                    >
-                      <span className="block text-xs font-medium">
-                        {message.role === "user" ? t("msg.you") : t("app.name")}
-                      </span>
-                      <span className="mt-0.5 line-clamp-2 block text-xs text-muted-foreground">
-                        {message.content}
-                      </span>
-                    </button>
-                  </li>
-                ))}
-              </ul>
-            )}
-          </>
+          results.length === 0 ? (
+            <p className="xv-sidebar-v3-empty">{t("search.empty")}</p>
+          ) : (
+            <ul className="flex flex-col gap-1">
+              {results.map((message) => (
+                <li key={message.id}>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      onJumpTo(message.id);
+                      onCloseDrawer?.();
+                    }}
+                    className="xv-sidebar-v3-result xv-focus"
+                  >
+                    <span className="block text-xs font-semibold">
+                      {message.role === "user" ? t("msg.you") : t("app.name")}
+                    </span>
+                    <span className="mt-1 line-clamp-2 block text-xs text-muted-foreground">
+                      {message.content}
+                    </span>
+                  </button>
+                </li>
+              ))}
+            </ul>
+          )
         ) : loading ? (
-          <div className="flex flex-col gap-2 pt-1">
-            <Skeleton className="h-9 w-full rounded-lg" />
-            <Skeleton className="h-9 w-4/5 rounded-lg" />
+          <div className="flex flex-col gap-2 px-1 pt-2">
+            <Skeleton className="h-11 w-full rounded-xl" />
+            <Skeleton className="h-11 w-4/5 rounded-xl" />
+            <Skeleton className="h-11 w-full rounded-xl" />
           </div>
         ) : conversations.length > 0 ? (
-          <ul className="flex flex-col gap-0.5">
-            {conversations.map((c) => (
-              <li
-                key={c.id}
-                className={cn(
-                  "xv-sidebar-conversation group/item flex items-center gap-1 rounded-xl border border-transparent px-2.5 py-2 transition-all hover:border-border/70 hover:bg-hover",
-                  c.id === activeId && "border-brand/25 bg-brand/10 shadow-sm",
-                )}
-              >
-                <button
-                  type="button"
-                  onClick={() => onSelect(c.id)}
-                  aria-current={c.id === activeId ? "page" : undefined}
-                  className="xv-focus flex min-w-0 flex-1 items-center gap-2 rounded text-start"
+          <ul className="flex flex-col gap-1">
+            {conversations.map((conversation) => (
+              <li key={conversation.id}>
+                <div
+                  className={cn(
+                    "xv-sidebar-v3-conversation group/item",
+                    conversation.id === activeId && "is-active",
+                  )}
                 >
-                  <span className="xv-sidebar-conversation-icon"><MessageSquare
-                    className={cn("h-3.5 w-3.5 shrink-0", c.id === activeId ? "text-brand" : "text-muted-foreground")}
-                    aria-hidden="true"
-                  /></span>
-                  <span className="min-w-0 flex-1">
-                    <span className="block truncate text-xs font-medium">{c.title ?? t("nav.newChat")}</span>
-                    <span className="block text-xxs text-faint">{new Date(c.updatedAt).toLocaleDateString()}</span>
+                  <button
+                    type="button"
+                    onClick={() => onSelect(conversation.id)}
+                    aria-current={conversation.id === activeId ? "page" : undefined}
+                    className="xv-sidebar-v3-conversation-main xv-focus"
+                  >
+                    <span className="xv-sidebar-v3-conversation-icon">
+                      <MessageSquare className="h-[15px] w-[15px]" aria-hidden="true" />
+                    </span>
+                    <span className="min-w-0 flex-1">
+                      <span className="block truncate text-xs font-semibold">
+                        {conversation.title ?? t("nav.newChat")}
+                      </span>
+                      <span className="xv-sidebar-v3-date">
+                        {formattedDate(conversation.updatedAt)}
+                      </span>
+                    </span>
+                  </button>
+                  <span className="xv-sidebar-v3-row-actions">
+                    <button
+                      type="button"
+                      onClick={() => onRename(conversation.id)}
+                      aria-label={t("dialog.rename.title")}
+                      title={t("dialog.rename.title")}
+                      className="xv-sidebar-v3-row-action xv-focus"
+                    >
+                      <Pencil className="h-3.5 w-3.5" />
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => onDelete(conversation.id)}
+                      aria-label={t("dialog.delete.title")}
+                      title={t("dialog.delete.title")}
+                      className="xv-sidebar-v3-row-action xv-focus"
+                    >
+                      <Trash2 className="h-3.5 w-3.5" />
+                    </button>
                   </span>
-                </button>
-                <button
-                  type="button"
-                  onClick={() => onRename(c.id)}
-                  aria-label={t("dialog.rename.title")}
-                  className="xv-focus grid h-6 w-6 place-items-center rounded text-muted-foreground opacity-100 hover:text-foreground md:opacity-0 md:group-hover/item:opacity-100 md:focus:opacity-100"
-                >
-                  <Pencil className="h-3 w-3" />
-                </button>
-                <button
-                  type="button"
-                  onClick={() => onDelete(c.id)}
-                  aria-label={t("dialog.delete.title")}
-                  className="xv-focus grid h-6 w-6 place-items-center rounded text-muted-foreground opacity-100 hover:text-destructive md:opacity-0 md:group-hover/item:opacity-100 md:focus:opacity-100"
-                >
-                  <Trash2 className="h-3 w-3" />
-                </button>
+                </div>
               </li>
             ))}
           </ul>
         ) : (
-          <p className="px-1 py-4 text-xs text-muted-foreground">{t("empty.noMessages")}</p>
+          <div className="xv-sidebar-v3-empty-state">
+            <span className="xv-sidebar-v3-empty-icon"><MessageSquare className="h-5 w-5" /></span>
+            <p>{t("empty.noMessages")}</p>
+            <span>{lang === "ar" ? "ابدأ محادثة جديدة وهتظهر هنا" : "Start a chat and it will show up here"}</span>
+          </div>
         )}
       </div>
 
-      <div className="xv-sidebar-footer border-t border-border/80 bg-background/30 p-3">
+      <div className="xv-sidebar-v3-footer">
         <button
           type="button"
           onClick={onOpenSettings}
-          className="xv-sidebar-settings xv-focus mb-2 flex w-full items-center gap-2 rounded-xl px-3 py-2.5 text-xs font-medium text-muted-foreground transition-colors hover:bg-hover hover:text-foreground"
+          className="xv-sidebar-v3-settings xv-focus"
         >
-          <span className="xv-sidebar-icon"><Settings className="h-4 w-4" /></span>
-          {t("nav.settings")}
+          <span className="xv-sidebar-v3-settings-icon"><Settings className="h-[17px] w-[17px]" /></span>
+          <span>{t("nav.settings")}</span>
         </button>
 
         <DropdownMenu>
-          <DropdownMenuTrigger className="xv-sidebar-profile xv-focus flex w-full items-center gap-2 rounded-xl border border-border/70 bg-surface/60 px-3 py-2.5 text-start transition-colors hover:border-brand/25 hover:bg-hover">
+          <DropdownMenuTrigger className="xv-sidebar-v3-profile xv-focus">
             {avatarUrl ? (
-              <img src={avatarUrl} alt="" className="h-7 w-7 shrink-0 rounded-full object-cover" />
+              <img src={avatarUrl} alt="" className="h-9 w-9 shrink-0 rounded-xl object-cover" />
             ) : (
-              <span className="xv-sidebar-avatar grid h-7 w-7 shrink-0 place-items-center rounded-full bg-elevated text-muted-foreground">
-                <User className="h-3.5 w-3.5" />
+              <span className="xv-sidebar-v3-avatar">
+                <User className="h-4 w-4" />
               </span>
             )}
-            <span className="min-w-0 flex-1">
-              <span className="block truncate text-xs font-medium">{displayName}</span>
-              <span className="block truncate text-xxs text-faint">{email}</span>
+            <span className="min-w-0 flex-1 text-start">
+              <span className="block truncate text-xs font-bold">{displayName}</span>
+              <span className="mt-0.5 block truncate text-[10px] text-muted-foreground">{email}</span>
             </span>
+            <span className="xv-sidebar-profile-status" aria-hidden="true" />
           </DropdownMenuTrigger>
           <DropdownMenuContent align="start" className="w-52">
             <DropdownMenuItem onClick={onOpenSettings}>
