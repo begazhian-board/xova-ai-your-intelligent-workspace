@@ -138,6 +138,50 @@ function getTextFromDelta(value: unknown): string {
     .join("");
 }
 
+async function fetchProviderStream(
+  config: AIProviderConfig,
+  body: string,
+  signal: AbortSignal,
+) {
+  const retryableStatuses = new Set([429, 500, 502, 503, 504]);
+  const maxAttempts = 3;
+
+  for (let attempt = 1; attempt <= maxAttempts; attempt++) {
+    const response = await fetch(config.endpoint, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: "Bearer " + config.apiKey,
+      },
+      body,
+      signal,
+    });
+
+    if (response.ok || !retryableStatuses.has(response.status) || attempt === maxAttempts) {
+      return response;
+    }
+
+    const retryAfter = Number(response.headers.get("retry-after"));
+    const delayMs = Number.isFinite(retryAfter) && retryAfter > 0
+      ? Math.min(retryAfter * 1000, 3000)
+      : attempt * 800;
+    await response.body?.cancel().catch(() => undefined);
+    await new Promise<void>((resolve, reject) => {
+      if (signal.aborted) {
+        reject(new DOMException("The request was aborted", "AbortError"));
+        return;
+      }
+      const timer = setTimeout(resolve, delayMs);
+      signal.addEventListener("abort", () => {
+        clearTimeout(timer);
+        reject(new DOMException("The request was aborted", "AbortError"));
+      }, { once: true });
+    });
+  }
+
+  throw new AIProviderError(503, "The AI provider remained temporarily unavailable");
+}
+
 async function streamAI(
   config: AIProviderConfig,
   system: string,
@@ -150,20 +194,16 @@ async function streamAI(
     ? Math.max(256, Math.min(32_000, Math.floor(configuredLimit)))
     : 8192;
 
-  const response = await fetch(config.endpoint, {
-    method: "POST",
-    headers: {
-      "Content-Type": "application/json",
-      Authorization: "Bearer " + config.apiKey,
-    },
-    body: JSON.stringify({
+  const response = await fetchProviderStream(
+    config,
+    JSON.stringify({
       model: config.model,
       messages: toProviderMessages(system, messages),
       max_tokens: maxTokens,
       stream: true,
     }),
     signal,
-  });
+  );
 
   if (!response.ok) {
     const detail = (await response.text().catch(() => "")).slice(0, 1200);
