@@ -204,7 +204,7 @@ const en: Dict = {
 
   "err.generic": "Something went wrong. Please try again.",
   "err.network": "Connection lost. Check your internet and retry.",
-  "err.unavailable": "Something went wrong while processing your request. Please try again later."
+  "err.unavailable": "Something went wrong while processing your request. Please try again later.",
   "err.aiConfig": "Something went wrong. Please try again later.",
   "err.aiCredits": "The service is temporarily unavailable. Please try again later.",
   "err.aiDailyLimit": "Something went wrong while processing your request. Please try again later.",
@@ -461,17 +461,17 @@ const ar: Dict = {
 
   "err.generic": "حدث خطأ ما. حاول مرة أخرى.",
   "err.network": "انقطع الاتصال. تحقق من الإنترنت وأعد المحاولة.",
-  "err.unavailable": "حدث خطأ أثناء تنفيذ الطلب. حاول مرة أخرى لاحقًا."
+  "err.unavailable": "حدث خطأ أثناء تنفيذ الطلب. حاول مرة أخرى لاحقًا.",
   "err.aiConfig": "حدث خطأ. حاول مرة أخرى لاحقًا.",
   "err.aiCredits": "الخدمة مش متاحة حاليًا. حاول مرة أخرى لاحقًا.",
-  "err.aiDailyLimit": "حدث خطأ أثناء تنفيذ طلبك. حاول مرة أخرى لاحقًا."
+  "err.aiDailyLimit": "حدث خطأ أثناء تنفيذ طلبك. حاول مرة أخرى لاحقًا.",
   "err.aiModel": "حدث خطأ. حاول مرة أخرى لاحقًا.",
   "err.aiRequest": "XOVA معرفش يعالج الطلب ده. جرّب تغيّر صياغته أو تختصره شوية.",
-  "err.aiBusy": "حدث خطأ أثناء تنفيذ الطلب. حاول مرة أخرى."
+  "err.aiBusy": "حدث خطأ أثناء تنفيذ الطلب. حاول مرة أخرى.",
   "err.aiNetwork": "حصلت مشكلة مؤقتة في الاتصال. حاول مرة تانية.",
   "err.aiOutputLimit": "الطلب طويل جدًا عشان نكمله مرة واحدة. جرّب تقسّمه لأجزاء أصغر.",
   "err.streamInterrupted": "الاتصال انتهى قبل ما الإجابة تكتمل. حفظت الجزء اللي وصل، وجرب تاني عشان تكمل.",
-  "err.rate": "حدث خطأ أثناء تنفيذ الطلب. حاول مرة أخرى لاحقًا."
+  "err.rate": "حدث خطأ أثناء تنفيذ الطلب. حاول مرة أخرى لاحقًا.",
   "err.auth": "انتهت الجلسة. سجّل الدخول من جديد.",
   "err.upload": "تعذّر إرفاق هذا الملف.",
   "err.unsupported": "نوع الملف غير مدعوم بعد.",
