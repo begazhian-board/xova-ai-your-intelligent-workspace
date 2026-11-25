@@ -157,7 +157,17 @@ async function fetchProviderStream(
       signal,
     });
 
-    if (response.ok || !retryableStatuses.has(response.status) || attempt === maxAttempts) {
+    const errorDetails = response.status === 429
+      ? await response.clone().text().catch(() => "")
+      : "";
+    const dailyQuotaExceeded = /3036|daily free allocation|used up your daily/i.test(errorDetails);
+
+    if (
+      response.ok ||
+      !retryableStatuses.has(response.status) ||
+      dailyQuotaExceeded ||
+      attempt === maxAttempts
+    ) {
       return response;
     }
 
