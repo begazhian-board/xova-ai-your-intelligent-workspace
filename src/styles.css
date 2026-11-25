@@ -4386,3 +4386,464 @@
     margin-bottom: 1.1rem;
   }
 }
+
+
+/* =========================================================
+   XOVA new home concept — neon glass, generous spacing,
+   electric blue/violet accents and a larger robot hero.
+   ========================================================= */
+.xv-home-dashboard {
+  width: 100%;
+  max-width: 78rem;
+  gap: 1.85rem;
+  padding-inline: clamp(1rem, 2.6vw, 2.4rem);
+  padding-top: clamp(1.25rem, 3vh, 2.25rem);
+  padding-bottom: 1.5rem;
+}
+
+.xv-home-hero {
+  position: relative;
+  min-height: 330px;
+  isolation: isolate;
+  border: 1px solid color-mix(in oklab, var(--brand) 48%, var(--border));
+  border-radius: 30px;
+  background:
+    radial-gradient(ellipse 28rem 22rem at 92% 48%, oklch(0.52 0.23 285 / 31%), transparent 72%),
+    radial-gradient(ellipse 28rem 18rem at 8% 94%, oklch(0.55 0.2 245 / 24%), transparent 72%),
+    linear-gradient(118deg, oklch(0.15 0.035 270), oklch(0.115 0.035 255) 58%, oklch(0.15 0.05 285));
+  box-shadow:
+    0 24px 65px oklch(0.03 0.03 265 / 34%),
+    inset 0 1px 0 oklch(1 0 0 / 9%);
+}
+
+.xv-home-hero::before,
+.xv-home-hero::after {
+  position: absolute;
+  z-index: -1;
+  border: 1px solid oklch(0.68 0.2 275 / 22%);
+  border-radius: 50%;
+  content: "";
+  pointer-events: none;
+}
+
+.xv-home-hero::before {
+  width: 490px;
+  height: 260px;
+  inset-inline-end: -90px;
+  top: -75px;
+  transform: rotate(-24deg);
+  box-shadow:
+    0 0 45px oklch(0.58 0.2 280 / 12%),
+    inset 0 0 36px oklch(0.58 0.2 280 / 8%);
+}
+
+.xv-home-hero::after {
+  width: 390px;
+  height: 190px;
+  inset-inline-end: -35px;
+  bottom: -108px;
+  border-color: oklch(0.65 0.18 245 / 30%);
+  transform: rotate(18deg);
+}
+
+.xv-home-hero-copy {
+  width: min(100%, 680px);
+  max-width: 63%;
+  padding-block: 8px;
+}
+
+.xv-home-badge {
+  border-color: oklch(0.72 0.16 280 / 38%);
+  background: oklch(0.35 0.1 280 / 42%);
+  color: oklch(0.88 0.1 275);
+  box-shadow: inset 0 1px 0 oklch(1 0 0 / 8%);
+}
+
+.xv-home-title {
+  color: oklch(0.98 0.012 260);
+  text-wrap: balance;
+}
+
+.xv-home-title .xv-gradient-text {
+  width: fit-content;
+  background-image: linear-gradient(105deg, #b16aff 5%, #5d9dff 52%, #28d2ff 100%);
+}
+
+.xv-home-hero-copy > p {
+  color: oklch(0.78 0.035 260);
+}
+
+.xv-home-primary-action {
+  border-color: oklch(0.7 0.19 280 / 58%);
+  background: linear-gradient(105deg, #922aff, #315eff 65%, #129cfb);
+  box-shadow:
+    0 10px 28px oklch(0.47 0.22 280 / 36%),
+    inset 0 1px 0 oklch(1 0 0 / 22%);
+}
+
+.xv-home-primary-action:hover {
+  transform: translateY(-2px);
+  filter: brightness(1.1);
+  box-shadow: 0 14px 34px oklch(0.47 0.22 280 / 45%);
+}
+
+.xv-home-secondary-action {
+  border-color: oklch(0.68 0.16 270 / 42%);
+  background: oklch(0.2 0.05 270 / 65%);
+  color: oklch(0.93 0.025 260);
+}
+
+.xv-home-secondary-action:hover {
+  border-color: oklch(0.75 0.17 270 / 68%);
+  background: oklch(0.29 0.08 275 / 70%);
+}
+
+.xv-home-art {
+  display: grid !important;
+  width: min(38%, 390px);
+  min-width: 240px;
+  min-height: 275px;
+  align-items: center;
+  justify-items: center;
+  overflow: visible;
+}
+
+.xv-home-art-glow {
+  width: 85%;
+  background: radial-gradient(circle, oklch(0.58 0.22 280 / 32%), oklch(0.55 0.2 245 / 12%) 45%, transparent 72%);
+  filter: blur(20px);
+}
+
+.xv-home-art-mark {
+  position: absolute;
+  z-index: 1;
+  width: clamp(145px, 15vw, 225px);
+  opacity: 0.19;
+  transform: rotate(-12deg);
+  filter: drop-shadow(0 0 30px oklch(0.6 0.22 280 / 55%));
+  animation: none;
+}
+
+.xv-home-robot {
+  position: relative;
+  z-index: 3;
+  width: clamp(170px, 20vw, 270px);
+  height: clamp(170px, 20vw, 270px);
+  overflow: visible;
+  filter:
+    drop-shadow(0 18px 26px oklch(0.1 0.03 270 / 55%))
+    drop-shadow(0 0 22px oklch(0.58 0.2 280 / 24%));
+}
+
+.xv-home-orbit {
+  z-index: 0;
+  width: 105%;
+  border-color: oklch(0.66 0.2 280 / 32%);
+  box-shadow: 0 0 20px oklch(0.55 0.2 270 / 12%);
+}
+
+.xv-home-orbit-one {
+  width: 108%;
+}
+
+.xv-home-orbit-two {
+  width: 85%;
+  border-color: oklch(0.62 0.18 245 / 38%);
+}
+
+.xv-home-float-icon {
+  width: 46px;
+  height: 46px;
+  border-color: oklch(0.74 0.16 280 / 45%);
+  background: linear-gradient(145deg, oklch(0.3 0.1 280 / 90%), oklch(0.2 0.07 250 / 90%));
+  color: oklch(0.78 0.15 245);
+  box-shadow: 0 0 22px oklch(0.55 0.2 280 / 28%);
+}
+
+.xv-home-float-one {
+  inset-block-start: 8%;
+  inset-inline-start: 8%;
+}
+
+.xv-home-float-three {
+  inset-block-end: 9%;
+  inset-inline-end: 5%;
+}
+
+.xv-home-section-kicker {
+  color: oklch(0.71 0.14 280);
+}
+
+.xv-home-tools-mark {
+  place-items: center;
+  border: 1px solid oklch(0.68 0.16 280 / 38%);
+  background: oklch(0.29 0.08 280 / 60%);
+  color: oklch(0.82 0.13 270);
+}
+
+.xv-home-tools-grid {
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+}
+
+.xv-home-tool-card {
+  position: relative;
+  min-height: 126px;
+  border: 1px solid oklch(0.65 0.13 280 / 28%);
+  border-radius: 21px;
+  background:
+    radial-gradient(ellipse 13rem 9rem at 100% 0%, oklch(0.5 0.17 280 / 12%), transparent 75%),
+    linear-gradient(145deg, oklch(0.2 0.03 270 / 96%), oklch(0.15 0.025 255 / 98%));
+  box-shadow:
+    0 12px 30px oklch(0.02 0.02 260 / 24%),
+    inset 0 1px 0 oklch(1 0 0 / 6%);
+}
+
+.xv-home-tool-card:hover {
+  transform: translateY(-3px);
+  border-color: oklch(0.72 0.19 280 / 58%);
+  background:
+    radial-gradient(ellipse 15rem 10rem at 100% 0%, oklch(0.52 0.2 280 / 22%), transparent 75%),
+    linear-gradient(145deg, oklch(0.24 0.05 275 / 98%), oklch(0.17 0.035 255 / 99%));
+  box-shadow:
+    0 16px 36px oklch(0.02 0.02 260 / 32%),
+    0 0 0 1px oklch(0.65 0.2 280 / 10%);
+}
+
+.xv-home-tool-icon {
+  width: 52px;
+  height: 52px;
+  border-radius: 16px;
+  border-color: oklch(0.72 0.17 280 / 36%);
+  background: linear-gradient(145deg, oklch(0.36 0.1 280 / 78%), oklch(0.23 0.07 250 / 84%));
+  color: oklch(0.84 0.12 265);
+  box-shadow: inset 0 1px 0 oklch(1 0 0 / 10%), 0 7px 18px oklch(0.4 0.16 280 / 16%);
+}
+
+.xv-home-tool-image .xv-home-tool-icon,
+.xv-home-tool-coder .xv-home-tool-icon {
+  color: oklch(0.82 0.16 245);
+}
+
+.xv-home-tool-ideas .xv-home-tool-icon,
+.xv-home-tool-explain .xv-home-tool-icon {
+  color: oklch(0.82 0.15 290);
+}
+
+.xv-home-tool-search .xv-home-tool-icon {
+  color: oklch(0.78 0.13 220);
+}
+
+.xv-home-tool-code .xv-home-tool-icon {
+  color: oklch(0.82 0.14 275);
+}
+
+.xv-home-tool-arrow {
+  border: 1px solid oklch(0.72 0.15 280 / 20%);
+  background: oklch(0.34 0.09 280 / 42%);
+  color: oklch(0.83 0.1 265);
+  transition: transform 180ms ease, background 180ms ease;
+}
+
+.xv-home-tool-card:hover .xv-home-tool-arrow {
+  transform: translate(2px, -2px);
+  background: oklch(0.4 0.13 280 / 62%);
+}
+
+.dark .xv-sidebar-v3 {
+  border-color: oklch(0.68 0.17 280 / 34%);
+  background:
+    radial-gradient(ellipse 17rem 13rem at 0% 0%, oklch(0.48 0.2 285 / 24%), transparent 78%),
+    radial-gradient(ellipse 12rem 16rem at 100% 82%, oklch(0.48 0.18 245 / 16%), transparent 82%),
+    linear-gradient(165deg, oklch(0.18 0.03 270 / 99%), oklch(0.105 0.02 255 / 99%));
+  box-shadow:
+    0 20px 52px oklch(0 0 0 / 40%),
+    inset 0 1px 0 oklch(1 0 0 / 7%);
+}
+
+.dark .xv-sidebar-v3-new-chat {
+  border-color: oklch(0.75 0.17 280 / 46%);
+  background: linear-gradient(105deg, #8e28f2, #375cff 68%, #109af1);
+  box-shadow: 0 9px 28px oklch(0.46 0.22 280 / 34%), inset 0 1px 0 oklch(1 0 0 / 18%);
+}
+
+.dark .xv-sidebar-v3-nav-icon {
+  border-color: oklch(0.73 0.14 280 / 32%);
+  background: linear-gradient(145deg, oklch(0.32 0.08 280 / 75%), oklch(0.22 0.05 250 / 85%));
+  box-shadow: 0 5px 16px oklch(0.45 0.18 280 / 16%);
+}
+
+.dark .xv-sidebar-v3-nav-link:hover,
+.dark .xv-sidebar-v3-settings:hover {
+  border-color: oklch(0.7 0.18 280 / 38%);
+  background: oklch(0.34 0.09 280 / 34%);
+  color: oklch(0.94 0.02 260);
+}
+
+.dark .xv-sidebar-v3-conversation.is-active {
+  border-color: oklch(0.7 0.19 280 / 58%);
+  background: linear-gradient(100deg, oklch(0.36 0.11 280 / 75%), oklch(0.23 0.07 245 / 74%));
+  box-shadow: 0 0 24px oklch(0.48 0.2 280 / 18%), inset 3px 0 0 oklch(0.72 0.18 285 / 90%);
+}
+
+.dark .xv-sidebar-v3-profile {
+  border-color: oklch(0.68 0.16 280 / 36%);
+  background: linear-gradient(120deg, oklch(0.23 0.05 275 / 96%), oklch(0.15 0.03 255 / 98%));
+}
+
+.dark .xv-topbar-v2 {
+  border-color: oklch(0.68 0.16 280 / 32%);
+  background:
+    radial-gradient(ellipse 24rem 8rem at 0% 0%, oklch(0.46 0.18 280 / 20%), transparent 76%),
+    linear-gradient(110deg, oklch(0.16 0.025 270 / 94%), oklch(0.12 0.02 255 / 96%));
+  box-shadow: 0 12px 38px oklch(0 0 0 / 20%), inset 0 1px 0 oklch(1 0 0 / 6%);
+}
+
+.dark .xv-composer {
+  border-color: oklch(0.7 0.18 280 / 42%);
+  background:
+    radial-gradient(ellipse 20rem 5rem at 0% 0%, oklch(0.45 0.17 280 / 14%), transparent 75%),
+    linear-gradient(145deg, oklch(0.19 0.03 270 / 98%), oklch(0.13 0.02 255 / 99%));
+  box-shadow:
+    0 18px 48px oklch(0 0 0 / 32%),
+    0 0 28px oklch(0.45 0.17 280 / 10%),
+    inset 0 1px 0 oklch(1 0 0 / 7%);
+}
+
+.dark .xv-composer:focus-within {
+  border-color: oklch(0.76 0.19 280 / 65%);
+  box-shadow: 0 0 0 3px oklch(0.55 0.2 280 / 16%), 0 18px 48px oklch(0 0 0 / 32%);
+}
+
+:root:not(.dark) .xv-home-hero {
+  border-color: oklch(0.75 0.12 280 / 55%);
+  background:
+    radial-gradient(ellipse 28rem 20rem at 92% 45%, oklch(0.86 0.1 280 / 40%), transparent 72%),
+    radial-gradient(ellipse 28rem 18rem at 8% 94%, oklch(0.86 0.08 245 / 33%), transparent 72%),
+    linear-gradient(118deg, oklch(0.985 0.012 255), oklch(0.955 0.035 270) 58%, oklch(0.965 0.025 245));
+}
+
+:root:not(.dark) .xv-home-title {
+  color: oklch(0.22 0.06 275);
+}
+
+:root:not(.dark) .xv-home-hero-copy > p {
+  color: oklch(0.42 0.035 260);
+}
+
+:root:not(.dark) .xv-home-badge {
+  border-color: oklch(0.72 0.1 280 / 48%);
+  background: oklch(0.93 0.045 280 / 75%);
+  color: oklch(0.38 0.14 280);
+}
+
+:root:not(.dark) .xv-home-secondary-action {
+  border-color: oklch(0.72 0.09 275 / 55%);
+  background: oklch(1 0 0 / 63%);
+  color: oklch(0.32 0.08 270);
+}
+
+:root:not(.dark) .xv-home-tool-card {
+  border-color: oklch(0.78 0.07 280 / 48%);
+  background:
+    radial-gradient(ellipse 13rem 9rem at 100% 0%, oklch(0.88 0.08 280 / 25%), transparent 75%),
+    linear-gradient(145deg, oklch(1 0 0 / 91%), oklch(0.94 0.035 265 / 88%));
+  box-shadow: 0 10px 28px oklch(0.38 0.08 270 / 8%), inset 0 1px 0 white;
+}
+
+:root:not(.dark) .xv-home-tool-card:hover {
+  border-color: oklch(0.69 0.13 280 / 65%);
+  box-shadow: 0 15px 32px oklch(0.45 0.11 280 / 13%), 0 0 0 1px oklch(0.65 0.14 280 / 12%);
+}
+
+:root:not(.dark) .xv-home-tool-arrow {
+  border-color: oklch(0.75 0.07 280 / 45%);
+  background: oklch(0.92 0.04 280 / 75%);
+  color: oklch(0.42 0.12 280);
+}
+
+:root:not(.dark) .xv-home-tool-icon {
+  border-color: oklch(0.72 0.1 280 / 48%);
+  background: linear-gradient(145deg, oklch(0.91 0.055 280), oklch(0.88 0.06 245));
+  color: oklch(0.38 0.14 275);
+  box-shadow: 0 6px 16px oklch(0.48 0.1 280 / 10%);
+}
+
+:root:not(.dark) .xv-home-tools-mark {
+  border-color: oklch(0.76 0.08 280 / 55%);
+  background: oklch(0.94 0.04 280 / 80%);
+  color: oklch(0.42 0.13 280);
+}
+
+:root:not(.dark) .xv-sidebar-v3 {
+  border-color: oklch(0.76 0.09 280 / 50%);
+  background:
+    radial-gradient(ellipse 17rem 13rem at 0% 0%, oklch(0.9 0.07 280 / 28%), transparent 78%),
+    linear-gradient(165deg, oklch(0.97 0.016 260 / 99%), oklch(0.925 0.03 265 / 99%));
+}
+
+@media (max-width: 1023px) {
+  .xv-home-dashboard {
+    max-width: 100%;
+    gap: 1.4rem;
+    padding-inline: 1rem;
+  }
+
+  .xv-home-hero {
+    min-height: 280px;
+  }
+
+  .xv-home-art {
+    width: 34%;
+    min-width: 180px;
+  }
+
+  .xv-home-hero-copy {
+    max-width: 65%;
+  }
+
+  .xv-home-tools-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+@media (max-width: 639px) {
+  .xv-home-hero {
+    min-height: 0;
+    flex-direction: column;
+    align-items: stretch;
+    padding: 24px 20px 18px;
+  }
+
+  .xv-home-hero-copy {
+    max-width: 100%;
+  }
+
+  .xv-home-art {
+    width: 100%;
+    min-width: 0;
+    min-height: 150px;
+    height: 150px;
+    align-self: center;
+  }
+
+  .xv-home-robot {
+    width: 150px;
+    height: 150px;
+  }
+
+  .xv-home-tools-grid {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .xv-home-tool-card {
+    min-height: 92px;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .xv-home-primary-action,
+  .xv-home-tool-card,
+  .xv-home-tool-arrow {
+    transition: none !important;
+  }
+}
