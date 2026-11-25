@@ -60,7 +60,11 @@ export function aiProviderErrorCode(status?: number, details = "") {
   if (status === 404 || status === 410) return "err.aiModel";
   if (status === 400 || status === 422) return "err.aiRequest";
   if (status === 413) return "err.aiOutputLimit";
-  if (status === 429) return "err.rate";
+  if (status === 429) {
+    if (/3036|daily free allocation|used up your daily/i.test(details)) return "err.aiDailyLimit";
+    if (/3040|capacity temporarily exceeded|no more data centers/i.test(details)) return "err.aiBusy";
+    return "err.rate";
+  }
   if (
     [408, 500, 502, 503, 504, 520, 521, 522, 523, 524, 529].includes(status ?? 0) ||
     /timeout|temporarily unavailable|overloaded/i.test(details)
