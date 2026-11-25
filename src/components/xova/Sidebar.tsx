@@ -191,7 +191,6 @@ export function Sidebar({
         >
           <span className="xv-sidebar-v3-new-icon"><Plus className="h-[18px] w-[18px]" /></span>
           <span className="flex-1 text-start">{t("nav.newChat")}</span>
-          <span className="xv-sidebar-new-spark" aria-hidden="true">✦</span>
         </button>
 
         <div className="xv-sidebar-v3-section-label">
