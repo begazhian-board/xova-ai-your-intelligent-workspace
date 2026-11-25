@@ -380,22 +380,25 @@ function Workspace() {
           </div>
         )}
 
-        <div className="mx-auto flex w-full max-w-3xl items-center px-4 pb-1 sm:px-6">
-          <Mascot state={mascotState} className="h-[4.5rem] w-[4.5rem] sm:h-20 sm:w-20 shrink-0" />
+        <div className="xv-composer-dock mx-auto flex w-full max-w-4xl items-end gap-2 px-4 sm:gap-3 sm:px-6">
+          <Mascot
+            state={mascotState}
+            className="h-14 w-14 shrink-0 sm:h-24 sm:w-24 lg:h-28 lg:w-28"
+          />
+          <Composer
+            mode={mode}
+            onModeChange={setMode}
+            status={status}
+            enterToSend={profile.enter_to_send}
+            imageMode={imageMode}
+            onToggleImageMode={() => setImageMode((value) => !value)}
+            onSend={handleSend}
+            onGenerateImage={(prompt) => void handleGenerateImage(prompt)}
+            onStop={stop}
+            seedText={draft}
+            onSeedConsumed={() => setDraft(null)}
+          />
         </div>
-        <Composer
-          mode={mode}
-          onModeChange={setMode}
-          status={status}
-          enterToSend={profile.enter_to_send}
-          imageMode={imageMode}
-          onToggleImageMode={() => setImageMode((value) => !value)}
-          onSend={handleSend}
-          onGenerateImage={(prompt) => void handleGenerateImage(prompt)}
-          onStop={stop}
-          seedText={draft}
-          onSeedConsumed={() => setDraft(null)}
-        />
       </main>
 
       {messages.length > 0 && <QuickTools onPick={(text) => setDraft(text)} />}
