@@ -4193,3 +4193,33 @@
   gap: 8px;
   padding: 12px 0;
 }
+
+
+/* Keep the light-mode sidebar controls from inheriting generic workspace button fills. */
+:root:not(.dark) .xv-shell .xv-sidebar-v3 .xv-sidebar-v3-new-chat {
+  border-color: color-mix(in oklab, var(--brand) 52%, transparent);
+  background: linear-gradient(112deg, oklch(0.56 0.23 285), oklch(0.55 0.2 245));
+  color: white;
+}
+
+:root:not(.dark) .xv-shell .xv-sidebar-v3 .xv-sidebar-v3-nav-link {
+  border-color: transparent;
+  background-color: transparent;
+}
+
+:root:not(.dark) .xv-shell .xv-sidebar-v3 .xv-sidebar-v3-nav-link:hover {
+  border-color: color-mix(in oklab, var(--brand) 18%, var(--border));
+  background: color-mix(in oklab, var(--brand-soft) 42%, var(--surface));
+}
+
+:root:not(.dark) .xv-shell .xv-sidebar-v3 .xv-sidebar-collapse-button,
+:root:not(.dark) .xv-shell .xv-sidebar-v3 .xv-sidebar-mini-button,
+:root:not(.dark) .xv-shell .xv-sidebar-v3 .xv-sidebar-v3-settings,
+:root:not(.dark) .xv-shell .xv-sidebar-v3 .xv-sidebar-v3-row-action {
+  border-color: transparent;
+  background-color: transparent;
+}
+
+:root:not(.dark) .xv-shell .xv-sidebar-v3 .xv-sidebar-v3-new-chat:hover {
+  background: linear-gradient(112deg, oklch(0.58 0.23 285), oklch(0.57 0.2 245));
+}
