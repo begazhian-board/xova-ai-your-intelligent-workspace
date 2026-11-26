@@ -10,14 +10,14 @@ interface AppearanceValue {
 }
 
 const AppearanceContext = createContext<AppearanceValue>({
-  theme: "dark",
+  theme: "light",
   lang: "en",
   setAppearance: () => {},
 });
 
 export function AppearanceProvider({ children }: { children: ReactNode }) {
   const [state, setState] = useState<{ theme: ThemeChoice; lang: LanguageId }>({
-    theme: "dark",
+    theme: "light",
     lang: "en",
   });
 
