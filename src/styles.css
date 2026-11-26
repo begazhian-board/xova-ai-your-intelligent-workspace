@@ -5014,3 +5014,69 @@
     height: 169px !important;
   }
 }
+
+/* Calm the ambient background: softer, smaller and less space-like. */
+.xv-wave-bg {
+  opacity: 0.26 !important;
+}
+
+.dark .xv-wave-bg {
+  opacity: 0.3 !important;
+}
+
+:root:not(.dark) .xv-wave-bg {
+  opacity: 0.22 !important;
+}
+
+.xv-wave-svg {
+  inset: 4% !important;
+  width: 92% !important;
+  height: 92% !important;
+}
+
+.xv-wave-line {
+  stroke-opacity: 0.58 !important;
+  stroke-width: 1.45 !important;
+  filter: none !important;
+}
+
+.xv-wave-line-soft {
+  stroke-opacity: 0.34 !important;
+  stroke-width: 1 !important;
+}
+
+.xv-wave-halo {
+  stroke-width: 14 !important;
+  opacity: 0.12 !important;
+}
+
+.xv-wave-orbit {
+  stroke-opacity: 0.25 !important;
+}
+
+.xv-wave-orbit-dashed {
+  stroke-opacity: 0.2 !important;
+}
+
+.xv-wave-orbit-fine {
+  stroke-opacity: 0.12 !important;
+}
+
+.xv-wave-orbit-dot,
+.xv-wave-geometry-dot {
+  opacity: 0.36 !important;
+  filter: drop-shadow(0 0 2px #716dff) !important;
+}
+
+.xv-wave-geometry-line {
+  stroke-opacity: 0.2 !important;
+}
+
+.xv-wave-geometry-line-soft {
+  stroke-opacity: 0.16 !important;
+}
+
+.xv-wave-ribbon-extra {
+  stroke-opacity: 0.22 !important;
+}
+
