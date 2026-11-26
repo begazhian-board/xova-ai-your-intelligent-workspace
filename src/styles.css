@@ -5131,3 +5131,198 @@
   }
 }
 
+
+
+/* XOVA monochrome refresh — black/white surfaces with blue interaction states. */
+/* Dark mode is pure black; light mode is the exact black/white inversion. */
+:root {
+  --background: #ffffff;
+  --foreground: #000000;
+  --rail: #ffffff;
+  --surface: #ffffff;
+  --elevated: #ffffff;
+  --composer: #ffffff;
+  --hover: #f2f2f2;
+  --active: #e8e8e8;
+  --subtle: #f7f7f7;
+  --faint: #666666;
+
+  --card: #ffffff;
+  --card-foreground: #000000;
+  --popover: #ffffff;
+  --popover-foreground: #000000;
+  --primary: #000000;
+  --primary-foreground: #ffffff;
+  --secondary: #ffffff;
+  --secondary-foreground: #000000;
+  --muted: #f2f2f2;
+  --muted-foreground: #666666;
+  --accent: #eeeeee;
+  --accent-foreground: #000000;
+  --border: #000000;
+  --input: #000000;
+  --ring: #2563eb;
+
+  --brand: #2563eb;
+  --brand-soft: #eaf1ff;
+  --brand-foreground: #ffffff;
+  --shadow-panel: none;
+  --shadow-float: none;
+}
+
+.dark {
+  --background: #000000;
+  --foreground: #ffffff;
+  --rail: #000000;
+  --surface: #000000;
+  --elevated: #000000;
+  --composer: #000000;
+  --hover: #171717;
+  --active: #222222;
+  --subtle: #101010;
+  --faint: #a3a3a3;
+
+  --card: #000000;
+  --card-foreground: #ffffff;
+  --popover: #000000;
+  --popover-foreground: #ffffff;
+  --primary: #ffffff;
+  --primary-foreground: #000000;
+  --secondary: #000000;
+  --secondary-foreground: #ffffff;
+  --muted: #151515;
+  --muted-foreground: #a3a3a3;
+  --accent: #171717;
+  --accent-foreground: #ffffff;
+  --border: #ffffff;
+  --input: #ffffff;
+  --ring: #3b82f6;
+
+  --brand: #3b82f6;
+  --brand-soft: #101010;
+  --brand-foreground: #ffffff;
+  --shadow-panel: none;
+  --shadow-float: none;
+}
+
+/* Remove every decorative gradient, glow, ribbon and tinted canvas. */
+:root *,
+.dark * {
+  background-image: none !important;
+  box-shadow: none !important;
+}
+
+.xv-ambient,
+.xv-shell,
+.xv-main-panel,
+.xv-sidebar,
+.xv-tools-rail,
+.xv-topbar,
+.xv-studio-shell,
+.xv-studio-glow,
+.xv-studio-panel,
+.xv-studio-preview,
+.xv-home-hero,
+.xv-home-art,
+.xv-home-tool-card,
+.xv-tool-card,
+.xv-hero-mark,
+.xv-wave-bg,
+.xv-wave-svg {
+  background-color: var(--background) !important;
+  background-image: none !important;
+  box-shadow: none !important;
+}
+
+.xv-gradient-text {
+  color: var(--foreground) !important;
+  background: none !important;
+  -webkit-text-fill-color: currentColor !important;
+}
+
+/* All buttons use a monochrome base and turn blue only on hover. */
+button,
+[role="button"],
+.xv-home-tool-card,
+.xv-home-primary-action,
+.xv-home-secondary-action {
+  border: 1px solid var(--foreground) !important;
+  background-color: var(--background) !important;
+  color: var(--foreground) !important;
+  box-shadow: none !important;
+  transition: background-color 160ms ease, border-color 160ms ease, color 160ms ease;
+}
+
+button:hover:not(:disabled),
+[role="button"]:hover:not([aria-disabled="true"]),
+.xv-home-tool-card:hover,
+.xv-home-primary-action:hover,
+.xv-home-secondary-action:hover {
+  border-color: #2563eb !important;
+  background-color: #2563eb !important;
+  color: #ffffff !important;
+}
+
+.dark button:hover:not(:disabled),
+.dark [role="button"]:hover:not([aria-disabled="true"]),
+.dark .xv-home-tool-card:hover,
+.dark .xv-home-primary-action:hover,
+.dark .xv-home-secondary-action:hover {
+  border-color: #3b82f6 !important;
+  background-color: #3b82f6 !important;
+  color: #ffffff !important;
+}
+
+/* Sent messages are the single blue-filled conversation element. */
+.xv-user-message > div:not(ul) {
+  border: 1px solid var(--foreground) !important;
+  background: #2563eb !important;
+  color: #ffffff !important;
+}
+
+.dark .xv-user-message > div:not(ul) {
+  border-color: #ffffff !important;
+  background: #3b82f6 !important;
+  color: #ffffff !important;
+}
+
+/* The sidebar, composer and chat canvas stay flat monochrome in both themes. */
+nav[aria-label],
+.xv-composer,
+.xv-composer-wrap,
+main,
+header {
+  background-color: var(--background);
+  background-image: none !important;
+}
+
+.xv-composer {
+  border: 1px solid var(--foreground) !important;
+  border-radius: 1rem;
+}
+
+.xv-composer:focus-within {
+  border-color: #2563eb !important;
+  box-shadow: none !important;
+}
+
+.dark .xv-composer:focus-within {
+  border-color: #3b82f6 !important;
+}
+
+.xv-studio-choice.is-selected,
+.dark .xv-studio-choice.is-selected,
+.xv-studio-thumb.is-selected,
+.dark .xv-studio-thumb.is-selected {
+  border-color: var(--foreground) !important;
+  background: var(--background) !important;
+  color: var(--foreground) !important;
+  box-shadow: none !important;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  button,
+  [role="button"] {
+    transition: none !important;
+  }
+}
