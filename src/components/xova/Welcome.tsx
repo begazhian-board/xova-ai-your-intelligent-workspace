@@ -144,7 +144,9 @@ export function Welcome({
           <span className="xv-home-orbit xv-home-orbit-one" />
           <span className="xv-home-orbit xv-home-orbit-two" />
           <span className="xv-home-art-glow" />
-          <XovaMark className="xv-home-art-mark" />
+          <span className="xv-home-mark-frame">
+            <XovaMark className="xv-home-art-mark" />
+          </span>
           <span className="xv-home-float-icon xv-home-float-one">
             <ImageIcon className="h-5 w-5" />
           </span>
