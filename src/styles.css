@@ -5080,3 +5080,54 @@
   stroke-opacity: 0.22 !important;
 }
 
+/* Welcome hero: keep only the X mark, with no orbit, glow, frame or floating icons. */
+.xv-home-art-clean {
+  display: flex !important;
+  width: min(36%, 320px) !important;
+  min-width: 220px !important;
+  min-height: 270px !important;
+  height: auto !important;
+  align-items: center !important;
+  justify-content: center !important;
+  overflow: visible !important;
+  background: transparent !important;
+}
+
+.xv-home-art-clean .xv-home-art-mark {
+  position: relative !important;
+  width: 220px !important;
+  height: 248px !important;
+  max-width: 100% !important;
+  opacity: 1 !important;
+  visibility: visible !important;
+  transform: none !important;
+  filter: drop-shadow(0 8px 18px rgb(50 90 180 / 16%)) !important;
+}
+
+@media (max-width: 1023px) {
+  .xv-home-art-clean {
+    width: 34% !important;
+    min-width: 180px !important;
+    min-height: 230px !important;
+  }
+
+  .xv-home-art-clean .xv-home-art-mark {
+    width: 190px !important;
+    height: 214px !important;
+  }
+}
+
+@media (max-width: 639px) {
+  .xv-home-art-clean {
+    width: 100% !important;
+    min-width: 0 !important;
+    min-height: 150px !important;
+    height: 150px !important;
+  }
+
+  .xv-home-art-clean .xv-home-art-mark {
+    width: 135px !important;
+    height: 152px !important;
+  }
+}
+
