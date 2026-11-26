@@ -310,7 +310,7 @@ function Workspace() {
   return (
     <div dir="ltr" data-device-layout={deviceLayout} className="xv-shell relative isolate flex h-dvh overflow-hidden text-foreground">
       <AmbientWaves />
-      <div className={`xv-left-rail relative z-10 ${deviceLayout === "mobile" ? "hidden" : "hidden md:flex"}`}>{sidebar()}</div>
+      <div className={`xv-left-rail relative z-10 ${deviceLayout === "mobile" ? "hidden" : "hidden md:flex"} ${collapsed ? "is-collapsed" : ""}`}>{sidebar()}</div>
 
       <Dialog open={drawer} onOpenChange={setDrawer}>
         <DialogContent className={`left-0 top-0 h-screen w-[86vw] max-w-xs translate-x-0 translate-y-0 gap-0 rounded-none border-0 p-0 ${deviceLayout === "mobile" ? "" : "md:hidden"}`}>
