@@ -9,17 +9,17 @@ export function AmbientWaves() {
       >
         <defs>
           <linearGradient id="xv-wave-gradient" x1="0%" y1="0%" x2="100%" y2="0%">
-            <stop offset="0%" stopColor="#29A9FF" />
-            <stop offset="48%" stopColor="#526BFF" />
-            <stop offset="100%" stopColor="#A54CFF" />
+            <stop offset="0%" stopColor="#315DEB" />
+            <stop offset="48%" stopColor="#5B7FF0" />
+            <stop offset="100%" stopColor="#8DA8FF" />
           </linearGradient>
           <linearGradient id="xv-wave-reverse" x1="100%" y1="0%" x2="0%" y2="0%">
-            <stop offset="0%" stopColor="#32C5FF" />
-            <stop offset="52%" stopColor="#6572FF" />
-            <stop offset="100%" stopColor="#B64DFF" />
+            <stop offset="0%" stopColor="#4B74E8" />
+            <stop offset="52%" stopColor="#6D8FFF" />
+            <stop offset="100%" stopColor="#A8BAF7" />
           </linearGradient>
           <radialGradient id="xv-wave-orb-fill">
-            <stop offset="0%" stopColor="#9B8CFF" stopOpacity="0.38" />
+            <stop offset="0%" stopColor="#8DA8FF" stopOpacity="0.38" />
             <stop offset="68%" stopColor="#39B8FF" stopOpacity="0.17" />
             <stop offset="100%" stopColor="#39B8FF" stopOpacity="0" />
           </radialGradient>
