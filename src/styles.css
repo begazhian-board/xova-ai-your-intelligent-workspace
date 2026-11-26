@@ -6021,3 +6021,55 @@ button {
 .dark .xv-composer button:not([class*="bg-brand"]):hover:not(:disabled) {
   background: #2C496D !important;
 }
+
+
+/* Clear, readable XOVA identity in the sidebar header. */
+.xv-sidebar-v3-header {
+  min-height: 68px !important;
+  align-items: center !important;
+  padding: 12px 12px 14px !important;
+}
+
+.xv-sidebar-brand-lockup {
+  min-height: 42px !important;
+  align-items: center !important;
+}
+
+.xv-sidebar-brand-copy {
+  display: flex !important;
+  flex-direction: column !important;
+  justify-content: center !important;
+  align-items: flex-start !important;
+  gap: 4px !important;
+  min-width: 0 !important;
+}
+
+.xv-sidebar-brand-name {
+  display: block !important;
+  color: var(--foreground) !important;
+  font-family: Inter, ui-sans-serif, system-ui, sans-serif !important;
+  font-size: 23px !important;
+  font-weight: 800 !important;
+  letter-spacing: 0.12em !important;
+  line-height: 1 !important;
+  white-space: nowrap !important;
+}
+
+.xv-sidebar-brand-name > span {
+  color: var(--brand) !important;
+}
+
+.xv-sidebar-brand-caption {
+  display: block !important;
+  margin: 0 !important;
+  color: var(--muted-foreground) !important;
+  font-size: 9px !important;
+  font-weight: 700 !important;
+  letter-spacing: 0.19em !important;
+  line-height: 1 !important;
+  white-space: nowrap !important;
+}
+
+.xv-sidebar-v3-header .xv-sidebar-collapse-button {
+  flex: 0 0 32px !important;
+}
