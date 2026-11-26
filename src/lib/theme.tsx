@@ -31,11 +31,11 @@ const LANG_KEY = "xova.lang";
 
 /** Local cache so the shell renders in the right theme before the profile loads. */
 export function readCachedAppearance(): { theme: ThemeChoice; lang: LanguageId } {
-  if (typeof window === "undefined") return { theme: "dark", lang: "en" };
+  if (typeof window === "undefined") return { theme: "light", lang: "en" };
   const theme = window.localStorage.getItem(THEME_KEY) as ThemeChoice | null;
   const lang = window.localStorage.getItem(LANG_KEY) as LanguageId | null;
   return {
-    theme: theme === "light" || theme === "system" ? theme : "dark",
+    theme: theme === "dark" || theme === "system" ? theme : "light",
     lang: lang === "ar" ? "ar" : "en",
   };
 }
