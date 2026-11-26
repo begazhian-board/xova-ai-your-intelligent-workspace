@@ -4,9 +4,9 @@ import { cn } from "@/lib/utils";
 function Grad({ id }: { id: string }) {
   return (
     <linearGradient id={id} x1="0%" y1="0%" x2="100%" y2="0%">
-      <stop offset="0%" stopColor="#168FFF" />
-      <stop offset="52%" stopColor="#5267FF" />
-      <stop offset="100%" stopColor="#8A45E8" />
+      <stop offset="0%" stopColor="#315DEB" />
+      <stop offset="52%" stopColor="#5B7FF0" />
+      <stop offset="100%" stopColor="#8DA8FF" />
     </linearGradient>
   );
 }
