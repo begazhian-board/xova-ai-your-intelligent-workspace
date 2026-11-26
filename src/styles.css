@@ -5133,245 +5133,454 @@
 
 
 
-/* XOVA monochrome refresh — black/white surfaces with blue interaction states. */
-/* Dark mode is pure black; light mode is the exact black/white inversion. */
+/* XOVA Paper / Blue — clean workspace surfaces and a restrained blue identity. */
 :root {
-  --background: #ffffff;
-  --foreground: #000000;
-  --rail: #ffffff;
-  --surface: #ffffff;
-  --elevated: #ffffff;
-  --composer: #ffffff;
-  --hover: #f2f2f2;
-  --active: #e8e8e8;
-  --subtle: #f7f7f7;
-  --faint: #666666;
+  color-scheme: light;
+  --background: #F4F5F7;
+  --foreground: #172235;
+  --rail: #ECEFF3;
+  --surface: #FFFFFF;
+  --elevated: #FFFFFF;
+  --composer: #FFFFFF;
+  --hover: #E9EEF5;
+  --active: #DFE8FF;
+  --subtle: #F0F3F7;
+  --faint: #8490A0;
 
-  --card: #ffffff;
-  --card-foreground: #000000;
-  --popover: #ffffff;
-  --popover-foreground: #000000;
-  --primary: #000000;
-  --primary-foreground: #ffffff;
-  --secondary: #ffffff;
-  --secondary-foreground: #000000;
-  --muted: #f2f2f2;
-  --muted-foreground: #666666;
-  --accent: #eeeeee;
-  --accent-foreground: #000000;
-  --border: #000000;
-  --input: #000000;
-  --ring: #2563eb;
+  --card: #FFFFFF;
+  --card-foreground: #172235;
+  --popover: #FFFFFF;
+  --popover-foreground: #172235;
+  --primary: #315DEB;
+  --primary-foreground: #FFFFFF;
+  --secondary: #E9EEF5;
+  --secondary-foreground: #24334A;
+  --muted: #EEF1F5;
+  --muted-foreground: #68768A;
+  --accent: #E5ECFF;
+  --accent-foreground: #244BBF;
+  --destructive: #D94848;
+  --destructive-foreground: #FFFFFF;
+  --border: #DCE2EA;
+  --input: #D6DEE8;
+  --ring: #315DEB;
 
-  --brand: #2563eb;
-  --brand-soft: #eaf1ff;
-  --brand-foreground: #ffffff;
-  --shadow-panel: none;
-  --shadow-float: none;
+  --brand: #315DEB;
+  --brand-soft: #DFE7FF;
+  --brand-foreground: #FFFFFF;
+  --shadow-panel: 0 1px 2px rgb(23 34 53 / 4%), 0 8px 24px rgb(23 34 53 / 5%);
+  --shadow-float: 0 14px 36px rgb(23 34 53 / 10%);
 }
 
 .dark {
-  --background: #000000;
-  --foreground: #ffffff;
-  --rail: #000000;
-  --surface: #000000;
-  --elevated: #000000;
-  --composer: #000000;
-  --hover: #171717;
-  --active: #222222;
-  --subtle: #101010;
-  --faint: #a3a3a3;
+  color-scheme: dark;
+  --background: #111827;
+  --foreground: #E8EEF7;
+  --rail: #0D1625;
+  --surface: #172235;
+  --elevated: #1C2A40;
+  --composer: #172235;
+  --hover: #223149;
+  --active: #263A59;
+  --subtle: #1B2A3D;
+  --faint: #91A2B8;
 
-  --card: #000000;
-  --card-foreground: #ffffff;
-  --popover: #000000;
-  --popover-foreground: #ffffff;
-  --primary: #ffffff;
-  --primary-foreground: #000000;
-  --secondary: #000000;
-  --secondary-foreground: #ffffff;
-  --muted: #151515;
-  --muted-foreground: #a3a3a3;
-  --accent: #171717;
-  --accent-foreground: #ffffff;
-  --border: #ffffff;
-  --input: #ffffff;
-  --ring: #3b82f6;
+  --card: #172235;
+  --card-foreground: #E8EEF7;
+  --popover: #1C2A40;
+  --popover-foreground: #E8EEF7;
+  --primary: #6D8FFF;
+  --primary-foreground: #FFFFFF;
+  --secondary: #223149;
+  --secondary-foreground: #E8EEF7;
+  --muted: #223149;
+  --muted-foreground: #A8B7C9;
+  --accent: #243858;
+  --accent-foreground: #DCE7FF;
+  --destructive: #F07171;
+  --destructive-foreground: #1B1720;
+  --border: #2B3A50;
+  --input: #35465E;
+  --ring: #7FA0FF;
 
-  --brand: #3b82f6;
-  --brand-soft: #101010;
-  --brand-foreground: #ffffff;
-  --shadow-panel: none;
-  --shadow-float: none;
+  --brand: #6D8FFF;
+  --brand-soft: #243858;
+  --brand-foreground: #FFFFFF;
+  --shadow-panel: 0 1px 2px rgb(0 0 0 / 16%), 0 8px 24px rgb(0 0 0 / 14%);
+  --shadow-float: 0 16px 42px rgb(0 0 0 / 25%);
 }
 
-/* Remove every decorative gradient, glow, ribbon and tinted canvas. */
-:root *,
-.dark * {
-  background-image: none !important;
-  box-shadow: none !important;
+/* App canvas and navigation */
+html,
+body {
+  background: var(--background);
+  color: var(--foreground);
 }
 
-.xv-ambient,
 .xv-shell,
 .xv-main-panel,
-.xv-sidebar,
-.xv-tools-rail,
-.xv-topbar,
 .xv-studio-shell,
-.xv-studio-glow,
-.xv-studio-panel,
-.xv-studio-preview,
-.xv-home-hero,
-.xv-home-art,
-.xv-home-tool-card,
-.xv-tool-card,
-.xv-hero-mark,
-.xv-wave-bg,
-.xv-wave-svg {
-  background-color: var(--background) !important;
+.xv-coder-page {
+  background: var(--background) !important;
   background-image: none !important;
+}
+
+.xv-sidebar,
+.xv-sidebar-v3,
+.xv-tools-rail {
+  background: var(--rail) !important;
+  border-color: var(--border) !important;
+  box-shadow: none !important;
+  backdrop-filter: none !important;
+}
+
+.xv-sidebar-v3 {
+  border-radius: 18px !important;
+  margin: 8px !important;
+  height: calc(100% - 16px) !important;
+}
+
+.xv-sidebar-v3::before {
+  display: none !important;
+}
+
+.xv-sidebar-v3-header,
+.xv-sidebar-v3-footer {
+  border-color: var(--border) !important;
+  background: transparent !important;
+}
+
+.xv-sidebar-brand-mark,
+.xv-sidebar-v3-nav-icon,
+.xv-sidebar-v3-conversation-icon,
+.xv-sidebar-v3-settings-icon,
+.xv-sidebar-v3-empty-icon {
+  background: var(--brand-soft) !important;
+  border-color: color-mix(in srgb, var(--brand) 18%, var(--border)) !important;
+  color: var(--brand) !important;
   box-shadow: none !important;
 }
 
-.xv-gradient-text {
+.xv-sidebar-v3-new-chat,
+.xv-toolbar-primary,
+.xv-home-primary-action,
+.xv-studio-generate {
+  background: var(--brand) !important;
+  border: 1px solid var(--brand) !important;
+  color: #FFFFFF !important;
+  box-shadow: none !important;
+}
+
+.xv-sidebar-v3-new-chat:hover,
+.xv-toolbar-primary:hover,
+.xv-home-primary-action:hover,
+.xv-studio-generate:hover:not(:disabled) {
+  background: color-mix(in srgb, var(--brand) 88%, #102D83) !important;
+  border-color: color-mix(in srgb, var(--brand) 88%, #102D83) !important;
+  color: #FFFFFF !important;
+  transform: translateY(-1px);
+}
+
+.xv-sidebar-v3-nav-link:hover,
+.xv-sidebar-v3-settings:hover,
+.xv-sidebar-v3-conversation:hover,
+.xv-sidebar-v3-result:hover {
+  background: var(--hover) !important;
+  border-color: var(--border) !important;
   color: var(--foreground) !important;
+}
+
+.xv-sidebar-v3-conversation.is-active {
+  background: var(--active) !important;
+  border-color: color-mix(in srgb, var(--brand) 22%, var(--border)) !important;
+  box-shadow: none !important;
+}
+
+.xv-sidebar-v3-conversation.is-active::before {
+  background: var(--brand) !important;
+}
+
+.xv-sidebar-v3-conversation.is-active .xv-sidebar-v3-conversation-icon {
+  background: var(--surface) !important;
+  color: var(--brand) !important;
+}
+
+.xv-topbar,
+.xv-topbar-v2,
+.xv-coder-header {
+  background: var(--surface) !important;
+  border-color: var(--border) !important;
+  box-shadow: none !important;
+}
+
+.xv-toolbar-icon,
+.xv-sidebar-collapse-button {
+  background: var(--surface) !important;
+  border-color: var(--border) !important;
+  color: var(--muted-foreground) !important;
+  box-shadow: none !important;
+}
+
+.xv-toolbar-icon:hover,
+.xv-sidebar-collapse-button:hover {
+  background: var(--hover) !important;
+  color: var(--brand) !important;
+}
+
+/* Home dashboard */
+.xv-home-dashboard {
+  gap: 1.5rem !important;
+  max-width: 78rem !important;
+}
+
+.xv-home-hero {
+  min-height: 245px !important;
+  border: 1px solid var(--border) !important;
+  border-radius: 22px !important;
+  background: var(--surface) !important;
+  box-shadow: var(--shadow-panel) !important;
+}
+
+.xv-home-hero::before,
+.xv-home-hero::after {
+  display: none !important;
+}
+
+.xv-home-hero-copy {
+  width: 100% !important;
+  max-width: 100% !important;
+  padding-block: 0 !important;
+}
+
+.xv-home-art,
+.xv-home-art-clean,
+.xv-home-art-glow,
+.xv-home-orbit,
+.xv-home-float-icon {
+  display: none !important;
+}
+
+.xv-home-badge,
+.xv-home-tools-mark,
+.xv-home-tool-arrow,
+.xv-home-tool-icon,
+[class*="xv-home-tool-icon-"],
+.xv-home-tool-icon {
+  background: var(--brand-soft) !important;
+  border-color: color-mix(in srgb, var(--brand) 16%, var(--border)) !important;
+  color: var(--brand) !important;
+  box-shadow: none !important;
+}
+
+.xv-home-title {
+  color: var(--foreground) !important;
+}
+
+.xv-home-title .xv-gradient-text,
+.xv-gradient-text,
+.xv-auth-gradient {
+  color: var(--brand) !important;
   background: none !important;
   -webkit-text-fill-color: currentColor !important;
 }
 
-/* All buttons use a monochrome base and turn blue only on hover. */
-button,
-[role="button"],
-.xv-home-tool-card,
-.xv-home-primary-action,
+.xv-home-hero-copy > p {
+  color: var(--muted-foreground) !important;
+}
+
+.xv-home-primary-action {
+  border-radius: 11px !important;
+  padding-inline: 18px !important;
+}
+
 .xv-home-secondary-action {
-  border: 1px solid var(--foreground) !important;
-  background-color: var(--background) !important;
+  background: var(--surface) !important;
+  border-color: var(--border) !important;
   color: var(--foreground) !important;
   box-shadow: none !important;
-  transition: background-color 160ms ease, border-color 160ms ease, color 160ms ease;
 }
 
-button:hover:not(:disabled),
-[role="button"]:hover:not([aria-disabled="true"]),
-.xv-home-tool-card:hover,
-.xv-home-primary-action:hover,
 .xv-home-secondary-action:hover {
-  border-color: #2563eb !important;
-  background-color: #2563eb !important;
-  color: #ffffff !important;
+  background: var(--hover) !important;
+  border-color: var(--brand) !important;
+  color: var(--brand) !important;
 }
 
-.dark button:hover:not(:disabled),
-.dark [role="button"]:hover:not([aria-disabled="true"]),
-.dark .xv-home-tool-card:hover,
-.dark .xv-home-primary-action:hover,
-.dark .xv-home-secondary-action:hover {
-  border-color: #3b82f6 !important;
-  background-color: #3b82f6 !important;
-  color: #ffffff !important;
+.xv-home-tool-card,
+.xv-home-panel,
+.xv-home-studio-panel,
+.xv-studio-panel,
+.xv-studio-preview,
+.xv-coder-chat,
+.xv-coder-preview,
+.xv-settings-dialog,
+.xv-auth-card {
+  background: var(--surface) !important;
+  border: 1px solid var(--border) !important;
+  border-radius: 16px !important;
+  box-shadow: var(--shadow-panel) !important;
 }
 
-/* Sent messages are the single blue-filled conversation element. */
-.xv-user-message > div:not(ul) {
-  border: 1px solid var(--foreground) !important;
-  background: #2563eb !important;
-  color: #ffffff !important;
+.xv-home-tool-card {
+  min-height: 112px !important;
 }
 
-.dark .xv-user-message > div:not(ul) {
-  border-color: #ffffff !important;
-  background: #3b82f6 !important;
-  color: #ffffff !important;
+.xv-home-tool-card:hover {
+  transform: translateY(-2px);
+  background: var(--surface) !important;
+  border-color: color-mix(in srgb, var(--brand) 42%, var(--border)) !important;
+  box-shadow: var(--shadow-float) !important;
 }
 
-/* The sidebar, composer and chat canvas stay flat monochrome in both themes. */
-nav[aria-label],
+.xv-home-studio-panel {
+  background: var(--surface) !important;
+}
+
+.xv-home-studio-glow {
+  display: none !important;
+}
+
+.xv-home-studio-mark {
+  background: var(--brand-soft) !important;
+  border-color: var(--border) !important;
+  color: var(--brand) !important;
+  box-shadow: none !important;
+}
+
+/* Chat, composer, and messages */
 .xv-composer,
-.xv-composer-wrap,
-main,
-header {
-  background-color: var(--background);
-  background-image: none !important;
+.xv-composer-wrap {
+  background: var(--surface) !important;
+  border-color: var(--border) !important;
+  box-shadow: var(--shadow-panel) !important;
 }
 
 .xv-composer {
-  border: 1px solid var(--foreground) !important;
-  border-radius: 1rem;
+  border-radius: 16px !important;
 }
 
 .xv-composer:focus-within {
-  border-color: #2563eb !important;
-  box-shadow: none !important;
+  border-color: var(--brand) !important;
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--brand) 12%, transparent) !important;
 }
 
-.dark .xv-composer:focus-within {
-  border-color: #3b82f6 !important;
+.xv-user-message > div:not(ul) {
+  background: var(--brand) !important;
+  color: #FFFFFF !important;
+  border: 1px solid var(--brand) !important;
+}
+
+.xv-assistant-message .xv-prose {
+  color: var(--foreground);
+}
+
+/* Image studio and coder workspace */
+.xv-studio-shell,
+.xv-studio-panel,
+.xv-studio-preview,
+.xv-coder-page {
+  background: var(--background) !important;
+}
+
+.xv-studio-panel,
+.xv-studio-preview,
+.xv-coder-chat,
+.xv-coder-preview {
+  border-color: var(--border) !important;
+}
+
+.xv-studio-control,
+.xv-studio-chip,
+.xv-studio-icon-button,
+.xv-studio-choice,
+.xv-studio-input,
+.xv-coder-select,
+.xv-coder-starter {
+  background: var(--surface) !important;
+  border-color: var(--border) !important;
+  color: var(--foreground) !important;
 }
 
 .xv-studio-choice.is-selected,
-.dark .xv-studio-choice.is-selected,
-.xv-studio-thumb.is-selected,
-.dark .xv-studio-thumb.is-selected {
-  border-color: var(--foreground) !important;
-  background: var(--background) !important;
-  color: var(--foreground) !important;
+.xv-studio-thumb.is-selected {
+  border-color: var(--brand) !important;
+  background: var(--brand-soft) !important;
+  color: var(--brand) !important;
   box-shadow: none !important;
+}
+
+.xv-coder-chat,
+.xv-coder-preview {
+  background: var(--surface) !important;
+  border-radius: 16px !important;
+}
+
+.xv-coder-starter:hover {
+  border-color: var(--brand) !important;
+  background: var(--brand-soft) !important;
+}
+
+.xv-coder-device {
+  border-color: var(--border) !important;
+  border-radius: 12px !important;
+  box-shadow: var(--shadow-panel) !important;
+}
+
+/* Authentication, dialogs, and fields */
+.xv-auth-page {
+  background: var(--background) !important;
+}
+
+.xv-auth-page::before {
+  display: none !important;
+}
+
+.xv-auth-story {
+  background: var(--surface) !important;
+  border-color: var(--border) !important;
+  box-shadow: var(--shadow-panel) !important;
+}
+
+.xv-settings-dialog,
+.xv-settings-header {
+  background: var(--surface) !important;
+}
+
+input,
+textarea,
+select,
+[role="combobox"] {
+  border-color: var(--input);
+}
+
+input:focus,
+textarea:focus,
+select:focus,
+[role="combobox"]:focus {
+  border-color: var(--brand);
+}
+
+button {
+  transition: background-color 150ms ease, border-color 150ms ease, color 150ms ease;
+}
+
+@media (max-width: 639px) {
+  .xv-home-hero {
+    min-height: 215px !important;
+    border-radius: 17px !important;
+    padding: 22px !important;
+  }
+
+  .xv-home-dashboard {
+    gap: 1.2rem !important;
+  }
 }
 
 @media (prefers-reduced-motion: reduce) {
   button,
-  [role="button"] {
+  [role="button"],
+  .xv-home-tool-card {
     transition: none !important;
+    transform: none !important;
   }
-}
-
-
-/* XOVA monochrome background cleanup: reserve blue fills for hover and sent messages only. */
-:root {
-  --destructive: #000000;
-  --destructive-foreground: #ffffff;
-}
-.dark {
-  --destructive: #ffffff;
-  --destructive-foreground: #000000;
-}
-
-/* Neutralize any remaining utility-driven accent fills and decorative icon wells. */
-[class*="bg-brand"],
-[class*="bg-destructive"],
-[class*="bg-blue-"],
-[class*="bg-indigo-"],
-[class*="bg-violet-"],
-[class*="bg-purple-"],
-[class*="bg-cyan-"],
-[class*="bg-teal-"],
-[class*="bg-emerald-"],
-[class*="bg-green-"],
-[class*="bg-lime-"],
-[class*="bg-yellow-"],
-[class*="bg-amber-"],
-[class*="bg-orange-"],
-[class*="bg-red-"],
-[class*="bg-pink-"],
-[class*="bg-rose-"],
-.xv-home-tool-icon,
-[class*="xv-home-tool-icon-"],
-.xv-home-tool-arrow,
-.xv-home-tools-mark,
-.xv-studio-empty-mark {
-  background-color: var(--background) !important;
-  color: var(--foreground) !important;
-  box-shadow: none !important;
-}
-
-/* Keep the two intentional blue states untouched by the neutralization above. */
-.xv-user-message > div:not(ul) {
-  background: #2563eb !important;
-  color: #ffffff !important;
-}
-.dark .xv-user-message > div:not(ul) {
-  background: #3b82f6 !important;
-  color: #ffffff !important;
 }
