@@ -4874,3 +4874,143 @@
     width: 148px;
   }
 }
+
+
+/* Make the X monogram unmistakable in the welcome hero. */
+.xv-home-art {
+  width: min(42%, 430px);
+  min-width: 300px;
+  min-height: 350px;
+  overflow: visible;
+}
+
+.xv-home-mark-frame {
+  position: relative;
+  z-index: 4;
+  display: grid;
+  width: clamp(260px, 27vw, 340px);
+  height: clamp(270px, 28vw, 350px);
+  flex: 0 0 auto;
+  place-items: center;
+  border: 1px solid oklch(0.76 0.18 280 / 60%);
+  border-radius: 38px;
+  background:
+    radial-gradient(circle at 50% 42%, oklch(0.55 0.22 280 / 28%), transparent 67%),
+    linear-gradient(145deg, oklch(0.28 0.09 280 / 72%), oklch(0.16 0.05 250 / 82%));
+  box-shadow:
+    0 0 0 8px oklch(0.56 0.19 280 / 8%),
+    0 0 55px oklch(0.56 0.21 280 / 32%),
+    0 22px 48px oklch(0.04 0.03 260 / 42%),
+    inset 0 1px 0 oklch(1 0 0 / 16%);
+  backdrop-filter: blur(12px);
+}
+
+.xv-home-mark-frame::before,
+.xv-home-mark-frame::after {
+  position: absolute;
+  inset: 12px;
+  border: 1px solid oklch(0.7 0.19 280 / 24%);
+  border-radius: 29px;
+  content: "";
+  pointer-events: none;
+}
+
+.xv-home-mark-frame::after {
+  inset: -13px;
+  border-color: oklch(0.65 0.19 245 / 24%);
+  border-radius: 48px;
+  filter: drop-shadow(0 0 12px oklch(0.6 0.2 275 / 28%));
+}
+
+.xv-home-art-mark {
+  position: relative;
+  z-index: 2;
+  display: block;
+  width: 245px !important;
+  height: 276px !important;
+  max-width: none;
+  opacity: 1 !important;
+  visibility: visible !important;
+  overflow: visible;
+  transform: none;
+  filter:
+    drop-shadow(0 0 12px rgb(39 157 255 / 58%))
+    drop-shadow(0 0 26px rgb(144 65 255 / 54%))
+    drop-shadow(0 12px 18px rgb(3 9 29 / 45%));
+}
+
+.xv-home-art-mark text {
+  font-size: 49px;
+  font-weight: 800;
+}
+
+.dark .xv-home-mark-frame {
+  border-color: oklch(0.78 0.18 280 / 70%);
+  background:
+    radial-gradient(circle at 50% 40%, oklch(0.54 0.22 280 / 34%), transparent 68%),
+    linear-gradient(145deg, oklch(0.26 0.08 280 / 88%), oklch(0.12 0.04 250 / 94%));
+  box-shadow:
+    0 0 0 8px oklch(0.56 0.19 280 / 10%),
+    0 0 68px oklch(0.56 0.21 280 / 40%),
+    0 22px 48px oklch(0.02 0.02 260 / 50%),
+    inset 0 1px 0 oklch(1 0 0 / 17%);
+}
+
+:root:not(.dark) .xv-home-mark-frame {
+  border-color: oklch(0.62 0.17 280 / 58%);
+  background:
+    radial-gradient(circle at 50% 42%, oklch(0.88 0.09 280 / 72%), transparent 67%),
+    linear-gradient(145deg, oklch(0.94 0.05 280 / 96%), oklch(0.86 0.07 245 / 94%));
+  box-shadow:
+    0 0 0 8px oklch(0.62 0.16 280 / 8%),
+    0 0 48px oklch(0.58 0.18 280 / 22%),
+    0 22px 42px oklch(0.35 0.08 270 / 16%),
+    inset 0 1px 0 white;
+}
+
+@media (max-width: 1023px) {
+  .xv-home-art {
+    width: 40%;
+    min-width: 280px;
+  }
+
+  .xv-home-mark-frame {
+    width: 250px;
+    height: 260px;
+  }
+
+  .xv-home-art-mark {
+    width: 220px !important;
+    height: 248px !important;
+  }
+}
+
+@media (max-width: 639px) {
+  .xv-home-art {
+    width: 100%;
+    min-width: 0;
+    min-height: 190px;
+    height: 190px;
+  }
+
+  .xv-home-mark-frame {
+    width: 165px;
+    height: 175px;
+    border-radius: 25px;
+  }
+
+  .xv-home-mark-frame::before {
+    inset: 8px;
+    border-radius: 18px;
+  }
+
+  .xv-home-mark-frame::after {
+    inset: -8px;
+    border-radius: 34px;
+  }
+
+  .xv-home-art-mark {
+    width: 150px !important;
+    height: 169px !important;
+  }
+}
