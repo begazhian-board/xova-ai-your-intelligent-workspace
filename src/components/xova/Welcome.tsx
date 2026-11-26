@@ -9,7 +9,6 @@ import {
   Search,
 } from "lucide-react";
 import { Link } from "@tanstack/react-router";
-import { XovaMark } from "./Logo";
 import { useI18n } from "@/lib/i18n";
 
 export function Welcome({
@@ -140,9 +139,6 @@ export function Welcome({
           </div>
         </div>
 
-        <div className="xv-home-art xv-home-art-clean relative z-10 shrink-0" aria-hidden="true">
-          <XovaMark className="xv-home-art-mark" />
-        </div>
       </section>
 
       <section aria-labelledby="xv-home-tools-title" className="xv-home-tools-section">
