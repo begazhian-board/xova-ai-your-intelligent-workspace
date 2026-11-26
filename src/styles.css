@@ -5991,3 +5991,33 @@ button {
   max-width: 64px !important;
   flex: 0 0 64px !important;
 }
+
+
+/* Composer contrast: a lighter blue input surface against the darker workspace canvas. */
+.dark .xv-composer-wrap {
+  background: var(--background) !important;
+}
+
+.dark .xv-composer {
+  background: #203958 !important;
+  border-color: #385779 !important;
+}
+
+.dark .xv-composer:focus-within {
+  background: #244263 !important;
+  border-color: #6D8FFF !important;
+  box-shadow: 0 0 0 2px rgb(109 143 255 / 13%) !important;
+}
+
+.dark .xv-composer textarea {
+  background: transparent !important;
+  color: #F1F6FF !important;
+}
+
+.dark .xv-composer textarea::placeholder {
+  color: #B5C5DA !important;
+}
+
+.dark .xv-composer button:not([class*="bg-brand"]):hover:not(:disabled) {
+  background: #2C496D !important;
+}
