@@ -5618,3 +5618,367 @@ button {
 :root:not(.dark) fieldset > div {
   border-color: var(--border) !important;
 }
+
+
+/* XOVA sidebar — flat, compact conversation rail inspired by ChatGPT. */
+.xv-shell {
+  background: var(--background) !important;
+}
+
+.xv-left-rail {
+  box-sizing: border-box !important;
+  width: 260px !important;
+  min-width: 260px !important;
+  max-width: 260px !important;
+  flex: 0 0 260px !important;
+  min-height: 0 !important;
+  height: 100% !important;
+  overflow: hidden !important;
+  background: var(--rail) !important;
+  border-inline-end: 1px solid var(--border) !important;
+}
+
+.xv-main-panel {
+  box-sizing: border-box !important;
+  flex: 1 1 0% !important;
+  width: 0 !important;
+  min-width: 0 !important;
+  max-width: 100% !important;
+  overflow: hidden !important;
+  background: var(--background) !important;
+}
+
+.xv-sidebar-v3:not(.xv-sidebar-collapsed) {
+  box-sizing: border-box !important;
+  display: flex !important;
+  width: 100% !important;
+  min-width: 0 !important;
+  max-width: 100% !important;
+  height: 100% !important;
+  min-height: 0 !important;
+  margin: 0 !important;
+  padding: 8px 10px 10px !important;
+  border: 0 !important;
+  border-radius: 0 !important;
+  background: var(--rail) !important;
+  box-shadow: none !important;
+  backdrop-filter: none !important;
+  -webkit-backdrop-filter: none !important;
+}
+
+.xv-sidebar-v3-header {
+  min-height: 58px !important;
+  padding: 8px 9px 14px !important;
+  border: 0 !important;
+  background: transparent !important;
+}
+
+.xv-sidebar-brand-lockup {
+  gap: 0 !important;
+}
+
+.xv-sidebar-brand-copy {
+  gap: 0 !important;
+}
+
+.xv-sidebar-brand-copy > svg {
+  width: 98px !important;
+  height: 26px !important;
+}
+
+.xv-sidebar-v3-primary {
+  gap: 7px !important;
+  padding: 7px 3px 14px !important;
+}
+
+.xv-sidebar-v3-new-chat {
+  min-height: 42px !important;
+  gap: 9px !important;
+  padding: 6px 10px !important;
+  border: 1px solid var(--border) !important;
+  border-radius: 10px !important;
+  background: var(--surface) !important;
+  color: var(--foreground) !important;
+  font-size: 13px !important;
+  font-weight: 600 !important;
+  box-shadow: none !important;
+}
+
+.xv-sidebar-v3-new-icon {
+  width: 25px !important;
+  height: 25px !important;
+  flex-basis: 25px !important;
+  border: 0 !important;
+  border-radius: 7px !important;
+  background: transparent !important;
+  color: var(--muted-foreground) !important;
+}
+
+.xv-sidebar-v3-new-chat:hover {
+  transform: none !important;
+  border-color: var(--input) !important;
+  background: var(--hover) !important;
+  color: var(--foreground) !important;
+  box-shadow: none !important;
+  filter: none !important;
+}
+
+.xv-sidebar-v3-section-label,
+.xv-sidebar-v3-list-head {
+  padding-inline: 9px !important;
+  color: var(--muted-foreground) !important;
+  font-size: 11px !important;
+  font-weight: 600 !important;
+  letter-spacing: 0 !important;
+}
+
+.xv-sidebar-v3-section-label {
+  margin-top: 9px !important;
+  margin-bottom: 2px !important;
+}
+
+.xv-sidebar-v3-nav {
+  gap: 2px !important;
+}
+
+.xv-sidebar-v3-nav-link {
+  min-height: 38px !important;
+  gap: 10px !important;
+  padding: 6px 10px !important;
+  border: 1px solid transparent !important;
+  border-radius: 9px !important;
+  background: transparent !important;
+  color: var(--foreground) !important;
+  font-size: 13px !important;
+  font-weight: 500 !important;
+}
+
+.xv-sidebar-v3-nav-link > svg {
+  flex: 0 0 auto;
+  color: var(--muted-foreground) !important;
+}
+
+.xv-sidebar-v3-nav-link:hover {
+  transform: none !important;
+  border-color: transparent !important;
+  background: var(--hover) !important;
+  color: var(--foreground) !important;
+}
+
+.xv-sidebar-v3-search-wrap {
+  margin: 0 3px 8px !important;
+}
+
+.xv-sidebar-v3-search {
+  min-height: 38px !important;
+  padding-inline: 36px 12px !important;
+  border: 1px solid var(--border) !important;
+  border-radius: 9px !important;
+  background: var(--surface) !important;
+  color: var(--foreground) !important;
+  font-size: 12px !important;
+  box-shadow: none !important;
+}
+
+.xv-sidebar-v3-search:focus {
+  border-color: var(--brand) !important;
+  background: var(--surface) !important;
+  box-shadow: 0 0 0 2px color-mix(in srgb, var(--brand) 10%, transparent) !important;
+}
+
+.xv-sidebar-search-icon {
+  color: var(--muted-foreground) !important;
+}
+
+.xv-sidebar-v3-list-head {
+  min-height: 34px !important;
+  margin-top: 2px !important;
+  padding-inline: 9px !important;
+}
+
+.xv-sidebar-v3-count {
+  min-width: 20px !important;
+  height: 19px !important;
+  border: 0 !important;
+  background: var(--hover) !important;
+  color: var(--muted-foreground) !important;
+  font-size: 10px !important;
+}
+
+.xv-sidebar-v3-list {
+  min-width: 0 !important;
+  padding: 0 3px 10px !important;
+}
+
+.xv-sidebar-v3-conversation {
+  min-height: 38px !important;
+  gap: 2px !important;
+  padding: 2px 5px 2px 9px !important;
+  border: 1px solid transparent !important;
+  border-radius: 8px !important;
+  background: transparent !important;
+  box-shadow: none !important;
+}
+
+.xv-sidebar-v3-conversation:hover {
+  background: var(--hover) !important;
+  border-color: transparent !important;
+}
+
+.xv-sidebar-v3-conversation.is-active {
+  background: var(--active) !important;
+  border-color: transparent !important;
+  box-shadow: none !important;
+}
+
+.xv-sidebar-v3-conversation.is-active::before {
+  display: none !important;
+}
+
+.xv-sidebar-v3-conversation-main {
+  min-width: 0 !important;
+  gap: 0 !important;
+  padding: 4px 2px !important;
+  color: var(--foreground) !important;
+  text-align: start !important;
+}
+
+.xv-sidebar-v3-conversation-main > span {
+  min-width: 0 !important;
+}
+
+.xv-sidebar-v3-conversation-main .truncate {
+  font-size: 12px !important;
+  font-weight: 500 !important;
+  line-height: 1.45 !important;
+}
+
+.xv-sidebar-v3-row-actions {
+  gap: 2px !important;
+}
+
+.xv-sidebar-v3-row-action {
+  width: 25px !important;
+  height: 26px !important;
+  border: 0 !important;
+  border-radius: 6px !important;
+  background: transparent !important;
+  color: var(--muted-foreground) !important;
+}
+
+.xv-sidebar-v3-row-action:hover {
+  background: var(--surface) !important;
+  color: var(--foreground) !important;
+}
+
+.xv-sidebar-v3-footer {
+  gap: 3px !important;
+  padding: 8px 3px 2px !important;
+  border-top: 1px solid var(--border) !important;
+  background: transparent !important;
+}
+
+.xv-sidebar-v3-settings {
+  min-height: 38px !important;
+  gap: 10px !important;
+  padding: 5px 10px !important;
+  border: 1px solid transparent !important;
+  border-radius: 8px !important;
+  background: transparent !important;
+  color: var(--foreground) !important;
+  font-size: 12px !important;
+}
+
+.xv-sidebar-v3-settings:hover {
+  background: var(--hover) !important;
+  color: var(--foreground) !important;
+}
+
+.xv-sidebar-v3-settings > svg {
+  color: var(--muted-foreground) !important;
+}
+
+.xv-sidebar-v3-profile {
+  min-height: 48px !important;
+  gap: 9px !important;
+  padding: 5px 8px !important;
+  border: 1px solid transparent !important;
+  border-radius: 9px !important;
+  background: transparent !important;
+  box-shadow: none !important;
+}
+
+.xv-sidebar-v3-profile:hover {
+  border-color: transparent !important;
+  background: var(--hover) !important;
+  box-shadow: none !important;
+}
+
+.xv-sidebar-v3-avatar {
+  width: 31px !important;
+  height: 31px !important;
+  flex-basis: 31px !important;
+  border: 0 !important;
+  border-radius: 50% !important;
+  background: var(--active) !important;
+  color: var(--foreground) !important;
+  box-shadow: none !important;
+}
+
+/* Collapsed rail and tablet retain a real fixed footprint; the chat never slides beneath it. */
+.xv-sidebar-v3.xv-sidebar-collapsed {
+  box-sizing: border-box !important;
+  width: 64px !important;
+  min-width: 64px !important;
+  max-width: 64px !important;
+  height: 100% !important;
+  margin: 0 !important;
+  padding: 10px 0 !important;
+  border: 0 !important;
+  border-radius: 0 !important;
+  background: var(--rail) !important;
+  box-shadow: none !important;
+}
+
+.xv-shell[data-device-layout="desktop"] .xv-left-rail {
+  width: 260px !important;
+  min-width: 260px !important;
+  max-width: 260px !important;
+  flex: 0 0 260px !important;
+}
+
+.xv-shell[data-device-layout="tablet"] .xv-left-rail {
+  width: 64px !important;
+  min-width: 64px !important;
+  max-width: 64px !important;
+  flex: 0 0 64px !important;
+}
+
+.xv-shell[data-device-layout="tablet"] .xv-sidebar-v3.xv-sidebar-collapsed {
+  width: 64px !important;
+  min-width: 64px !important;
+  max-width: 64px !important;
+}
+
+@media (max-width: 767px) {
+  .xv-left-rail {
+    display: none !important;
+  }
+
+  .xv-sidebar-v3:not(.xv-sidebar-collapsed) {
+    width: 100% !important;
+    min-width: 0 !important;
+    max-width: 100% !important;
+    height: 100% !important;
+    margin: 0 !important;
+    border-radius: 0 !important;
+  }
+}
+
+/* Dark theme keeps the same quiet geometry with dark neutral surfaces. */
+.dark .xv-sidebar-v3:not(.xv-sidebar-collapsed),
+.dark .xv-sidebar-v3.xv-sidebar-collapsed {
+  background: var(--rail) !important;
+  border-color: var(--border) !important;
+  box-shadow: none !important;
+}
