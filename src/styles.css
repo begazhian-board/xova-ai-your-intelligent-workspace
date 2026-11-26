@@ -5590,3 +5590,31 @@ button {
 .xv-wave-bg {
   display: none !important;
 }
+
+
+/* Keep light-theme controls crisp and neutral; blue is reserved for active states. */
+:root:not(.dark) button:not([class*="border"]):not(.xv-composer button) {
+  border-color: var(--border) !important;
+  box-shadow: none !important;
+}
+
+:root:not(.dark) button:not([class*="border"]):not(.xv-composer button):hover:not(:disabled) {
+  border-color: color-mix(in srgb, var(--brand) 38%, var(--border)) !important;
+}
+
+:root:not(.dark) button[role="switch"] {
+  border-color: var(--input) !important;
+  box-shadow: none !important;
+}
+
+:root:not(.dark) input:not([type="checkbox"]):not([type="radio"]):not([type="file"]),
+:root:not(.dark) select,
+:root:not(.dark) [role="combobox"],
+:root:not(.dark) textarea:not(.xv-composer textarea) {
+  border-color: var(--input) !important;
+  box-shadow: none !important;
+}
+
+:root:not(.dark) fieldset > div {
+  border-color: var(--border) !important;
+}
