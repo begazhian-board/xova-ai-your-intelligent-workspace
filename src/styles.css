@@ -4847,3 +4847,30 @@
     transition: none !important;
   }
 }
+
+
+/* Restore XOVA's original X monogram as the main welcome hero artwork. */
+.xv-home-art-mark {
+  position: relative;
+  z-index: 3;
+  display: block;
+  width: clamp(190px, 22vw, 285px);
+  height: auto;
+  opacity: 1;
+  transform: none;
+  filter:
+    drop-shadow(0 0 18px oklch(0.62 0.22 280 / 34%))
+    drop-shadow(0 18px 30px oklch(0.35 0.18 270 / 24%));
+}
+
+.dark .xv-home-art-mark {
+  filter:
+    drop-shadow(0 0 22px oklch(0.68 0.22 280 / 48%))
+    drop-shadow(0 18px 32px oklch(0.28 0.16 270 / 40%));
+}
+
+@media (max-width: 639px) {
+  .xv-home-art-mark {
+    width: 148px;
+  }
+}
