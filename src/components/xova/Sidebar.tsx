@@ -151,14 +151,8 @@ export function Sidebar({
     >
       <div className="xv-sidebar-v3-header">
         <div className="xv-sidebar-brand-lockup">
-          <span className="xv-sidebar-brand-mark">
-            <XovaMark className="h-8 w-8" />
-          </span>
           <span className="xv-sidebar-brand-copy">
             <XovaWordmark className="h-5 w-auto" />
-            <span className="xv-sidebar-brand-caption">
-              {lang === "ar" ? "مساحة العمل الذكية" : "AI WORKSPACE"}
-            </span>
           </span>
         </div>
         {onCloseDrawer ? (
@@ -202,7 +196,7 @@ export function Sidebar({
             onClick={() => onCloseDrawer?.()}
             className="xv-sidebar-v3-nav-link xv-focus"
           >
-            <span className="xv-sidebar-v3-nav-icon xv-sidebar-v3-image-icon"><ImageIcon className="h-[17px] w-[17px]" /></span>
+            <ImageIcon className="h-[17px] w-[17px]" />
             <span>{t("nav.imageStudio")}</span>
           </Link>
           <Link
@@ -210,7 +204,7 @@ export function Sidebar({
             onClick={() => onCloseDrawer?.()}
             className="xv-sidebar-v3-nav-link xv-focus"
           >
-            <span className="xv-sidebar-v3-nav-icon xv-sidebar-v3-code-icon"><Code2 className="h-[17px] w-[17px]" /></span>
+            <Code2 className="h-[17px] w-[17px]" />
             <span>{t("nav.coder")}</span>
           </Link>
         </div>
@@ -294,15 +288,9 @@ export function Sidebar({
                     aria-current={conversation.id === activeId ? "page" : undefined}
                     className="xv-sidebar-v3-conversation-main xv-focus"
                   >
-                    <span className="xv-sidebar-v3-conversation-icon">
-                      <MessageSquare className="h-[15px] w-[15px]" aria-hidden="true" />
-                    </span>
                     <span className="min-w-0 flex-1">
-                      <span className="block truncate text-xs font-semibold">
+                      <span className="block truncate text-[13px] font-medium">
                         {conversation.title ?? t("nav.newChat")}
-                      </span>
-                      <span className="xv-sidebar-v3-date">
-                        {formattedDate(conversation.updatedAt)}
                       </span>
                     </span>
                   </button>
@@ -345,7 +333,7 @@ export function Sidebar({
           onClick={onOpenSettings}
           className="xv-sidebar-v3-settings xv-focus"
         >
-          <span className="xv-sidebar-v3-settings-icon"><Settings className="h-[17px] w-[17px]" /></span>
+          <Settings className="h-[17px] w-[17px]" />
           <span>{t("nav.settings")}</span>
         </button>
 
