@@ -9,6 +9,8 @@ import type {
   ThemeChoice,
 } from "@/lib/xova";
 
+const PAPER_BLUE_APPLIED_KEY = "xova.paper-blue-applied-v1";
+
 export interface Profile {
   id: string;
   display_name: string | null;
@@ -59,10 +61,45 @@ export function useProfile(userId: string | undefined) {
       .select("*")
       .eq("id", userId)
       .maybeSingle()
-      .then(({ data, error }) => {
+      .then(async ({ data, error }) => {
         if (!active) return;
         if (error) console.error("profile load", error.message);
-        const next = (data as Profile | null) ?? fallbackProfile(userId);
+
+        let next = (data as Profile | null) ?? fallbackProfile(userId);
+        let paperBlueApplied = false;
+        try {
+          paperBlueApplied = window.localStorage.getItem(PAPER_BLUE_APPLIED_KEY) === "1";
+        } catch {
+          // The visual update still applies for this session if storage is unavailable.
+        }
+
+        if (!paperBlueApplied) {
+          if (data && next.theme !== "light") {
+            const { error: themeError } = await supabase
+              .from("profiles")
+              .update({ theme: "light" })
+              .eq("id", userId);
+            if (themeError) {
+              console.warn("Paper Blue theme migration", themeError.message);
+            } else {
+              next = { ...next, theme: "light" };
+              try {
+                window.localStorage.setItem(PAPER_BLUE_APPLIED_KEY, "1");
+              } catch {
+                // The profile update is saved even if local storage is unavailable.
+              }
+            }
+          } else {
+            next = { ...next, theme: "light" };
+            try {
+              window.localStorage.setItem(PAPER_BLUE_APPLIED_KEY, "1");
+            } catch {
+              // The visual update still applies for this session.
+            }
+          }
+        }
+
+        if (!active) return;
         setProfile(next);
         cacheAppearance(next.theme, next.language);
         setLoading(false);
