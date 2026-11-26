@@ -5584,3 +5584,9 @@ button {
     transform: none !important;
   }
 }
+
+
+/* The Paper / Blue workspace keeps the canvas quiet and free of ambient ribbons. */
+.xv-wave-bg {
+  display: none !important;
+}
