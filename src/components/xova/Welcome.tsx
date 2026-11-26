@@ -98,47 +98,41 @@ export function Welcome({
       dir={dir}
       className="xv-welcome xv-home-dashboard mx-auto flex w-full max-w-6xl flex-1 flex-col gap-7 px-4 py-6 sm:px-6 sm:py-8 xl:px-8"
     >
-      <section className="xv-home-hero relative flex min-h-[330px] items-center justify-between gap-5 overflow-hidden rounded-[2rem] px-6 py-8 sm:px-9 lg:px-11">
-        <div className="xv-home-hero-copy relative z-10 max-w-2xl">
-          <span className="xv-home-badge mb-5 inline-flex items-center gap-2 rounded-full border px-3.5 py-2 text-xs font-semibold">
-            <MessageCircle className="h-3.5 w-3.5" />
-            {lang === "ar" ? "مساحة عملك الذكية" : "YOUR INTELLIGENT WORKSPACE"}
-          </span>
-          <h1 className="xv-home-title text-3xl font-extrabold leading-tight tracking-tight sm:text-4xl xl:text-5xl">
-            <span className="block">{greeting}</span>
-            <span className="xv-gradient-text block">XOVA</span>
+      <section className="xv-home-intro flex flex-col items-start gap-3 px-1 py-3 sm:py-5">
+        <div className="max-w-2xl">
+          <h1 className="text-3xl font-semibold tracking-tight text-foreground sm:text-4xl">
+            {greeting}
           </h1>
-          <p className="mt-4 max-w-xl text-sm leading-7 text-muted-foreground sm:text-base">
+          <p className="mt-3 max-w-xl text-sm leading-7 text-muted-foreground sm:text-base">
             {lang === "ar"
               ? "ابدأ رحلتك مع الذكاء الاصطناعي بطريقة أسهل وأذكى."
               : "Your ideas, tools, and AI workspace — all in one place."}
           </p>
-          <div className="mt-7 flex flex-wrap items-center gap-3">
-            <button
-              type="button"
-              onClick={() =>
-                onPick(
-                  lang === "ar"
-                    ? "خلينا نبدأ محادثة جديدة. أريد مساعدتك في: "
-                    : "Let's start a new conversation. I need help with: ",
-                )
-              }
-              className="xv-home-primary-action xv-focus inline-flex items-center gap-2 rounded-xl px-5 py-3 text-sm font-bold"
-            >
-              <MessageCircle className="h-4 w-4" />
-              {lang === "ar" ? "ابدأ محادثة" : "Start chatting"}
-              <ArrowUpRight className="h-4 w-4" />
-            </button>
-            <Link
-              to="/images"
-              className="xv-home-secondary-action xv-focus inline-flex items-center gap-2 rounded-xl border px-5 py-3 text-sm font-semibold transition-colors"
-            >
-              <ImageIcon className="h-4 w-4" />
-              {lang === "ar" ? "استوديو الصور" : "Image studio"}
-            </Link>
-          </div>
         </div>
-
+        <div className="flex flex-wrap items-center gap-2.5">
+          <button
+            type="button"
+            onClick={() =>
+              onPick(
+                lang === "ar"
+                  ? "خلينا نبدأ محادثة جديدة. أريد مساعدتك في: "
+                  : "Let's start a new conversation. I need help with: ",
+              )
+            }
+            className="xv-home-primary-action xv-focus inline-flex items-center gap-2 rounded-xl px-4 py-2.5 text-sm font-semibold"
+          >
+            <MessageCircle className="h-4 w-4" />
+            {lang === "ar" ? "ابدأ محادثة" : "Start chatting"}
+            <ArrowUpRight className="h-4 w-4" />
+          </button>
+          <Link
+            to="/images"
+            className="xv-home-secondary-action xv-focus inline-flex items-center gap-2 rounded-xl border px-4 py-2.5 text-sm font-semibold transition-colors"
+          >
+            <ImageIcon className="h-4 w-4" />
+            {lang === "ar" ? "استوديو الصور" : "Image studio"}
+          </Link>
+        </div>
       </section>
 
       <section aria-labelledby="xv-home-tools-title" className="xv-home-tools-section">
