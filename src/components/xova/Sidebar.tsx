@@ -15,7 +15,7 @@ import {
   User,
   X,
 } from "lucide-react";
-import { XovaMark, XovaWordmark } from "./Logo";
+import { XovaMark } from "./Logo";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -146,7 +146,8 @@ export function Sidebar({
       <div className="xv-sidebar-v3-header">
         <div className="xv-sidebar-brand-lockup">
           <span className="xv-sidebar-brand-copy">
-            <XovaWordmark className="h-5 w-auto" />
+            <span className="xv-sidebar-brand-name"><span>X</span>OVA</span>
+            <span className="xv-sidebar-brand-caption">AI WORKSPACE</span>
           </span>
         </div>
         {onCloseDrawer ? (
