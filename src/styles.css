@@ -5326,3 +5326,52 @@ header {
     transition: none !important;
   }
 }
+
+
+/* XOVA monochrome background cleanup: reserve blue fills for hover and sent messages only. */
+:root {
+  --destructive: #000000;
+  --destructive-foreground: #ffffff;
+}
+.dark {
+  --destructive: #ffffff;
+  --destructive-foreground: #000000;
+}
+
+/* Neutralize any remaining utility-driven accent fills and decorative icon wells. */
+[class*="bg-brand"],
+[class*="bg-destructive"],
+[class*="bg-blue-"],
+[class*="bg-indigo-"],
+[class*="bg-violet-"],
+[class*="bg-purple-"],
+[class*="bg-cyan-"],
+[class*="bg-teal-"],
+[class*="bg-emerald-"],
+[class*="bg-green-"],
+[class*="bg-lime-"],
+[class*="bg-yellow-"],
+[class*="bg-amber-"],
+[class*="bg-orange-"],
+[class*="bg-red-"],
+[class*="bg-pink-"],
+[class*="bg-rose-"],
+.xv-home-tool-icon,
+[class*="xv-home-tool-icon-"],
+.xv-home-tool-arrow,
+.xv-home-tools-mark,
+.xv-studio-empty-mark {
+  background-color: var(--background) !important;
+  color: var(--foreground) !important;
+  box-shadow: none !important;
+}
+
+/* Keep the two intentional blue states untouched by the neutralization above. */
+.xv-user-message > div:not(ul) {
+  background: #2563eb !important;
+  color: #ffffff !important;
+}
+.dark .xv-user-message > div:not(ul) {
+  background: #3b82f6 !important;
+  color: #ffffff !important;
+}
