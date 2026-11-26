@@ -10,17 +10,14 @@ import {
 } from "lucide-react";
 import { Link } from "@tanstack/react-router";
 import { XovaMark } from "./Logo";
-import { Mascot, type MascotState } from "./Mascot";
 import { useI18n } from "@/lib/i18n";
 
 export function Welcome({
   onPick,
   displayName,
-  mascotState,
 }: {
   onPick: (text: string) => void;
   displayName?: string | null;
-  mascotState: MascotState;
 }) {
   const { lang, dir } = useI18n();
   const preferredName = displayName?.trim();
@@ -148,10 +145,6 @@ export function Welcome({
           <span className="xv-home-orbit xv-home-orbit-two" />
           <span className="xv-home-art-glow" />
           <XovaMark className="xv-home-art-mark" />
-          <Mascot
-            state={mascotState}
-            className="xv-home-robot h-40 w-40 sm:h-52 sm:w-52 xl:h-64 xl:w-64"
-          />
           <span className="xv-home-float-icon xv-home-float-one">
             <ImageIcon className="h-5 w-5" />
           </span>
