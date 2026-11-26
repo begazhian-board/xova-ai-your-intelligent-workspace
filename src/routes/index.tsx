@@ -342,7 +342,6 @@ function Workspace() {
             <div className="flex min-h-full flex-col">
               <Welcome
                 displayName={profile.display_name}
-                mascotState={mascotState}
                 onPick={(text) => setDraft(text)}
               />
             </div>
