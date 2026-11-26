@@ -140,19 +140,8 @@ export function Welcome({
           </div>
         </div>
 
-        <div className="xv-home-art relative z-10 shrink-0" aria-hidden="true">
-          <span className="xv-home-orbit xv-home-orbit-one" />
-          <span className="xv-home-orbit xv-home-orbit-two" />
-          <span className="xv-home-art-glow" />
-          <span className="xv-home-mark-frame">
-            <XovaMark className="xv-home-art-mark" />
-          </span>
-          <span className="xv-home-float-icon xv-home-float-one">
-            <ImageIcon className="h-5 w-5" />
-          </span>
-          <span className="xv-home-float-icon xv-home-float-three">
-            <BrainCircuit className="h-5 w-5" />
-          </span>
+        <div className="xv-home-art xv-home-art-clean relative z-10 shrink-0" aria-hidden="true">
+          <XovaMark className="xv-home-art-mark" />
         </div>
       </section>
 
