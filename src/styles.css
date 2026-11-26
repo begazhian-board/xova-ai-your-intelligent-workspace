@@ -5982,3 +5982,12 @@ button {
   border-color: var(--border) !important;
   box-shadow: none !important;
 }
+
+
+/* Desktop collapse shrinks the wrapper together with the icon rail. */
+.xv-shell[data-device-layout="desktop"] .xv-left-rail.is-collapsed {
+  width: 64px !important;
+  min-width: 64px !important;
+  max-width: 64px !important;
+  flex: 0 0 64px !important;
+}
