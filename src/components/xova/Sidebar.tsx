@@ -79,12 +79,6 @@ export function Sidebar({
       .reverse();
   }, [messages, query]);
 
-  const formattedDate = (value: string | number) =>
-    new Date(value).toLocaleDateString(lang === "ar" ? "ar-EG" : "en-US", {
-      month: "short",
-      day: "numeric",
-    });
-
   if (collapsed) {
     return (
       <nav
