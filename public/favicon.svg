@@ -1,9 +1,9 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" role="img" aria-label="XOVA">
   <defs>
     <linearGradient id="xova-wordmark-gradient" x1="0%" y1="0%" x2="100%" y2="0%">
-      <stop offset="0%" stop-color="#168FFF"/>
-      <stop offset="52%" stop-color="#5267FF"/>
-      <stop offset="100%" stop-color="#8A45E8"/>
+      <stop offset="0%" stop-color="#315DEB"/>
+      <stop offset="52%" stop-color="#5B7FF0"/>
+      <stop offset="100%" stop-color="#8DA8FF"/>
     </linearGradient>
   </defs>
   <text
